@@ -1,13 +1,13 @@
 using System.Collections.Generic;
-using Avalonia.Media;
+using System.Drawing;
 
 namespace TaskTwig.Core;
 
-public record TaskCategory
+public class TaskCategory
 {
     public required string Name { get; set; }
     public required Color Color { get; set; }
-    public List<Task> Tasks { get; } = [];
+    public List<Task> Tasks { get; init; } = [];
 
     public void AddTask(Task task)
     {
