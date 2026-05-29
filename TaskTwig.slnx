@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="TaskTwig.Android/TaskTwig.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="TaskTwig.Browser/TaskTwig.Browser.csproj" />
+  <Project Path="TaskTwig.Desktop/TaskTwig.Desktop.csproj" />
+  <Project Path="TaskTwig.iOS/TaskTwig.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="TaskTwig/TaskTwig.csproj" />
+</Solution>
