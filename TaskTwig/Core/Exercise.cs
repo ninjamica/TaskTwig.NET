@@ -20,11 +20,6 @@ public readonly record struct Exercise()
     public required string Name { get; init; }
     public required ExerciseUnit Unit { get; init; }
 
-    public String test()
-    {
-        return "asdf";
-    }
-
     public class ExerciseJsonConverter : JsonConverter<Exercise>
     {
         public override Exercise Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -41,8 +36,8 @@ public readonly record struct Exercise()
         public override void Write(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
         {
             // JsonSerializer.Serialize(writer, value, value.GetType(), options);
-            Console.WriteLine($"{value.Name}:{value.Unit.ToString()}");
-            writer.WriteStringValue($"{value.Name}:{value.Unit.ToString()}");
+            Console.WriteLine($"{value.Name}:{value.Unit}");
+            writer.WriteStringValue($"{value.Name}:{value.Unit}");
         }
     
         public override Exercise ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -57,8 +52,8 @@ public readonly record struct Exercise()
         
         public override void WriteAsPropertyName(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
         {
-            Console.WriteLine($"{value.Name}:{value.Unit.ToString()}");
-            writer.WritePropertyName($"{value.Name}:{value.Unit.ToString()}");
+            Console.WriteLine($"{value.Name}:{value.Unit}");
+            writer.WritePropertyName($"{value.Name}:{value.Unit}");
         }
     }
 }

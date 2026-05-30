@@ -1,7 +1,9 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core.TwigInterval;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum DateUnit
 {
     Day,
@@ -14,11 +16,11 @@ public class UnitInterval : RepeatingInterval
 {
     
     public int UnitAmount { get; set; } = 1;
-    public DateUnit UnitType { get; set; } = DateUnit.Day;
+    public DateUnit Unit { get; set; } = DateUnit.Day;
 
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {
-        return UnitType switch
+        return Unit switch
         {
             DateUnit.Day => refDate.AddDays(UnitAmount),
             DateUnit.Week => refDate.AddDays(UnitAmount * 7),
@@ -30,7 +32,7 @@ public class UnitInterval : RepeatingInterval
 
     protected override DateOnly? PreviousFromDate(DateOnly refDate)
     {
-        return UnitType switch
+        return Unit switch
         {
             DateUnit.Day => refDate.AddDays(-UnitAmount),
             DateUnit.Week => refDate.AddDays(-UnitAmount * 7),

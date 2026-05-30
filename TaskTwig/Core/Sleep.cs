@@ -2,8 +2,8 @@ using System;
 
 namespace TaskTwig.Core;
 
-public record Sleep
+public readonly record struct Sleep
 {
-    public required DateTime StartTime { get; set; }
-    public required DateTime EndTime { get; set; }
+    public required DateTime StartTime { get; init; }
+    public required DateTime EndTime { get; init; }
 }

@@ -9,11 +9,12 @@ public record SubTask() : ITask
     public Task ParentTask { get; init; }
     public required string Name { get; set; }
 
+    [JsonIgnore]
     public bool IsDone
     {
         get => ParentTask._IsDone(LastDone);
         set => LastDone = value ? TaskTwig.Today : null;
     }
-
+    
     private DateOnly? LastDone { get; set; }
 }

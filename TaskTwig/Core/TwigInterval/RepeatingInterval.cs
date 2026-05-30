@@ -1,42 +1,71 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core.TwigInterval;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum RepeatPattern
+{
+    OnAfter,
+    OnBefore
+}
+
 public abstract class RepeatingInterval : ITwigInterval
 {
-    public DateOnly? NextOccurrence
+    [JsonIgnore]
+    public DateOnly? NextOccurrence => AutoRepeat ? NextFromToday : NextFromReference;
+
+    [JsonIgnore]
+    public DateOnly? PreviousOccurrence => AutoRepeat ? PreviousFromToday : PreviousFromReference;
+
+    [JsonIgnore]
+    public DateOnly? NextFromToday
     {
         get
         {
             DateOnly? date = NextFromDate(ReferenceDate);
-
-            if (AutoRepeat && date is not null)
+            DateOnly today = TaskTwig.Today;
+            switch (RepeatTo)
             {
-                // TODO: implement auto repeat, requires TaskTwig.Today                
+                case RepeatPattern.OnAfter:
+                    while (date is not null && date.Value.CompareTo(today) < 0)
+                        date = NextFromDate(date.Value);
+                    break;
+
+                case RepeatPattern.OnBefore:
+                    while (date is not null && date.Value.CompareTo(today) <= 0)
+                        date = NextFromDate(date.Value);
+
+                    if (date is not null)
+                        date = PreviousFromDate(date.Value);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-            
             return date;
         }
     }
 
-    public DateOnly? PreviousOccurrence
+    [JsonIgnore]
+    public DateOnly? PreviousFromToday
     {
         get
         {
-            DateOnly? date = PreviousFromDate(ReferenceDate);
-
-            if (AutoRepeat && date is not null)
-            {
-                // TODO: implement auto repeat, requires TaskTwig.Today                
-            }
-            
-            return date;
+            DateOnly? nextDate = NextFromToday;
+            return (nextDate is null) ? null : PreviousFromDate(nextDate.Value);
         }
     }
 
-    public required DateOnly ReferenceDate { get; set; }
-    public required bool AutoRepeat { get; set; }
+    [JsonIgnore]
+    public DateOnly? NextFromReference => NextFromDate(ReferenceDate);
+    [JsonIgnore]
+    public DateOnly? PreviousFromReference => PreviousFromDate(ReferenceDate);
 
+    public DateOnly ReferenceDate { get; set; } = TaskTwig.Today;
+    public bool AutoRepeat { get; set; } = false;
+    public RepeatPattern RepeatTo { get; set; } = RepeatPattern.OnAfter;
+    
     protected abstract DateOnly? NextFromDate(DateOnly refDate);
     protected abstract DateOnly? PreviousFromDate(DateOnly refDate);
 }

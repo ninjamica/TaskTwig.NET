@@ -7,14 +7,16 @@ namespace TaskTwig.Core;
 
 public class Task() : ITask
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum OccurrencePattern
     {
-        OccurOn,
         DueBy,
+        OccurOn,
         StartOn
     }
 
-    public enum ExtendPattern
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum AutoExtendPattern
     {
         NoExtend,
         OnCompletion,
@@ -23,35 +25,94 @@ public class Task() : ITask
     }
     
     public required string Name { get; set; }
-    public bool IsDone { get => _IsDone(LastDone); set => _SetDone(value); }
-    public bool IsToday => _IsToday();
-
+    
     [JsonIgnore]
     public TaskCategory? Category { get; set; }
-    public required ITwigInterval Interval { get; set; }
-    public int Points { get; set; } = 1;
-    public OccurrencePattern OPattern { get; set; }
-    public ExtendPattern EPattern { get; set; }
     
+    public int Points { get; set; } = 1;
+
+    public required ITwigInterval Interval
+    {
+        get;
+        set
+        {
+            field = value;
+            _UpdateOPattern(OPattern);
+            _UpdateEPattern(EPattern);
+        }
+    }
+
+    public OccurrencePattern OPattern
+    {
+        get;
+        set
+        {
+            field = value;
+            _UpdateOPattern(value);
+        }
+    }
+
+    public AutoExtendPattern EPattern
+    {
+        get;
+        set
+        {
+            field = value;
+            _UpdateEPattern(value);
+        }
+    }
+
     private DateOnly? LastDone { get; set; }
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public List<SubTask> SubTasks { get; init; } = [];
+    
+    
+    [JsonIgnore]
+    public bool IsDone { get => _IsDone(LastDone); set => _SetDone(value); }
+    [JsonIgnore]
+    public bool IsToday => _IsToday();
+    [JsonIgnore]
+    public bool IsOverdue => _IsOverdue();
 
     internal bool _IsDone(DateOnly? lastDone)
     {
         if (lastDone is null)
             return false;
 
-        if (Interval.NextOccurrence is null || Interval.PreviousOccurrence is null)
+        if (lastDone == TaskTwig.Today || Interval.PreviousOccurrence is null)
             return true;
         
-        return lastDone.Value.DayNumber > Interval.PreviousOccurrence.Value.DayNumber;
+        return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
     }
 
     private void _SetDone(bool done)
     {
         LastDone = done ? TaskTwig.Today : null;
+
+        if (Interval is RepeatingInterval repeatingInterval)
+        {
+            switch (EPattern)
+            {
+                case AutoExtendPattern.OnCompletion when done:
+                {
+                    if (repeatingInterval.NextFromToday != null)
+                        repeatingInterval.ReferenceDate = repeatingInterval.NextFromToday.Value;
+                    break;
+                }
+                case AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend when done:
+                {
+                    repeatingInterval.ReferenceDate = TaskTwig.Today;
+                    break;
+                }
+                case AutoExtendPattern.OnCompletion or AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend:
+                {
+                    if (repeatingInterval.PreviousOccurrence != null)
+                        repeatingInterval.ReferenceDate = repeatingInterval.PreviousOccurrence.Value;
+                    break;
+                }
+            }
+        }
     }
 
     internal bool _IsToday()
@@ -59,6 +120,54 @@ public class Task() : ITask
         if (IsDone)
             return false;
 
-        return Interval.NextOccurrence is null;
+        if (Interval.NextOccurrence is null)
+            return false;
+
+        return OPattern switch
+        {
+            OccurrencePattern.OccurOn => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) == 0,
+            OccurrencePattern.DueBy => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) < 0,
+            OccurrencePattern.StartOn => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) >= 0,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    private bool _IsOverdue()
+    {
+        switch (OPattern)
+        {
+            case OccurrencePattern.StartOn or OccurrencePattern.OccurOn:
+                return false;
+            
+            case OccurrencePattern.DueBy:
+                if (IsDone || Interval.NextOccurrence is null)
+                    return false;
+
+                return TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) > 0;
+                
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private void _UpdateOPattern(OccurrencePattern pattern)
+    {
+        if (Interval is RepeatingInterval repeatingInterval)
+        {
+            repeatingInterval.RepeatTo = pattern switch
+            {
+                OccurrencePattern.OccurOn or OccurrencePattern.DueBy => RepeatPattern.OnAfter,
+                OccurrencePattern.StartOn => RepeatPattern.OnBefore,
+                _ => throw new ArgumentOutOfRangeException(nameof(pattern), pattern, null)
+            };
+        }
+    }
+
+    private void _UpdateEPattern(AutoExtendPattern pattern)
+    {
+        if (Interval is RepeatingInterval repeatingInterval)
+        {
+            repeatingInterval.AutoRepeat = pattern is AutoExtendPattern.Auto;
+        }
     }
 }

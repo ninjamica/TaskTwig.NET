@@ -2,5 +2,7 @@ namespace TaskTwig.Core;
 
 public record Journal
 {
-    public required string Text { get; set; }
+    public static string GlobalText { get; set; } = "";
+    public string Text { get; set; } = "";
+    
 }
