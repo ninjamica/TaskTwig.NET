@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.Core;
 
-public class Task() : ITask
+public partial class Task() : ObservableObject, ITask
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum OccurrencePattern
@@ -24,13 +26,16 @@ public class Task() : ITask
         Auto
     }
     
-    public required string Name { get; set; }
+    [ObservableProperty]
+    public required partial string Name { get; set; }
     
     [JsonIgnore]
     public TaskCategory? Category { get; set; }
     
-    public int Points { get; set; } = 1;
+    [ObservableProperty]
+    public partial int Points { get; set; } = 1;
 
+    // TODO: Make [ObservableProperty]
     public required ITwigInterval Interval
     {
         get;
@@ -41,7 +46,7 @@ public class Task() : ITask
             _UpdateEPattern(EPattern);
         }
     }
-
+    
     public OccurrencePattern OPattern
     {
         get;
@@ -51,7 +56,7 @@ public class Task() : ITask
             _UpdateOPattern(value);
         }
     }
-
+    
     public AutoExtendPattern EPattern
     {
         get;
@@ -62,16 +67,22 @@ public class Task() : ITask
         }
     }
 
-    private DateOnly? LastDone { get; set; }
+    [ObservableProperty]
+    private partial DateOnly? LastDone { get; set; }
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public List<SubTask> SubTasks { get; init; } = [];
+    public ObservableCollection<SubTask> SubTasks { get; init; } = [];
     
     
+    // TODO: Make Observable
     [JsonIgnore]
     public bool IsDone { get => _IsDone(LastDone); set => _SetDone(value); }
+    
+    // TODO: Make Observable
     [JsonIgnore]
     public bool IsToday => _IsToday();
+    
+    // TODO: Make Observable
     [JsonIgnore]
     public bool IsOverdue => _IsOverdue();
 
@@ -115,7 +126,7 @@ public class Task() : ITask
         }
     }
 
-    internal bool _IsToday()
+    private bool _IsToday()
     {
         if (IsDone)
             return false;

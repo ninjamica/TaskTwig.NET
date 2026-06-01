@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using TaskTwig.Core.TwigInterval;
@@ -22,10 +23,10 @@ public class TaskTwig
         }
     }
 
-    public List<TaskCategory> TaskCategories { get; private set; } = [];
+    public ObservableCollection<TaskCategory> TaskCategories { get; private set; } = [];
     public Dictionary<DateOnly, Sleep> SleepRecords { get; private set; } = new();
-    public List<Exercise> Exercises { get; private set; } = [];
-    public List<Workout> WorkoutList { get; private set; } = [];
+    public ObservableCollection<Exercise> Exercises { get; private set; } = [];
+    public ObservableCollection<Workout> WorkoutList { get; private set; } = [];
     public Dictionary<DateOnly, Journal> JournalRecords { get; private set; } = new();
 
     public void WriteDataFiles()
@@ -44,21 +45,22 @@ public class TaskTwig
         
         string journalText = JsonSerializer.Serialize(JournalRecords);
         File.WriteAllText("../../../journal.json", journalText);
+        
     }
 
     public void ReadDataFiles()
     {
         string taskText = File.ReadAllText("../../../task.json");
-        TaskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(taskText) ?? [];
+        TaskCategories = JsonSerializer.Deserialize<ObservableCollection<TaskCategory>>(taskText) ?? [];
         
         string sleepText = File.ReadAllText("../../../sleep.json");
         SleepRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Sleep>>(sleepText) ?? [];
         
         string exerciseText = File.ReadAllText("../../../exercise.json");
-        Exercises = JsonSerializer.Deserialize<List<Exercise>>(exerciseText) ?? [];
+        Exercises = JsonSerializer.Deserialize<ObservableCollection<Exercise>>(exerciseText) ?? [];
         
         string workoutText = File.ReadAllText("../../../workout.json");
-        WorkoutList = JsonSerializer.Deserialize<List<Workout>>(workoutText) ?? [];
+        WorkoutList = JsonSerializer.Deserialize<ObservableCollection<Workout>>(workoutText) ?? [];
         
         string journalText = File.ReadAllText("../../../journal.json");
         JournalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(journalText) ?? [];

@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core.TwigInterval;
 
@@ -12,11 +13,14 @@ public enum DateUnit
     Year
 }
 
-public class UnitInterval : RepeatingInterval
+public partial class UnitInterval : RepeatingInterval
 {
-    
-    public int UnitAmount { get; set; } = 1;
-    public DateUnit Unit { get; set; } = DateUnit.Day;
+
+    [ObservableProperty]
+    public required partial int UnitAmount { get; set; }
+
+    [ObservableProperty]
+    public required partial DateUnit Unit { get; set; }
 
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {

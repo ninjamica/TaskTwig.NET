@@ -1,8 +1,13 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace TaskTwig.Core;
 
-public record Journal
+public partial class Journal : ObservableObject
 {
+    // TODO: make observable (probably manually)
     public static string GlobalText { get; set; } = "";
-    public string Text { get; set; } = "";
+    
+    [ObservableProperty]
+    public partial string Text { get; set; } = "";
     
 }

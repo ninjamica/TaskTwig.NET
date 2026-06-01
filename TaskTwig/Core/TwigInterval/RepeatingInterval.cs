@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core.TwigInterval;
 
@@ -10,7 +14,7 @@ public enum RepeatPattern
     OnBefore
 }
 
-public abstract class RepeatingInterval : ITwigInterval
+public abstract partial class RepeatingInterval : ObservableObject, ITwigInterval
 {
     [JsonIgnore]
     public DateOnly? NextOccurrence => AutoRepeat ? NextFromToday : NextFromReference;
@@ -62,10 +66,15 @@ public abstract class RepeatingInterval : ITwigInterval
     [JsonIgnore]
     public DateOnly? PreviousFromReference => PreviousFromDate(ReferenceDate);
 
-    public DateOnly ReferenceDate { get; set; } = TaskTwig.Today;
-    public bool AutoRepeat { get; set; } = false;
-    public RepeatPattern RepeatTo { get; set; } = RepeatPattern.OnAfter;
-    
+    [ObservableProperty]
+    public partial DateOnly ReferenceDate { get; set; } = TaskTwig.Today;
+
+    [ObservableProperty]
+    public partial bool AutoRepeat { get; set; }
+
+    [ObservableProperty]
+    public partial RepeatPattern RepeatTo { get; set; }
+
     protected abstract DateOnly? NextFromDate(DateOnly refDate);
     protected abstract DateOnly? PreviousFromDate(DateOnly refDate);
 }

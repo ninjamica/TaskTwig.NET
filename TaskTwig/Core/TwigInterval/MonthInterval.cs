@@ -1,71 +1,76 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core.TwigInterval;
 
-public class MonthInterval : RepeatingInterval
+public partial class MonthInterval : RepeatingInterval
 {
-    public int MonthSpacing
-    {
-        get;
-        set
-        {
-            if (value > 0)
-                field = value;
-        }
-    }
-
-    public SortedSet<int> DaysOfMonth
-    {
-        get;
-        set
-        {
-            if (value.Min < 1 || value.Max > 31)
-                throw new ArgumentOutOfRangeException(nameof(DaysOfMonth), value,
-                    "Day of Month must be between 1 and 31.");
-            
-            field = value;
-        }
-    } = [];
+    [ObservableProperty] public partial int MonthSpacing { get; set; } = 1;
+    [ObservableProperty] public partial uint DaysOfMonthMap { get; set; } = 0u;
 
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {
-        if (DaysOfMonth.Count == 0)
+        if ((DaysOfMonthMap & 0x7FFF_FFFF) == 0)
             return null;
-
-        int refDay = refDate.Day;
+        
         int maxDaysInMonth = DateTime.DaysInMonth(refDate.Year, refDate.Month);
-        int nextDay = DaysOfMonth.FirstOrDefault(day => Math.Max(day, maxDaysInMonth) > refDay, DaysOfMonth.Min);
+        DateOnly nextMonthDate = refDate.AddMonths(1);
+        int maxDaysInNextMonth = DateTime.DaysInMonth(nextMonthDate.Year, nextMonthDate.Month);
         
+        int refDay = refDate.Day;
+        int nextDay = _FindNextDay(refDay, maxDaysInMonth, maxDaysInNextMonth);
+
         if (nextDay > refDay)
-        {
-            return new DateOnly(refDate.Year, refDate.Month, Math.Max(nextDay, maxDaysInMonth));
-        }
+            return new DateOnly(refDate.Year, refDate.Month, nextDay);
         else
-        {
-            int maxDaysInNextMonth = DateTime.DaysInMonth(refDate.Year, refDate.Month + 1);
-            return new DateOnly(refDate.Year, refDate.Month + 1, Math.Max(nextDay, maxDaysInNextMonth));
-        }
-        
+            return new DateOnly(nextMonthDate.Year, nextMonthDate.Month, nextDay);
+
     }
 
     protected override DateOnly? PreviousFromDate(DateOnly refDate)
     {
-        if (DaysOfMonth.Count == 0)
+        if ((DaysOfMonthMap & 0x7FFF_FFFF) == 0)
             return null;
 
-        int refDay = refDate.Day;
-        int nextDay = DaysOfMonth.LastOrDefault(day => day < refDay, DaysOfMonth.Max);
+        DateOnly prevMonthDate = refDate.AddMonths(-1);
+        int maxDaysInPrevMonth = DateTime.DaysInMonth(prevMonthDate.Year, prevMonthDate.Month);
         
-        if (nextDay < refDay)
-        {
-            return new DateOnly(refDate.Year, refDate.Month, nextDay);
-        }
+        int refDay = refDate.Day;
+        int prevDay = _FindPrevDay(refDay, maxDaysInPrevMonth);
+
+        if (prevDay < refDay)
+            return new DateOnly(refDate.Year, refDate.Month, prevDay);
         else
-        {
-            int maxDaysInNextMonth = DateTime.DaysInMonth(refDate.Year, refDate.Month + 1);
-            return new DateOnly(refDate.Year, refDate.Month - 1, Math.Max(nextDay, maxDaysInNextMonth));
-        }
+            return new DateOnly(prevMonthDate.Year, prevMonthDate.Month, prevDay);
+    }
+
+    private int _FindNextDay(int day, int maxDaysInMonth, int maxDaysInNextMonth)
+    {
+        uint daysMap = DaysOfMonthMap & 0x7FFF_FFFF; 
+        if (daysMap == 0)
+            return 0;
+        
+        uint maskedMap = daysMap & ((1u << day) - 1u);
+        return Math.Min(
+            BitOperations.TrailingZeroCount((maskedMap == 0 || day >= maxDaysInMonth) ? daysMap : maskedMap) + 1, 
+            maxDaysInNextMonth);
+    }
+
+    private int _FindPrevDay(int day, int maxDaysInPrevMonth)
+    {
+        uint daysMap = DaysOfMonthMap & 0x7FFF_FFFF; 
+        if (daysMap == 0)
+            return 0;
+        
+        uint maskedMap = daysMap & (~0u >> (33 - day));
+        return Math.Min(32 - BitOperations.LeadingZeroCount(maskedMap == 0 ? daysMap : maskedMap), maxDaysInPrevMonth);
+    }
+
+    private bool _IsOnDay(int day)
+    {
+        return (DaysOfMonthMap & (1 << (day - 1)) & 0x7FFF_FFFF) != 0;
     }
 }

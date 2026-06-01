@@ -1,4 +1,5 @@
 using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core.TwigInterval;
 
@@ -15,20 +16,23 @@ public enum DayOfWeekFlag
     Saturday = 64
 }
 
-public class WeekInterval : RepeatingInterval
+public partial class WeekInterval : RepeatingInterval
 {
-    public int WeekSpacing
-    {
-        get;
-        set
-        {
-            if (value > 0)
-                field = value;
-        }
-    } = 1;
+    [ObservableProperty]
+    public required partial int WeekSpacing { get; set; }
 
-    public DayOfWeekFlag DayOfWeekMap { get; set; } = DayOfWeekFlag.None;
-    
+    // {
+    //     get;
+    //     set
+    //     {
+    //         if (value > 0)
+    //             field = value;
+    //     }
+    // } = 1;
+
+    [ObservableProperty]
+    public partial DayOfWeekFlag DayOfWeekMap { get; set; } = DayOfWeekFlag.None;
+
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {
         int refDay = (int) refDate.DayOfWeek;

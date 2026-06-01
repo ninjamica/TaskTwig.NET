@@ -1,13 +1,19 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public class TaskCategory
+public partial class TaskCategory : ObservableObject
 {
-    public required string Name { get; set; }
-    public required Color Color { get; set; }
-    public List<Task> Tasks { get; init; } = [];
+    [ObservableProperty] 
+    public required partial string Name { get; set; }
+    
+    [ObservableProperty]
+    public required partial Color Color { get; set; }
+    
+    public ObservableCollection<Task> Tasks { get; init; } = [];
 
     public void AddTask(Task task)
     {

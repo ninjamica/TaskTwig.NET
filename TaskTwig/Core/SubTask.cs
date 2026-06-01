@@ -1,14 +1,18 @@
 using System;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public record SubTask() : ITask
+public partial class SubTask() : ObservableObject, ITask
 {
     [JsonIgnore]
     public Task ParentTask { get; init; }
-    public required string Name { get; set; }
+    
+    [ObservableProperty]
+    public required partial string Name { get; set; }
 
+    // TODO: make observable
     [JsonIgnore]
     public bool IsDone
     {
@@ -16,5 +20,6 @@ public record SubTask() : ITask
         set => LastDone = value ? TaskTwig.Today : null;
     }
     
-    private DateOnly? LastDone { get; set; }
+    [ObservableProperty]
+    private partial DateOnly? LastDone { get; set; }
 }
