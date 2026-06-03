@@ -16,11 +16,8 @@ public enum DateUnit
 public partial class UnitInterval : RepeatingInterval
 {
 
-    [ObservableProperty]
-    public required partial int UnitAmount { get; set; }
-
-    [ObservableProperty]
-    public required partial DateUnit Unit { get; set; }
+    [ObservableProperty] public required partial int UnitAmount { get; set; }
+    [ObservableProperty] public required partial DateUnit Unit { get; set; }
 
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {
@@ -45,4 +42,7 @@ public partial class UnitInterval : RepeatingInterval
             _ => throw new ArgumentOutOfRangeException()
         };
     }
+    
+    partial void OnUnitAmountChanged(int value) => UpdateOccurrences();
+    partial void OnUnitChanged(DateUnit value) => UpdateOccurrences();
 }

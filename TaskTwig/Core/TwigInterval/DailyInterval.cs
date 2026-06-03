@@ -5,6 +5,7 @@ namespace TaskTwig.Core.TwigInterval;
 
 public class DailyInterval : ITwigInterval
 {
+    // TODO: Deal with TaskTwig.Today being possibly observable
     [JsonIgnore]
     public DateOnly? NextOccurrence => TaskTwig.Today;
     [JsonIgnore]

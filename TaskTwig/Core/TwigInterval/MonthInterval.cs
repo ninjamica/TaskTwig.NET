@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -73,4 +71,7 @@ public partial class MonthInterval : RepeatingInterval
     {
         return (DaysOfMonthMap & (1 << (day - 1)) & 0x7FFF_FFFF) != 0;
     }
+    
+    partial void OnMonthSpacingChanged(int value) => UpdateOccurrences();
+    partial void OnDaysOfMonthMapChanged(uint value) => UpdateOccurrences();
 }

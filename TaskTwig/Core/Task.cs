@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,7 +6,7 @@ using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.Core;
 
-public partial class Task() : ObservableObject, ITask
+public partial class Task : ObservableObject
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum OccurrencePattern
@@ -35,57 +34,53 @@ public partial class Task() : ObservableObject, ITask
     [ObservableProperty]
     public partial int Points { get; set; } = 1;
 
-    // TODO: Make [ObservableProperty]
-    public required ITwigInterval Interval
+    [ObservableProperty]
+    public required partial ITwigInterval Interval { get; set; }
+    partial void OnIntervalChanged(ITwigInterval value)
     {
-        get;
-        set
-        {
-            field = value;
-            _UpdateOPattern(OPattern);
-            _UpdateEPattern(EPattern);
-        }
+        _UpdateOPattern(OPattern);
+        _UpdateEPattern(EPattern);
+        _UpdateStatusVars();
     }
     
-    public OccurrencePattern OPattern
+    [ObservableProperty]
+    public partial OccurrencePattern OPattern { get; set; }
+    partial void OnOPatternChanged(OccurrencePattern value)
     {
-        get;
-        set
-        {
-            field = value;
-            _UpdateOPattern(value);
-        }
+        _UpdateOPattern(value);
+        _UpdateStatusVars();
     }
     
-    public AutoExtendPattern EPattern
+    [ObservableProperty]
+    public partial AutoExtendPattern EPattern { get; set; }
+    partial void OnEPatternChanged(AutoExtendPattern value)
     {
-        get;
-        set
-        {
-            field = value;
-            _UpdateEPattern(value);
-        }
+        _UpdateEPattern(value);
+        _UpdateStatusVars();
     }
 
     [ObservableProperty]
     private partial DateOnly? LastDone { get; set; }
     
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public ObservableCollection<SubTask> SubTasks { get; init; } = [];
     
     
-    // TODO: Make Observable
+    // TODO: Initialize
     [JsonIgnore]
-    public bool IsDone { get => _IsDone(LastDone); set => _SetDone(value); }
+    [ObservableProperty]
+    public partial bool IsDone { get; private set; }
     
-    // TODO: Make Observable
+    // TODO: Initialize
     [JsonIgnore]
-    public bool IsToday => _IsToday();
+    [ObservableProperty]
+    public partial bool IsToday { get; private set; }
     
-    // TODO: Make Observable
+    // TODO: Initialize
     [JsonIgnore]
-    public bool IsOverdue => _IsOverdue();
+    [ObservableProperty]
+    public partial bool IsOverdue { get; private set; }
 
+    
     internal bool _IsDone(DateOnly? lastDone)
     {
         if (lastDone is null)
@@ -97,7 +92,7 @@ public partial class Task() : ObservableObject, ITask
         return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
     }
 
-    private void _SetDone(bool done)
+    public void SetDone(bool done)
     {
         LastDone = done ? TaskTwig.Today : null;
 
@@ -107,8 +102,8 @@ public partial class Task() : ObservableObject, ITask
             {
                 case AutoExtendPattern.OnCompletion when done:
                 {
-                    if (repeatingInterval.NextFromToday != null)
-                        repeatingInterval.ReferenceDate = repeatingInterval.NextFromToday.Value;
+                    if (repeatingInterval.NextFromToday() is { } nextFromToday)
+                        repeatingInterval.ReferenceDate = nextFromToday;
                     break;
                 }
                 case AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend when done:
@@ -180,5 +175,12 @@ public partial class Task() : ObservableObject, ITask
         {
             repeatingInterval.AutoRepeat = pattern is AutoExtendPattern.Auto;
         }
+    }
+    
+    protected void _UpdateStatusVars()
+    {
+        IsDone = _IsDone(LastDone);
+        IsToday = _IsToday();
+        IsOverdue = _IsOverdue();
     }
 }

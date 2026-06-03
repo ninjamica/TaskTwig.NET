@@ -82,4 +82,7 @@ public partial class WeekInterval : RepeatingInterval
         }
         return -1;
     }
+
+    partial void OnWeekSpacingChanged(int value) => UpdateOccurrences();
+    partial void OnDayOfWeekMapChanged(DayOfWeekFlag value) => UpdateOccurrences();
 }

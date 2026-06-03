@@ -1,12 +1,11 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Transactions;
 
 namespace TaskTwig.Core;
 
 [JsonConverter(typeof(ExerciseJsonConverter))]
-public readonly record struct Exercise()
+public readonly record struct Exercise
 {
     [JsonConverter(typeof(JsonStringEnumConverter<ExerciseUnit>))]
     public enum ExerciseUnit

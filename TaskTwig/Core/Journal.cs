@@ -1,13 +1,14 @@
+using System;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
 public partial class Journal : ObservableObject
 {
-    // TODO: make observable (probably manually)
-    public static string GlobalText { get; set; } = "";
-    
-    [ObservableProperty]
-    public partial string Text { get; set; } = "";
+    public static string GlobalJournal { get; set; } = "";
+
+    public required DateOnly Date { get; init; }
+    public string JournalText { get; set; } = "";
     
 }

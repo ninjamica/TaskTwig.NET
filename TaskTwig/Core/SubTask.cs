@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public partial class SubTask() : ObservableObject, ITask
+public partial class SubTask() : ObservableObject
 {
     [JsonIgnore]
     public Task ParentTask { get; init; }
@@ -12,7 +12,7 @@ public partial class SubTask() : ObservableObject, ITask
     [ObservableProperty]
     public required partial string Name { get; set; }
 
-    // TODO: make observable
+    // TODO: make observable (listen to external changes from parent)
     [JsonIgnore]
     public bool IsDone
     {

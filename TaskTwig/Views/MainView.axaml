@@ -13,24 +13,44 @@ to set the actual DataContext for runtime, set the DataContext property in code 
     </Design.DataContext>
 
     
-    <StackPanel>
-        <Border Margin="5" CornerRadius="10" Background="LightBlue">
-            <TextBlock Text="{Binding Greeting}" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center"
-                               Margin="5"
-                               FontSize="24">
-            </TextBlock>
-        </Border>
-        <Grid ShowGridLines="True" Margin="5"
-              ColumnDefinitions="120, 100"
-              RowDefinitions="Auto, Auto">
-            <TextBlock Grid.Row="0" Grid.Column="0" Margin="10">Celsius</TextBlock>
-            <TextBox Grid.Row="0" Grid.Column="1" Margin="0 5" Text="0" Name="Celsius"></TextBox>
-            <TextBlock Grid.Row="1" Grid.Column="0" Margin="10">Fahrenheit</TextBlock>
-            <TextBox Grid.Row="1" Grid.Column="1" Margin="0 5" Text="0" Name="Fahrenheit"></TextBox>
-        </Grid>
-        <Button HorizontalAlignment="Center" Click="Button_OnClick">Calculate</Button>
-    </StackPanel>
+    <TabControl x:Name="TabControl" Margin="5">
+        
+        <TabItem Header="Tasks">
+            <ScrollViewer>
+            <StackPanel>
+                <ListBox ItemsSource="{Binding TaskCategoryList}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="5">
+                                <TextBox Text="{Binding Name}"/>
+                                <ListBox ItemsSource="{Binding Tasks}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <CheckBox IsChecked="{Binding IsDone}"></CheckBox>
+                                                <TextBox Text="{Binding Name}"></TextBox>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <Button Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" CommandParameter="{Binding}" Margin="20, 0, 0, 0"> Add Task+</Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button Command="{Binding CreateTaskCategory}">Add Task Category+</Button>
+            </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        
+        <TabItem Header="Journal">
+            <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, *">
+                <TextBox Grid.Column="0" Text="{Binding DailyJournal}" PlaceholderText="Daily Journal" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"/>
+                <TextBox Grid.Column="1" Text="{Binding GlobalJournal}" PlaceholderText="Global Journal" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"/>
+            </Grid>
+        </TabItem>
+        
+    </TabControl>
+    
     
 </UserControl>
