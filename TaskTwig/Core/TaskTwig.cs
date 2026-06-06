@@ -1,50 +1,103 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using ObservableCollections;
 using TaskTwig.Core.TwigInterval;
 using Color = System.Drawing.Color;
 
 namespace TaskTwig.Core;
 
-public class TaskTwig : ObservableObject
+public partial class TaskTwig : ObservableObject
 {
-    public static TimeOnly DayStart
+    public static TimeSpan DayStart
     {
         get;
         set
         {
             field = value;
-            Today = _Today();
+            Today = EffectiveDate(DateTime.Now);
         }
-    } = new TimeOnly(5, 0);
+    } = new TimeSpan(5, 0, 0);
 
-    public static DateOnly Today { get; private set; } = _Today();
+    public static DateOnly Today { get; private set; } = EffectiveDate(DateTime.Now);
 
-    private static DateOnly _Today()
+    public static DateOnly EffectiveDate(DateTime dateTime)
     {
-        if (TimeOnly.FromDateTime(DateTime.Now).CompareTo(DayStart) < 0)
-            return DateOnly.FromDateTime(DateTime.Today).AddDays(-1);
-        else
-            return DateOnly.FromDateTime(DateTime.Today);
+        DateOnly date = DateOnly.FromDateTime(dateTime);
+        
+        if (dateTime.TimeOfDay.CompareTo(DayStart) < 0)
+            date = date.AddDays(-1);
+        
+        return date;
     }
 
-    public ObservableCollection<TaskCategory> TaskCategories { get; private set; } = [];
-    public ObservableCollection<Sleep> SleepRecords { get; private set; } = [];
+    struct SleepValues()
+    {
+        public ObservableDictionary<DateOnly, Sleep> SleepRecords { get; set; } = [];
+        public DateTime? SleepStart { get; set; }
+    }
+
+    public partial class JournalValues : ObservableObject
+    {
+        public ObservableDictionary<DateOnly, Journal> Journals { get; set; } = [];
+        [ObservableProperty] public partial string GlobalJournal { get; set; }
+    }
+
+    private SleepValues _sleepValues;
+    public JournalValues JournalRecords { get; private set; } = new();
+
+    public ObservableList<TaskCategory> TaskCategories { get; private set; } = [];
+    public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
     public ObservableCollection<Exercise> Exercises { get; private set; } = [];
     public ObservableCollection<Workout> WorkoutList { get; private set; } = [];
-    public ObservableCollection<Journal> JournalRecords { get; private set; } = [];
+    // public ObservableDictionary<DateOnly, Journal> JournalRecords => _journalValues.JournalRecords;
 
-    private string _dataFilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
+    [ObservableProperty]
+    public partial bool IsSleeping { get; private set; }
+
+    private readonly string _dataFilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
+    
+    
+    public void StartSleeping(DateTime sleepStart)
+    {
+        _SetSleepStart(sleepStart);
+    }
+
+    public bool FinishSleeping(DateTime sleepEnd, bool force)
+    {
+        DateOnly endDate = DateOnly.FromDateTime(sleepEnd).AddDays(-1);
+        
+        if (!force && SleepRecords.ContainsKey(endDate))
+            return false;
+        
+        if (_sleepValues.SleepStart is { } sleepStart)
+        {
+            SleepRecords[endDate] = new Sleep(sleepStart, sleepEnd);
+            _SetSleepStart(null);
+            return true;
+        }
+
+        return false;
+    }
+
+    public Journal TodaysJournal()
+    {
+        if (!JournalRecords.Journals.ContainsKey(Today))
+            JournalRecords.Journals[Today] = new Journal();
+
+        return JournalRecords.Journals[Today];
+    }
 
     public void WriteDataFiles()
     {
         string taskText = JsonSerializer.Serialize(TaskCategories);
         File.WriteAllText(Path.Combine(_dataFilePath, "task.json"), taskText);
         
-        string sleepText = JsonSerializer.Serialize(SleepRecords);
+        string sleepText = JsonSerializer.Serialize(_sleepValues);
         File.WriteAllText(Path.Combine(_dataFilePath, "sleep.json"), sleepText);
         
         string exerciseText = JsonSerializer.Serialize(Exercises);
@@ -56,38 +109,94 @@ public class TaskTwig : ObservableObject
         string journalText = JsonSerializer.Serialize(JournalRecords);
         File.WriteAllText(Path.Combine(_dataFilePath, "journal.json"), journalText);
         
-        string globalJournalText = JsonSerializer.Serialize(Journal.GlobalJournal);
-        File.WriteAllText(Path.Combine(_dataFilePath, "global-journal.json"), globalJournalText);
+        // string globalJournalText = JsonSerializer.Serialize(Journal.GlobalJournal);
+        // File.WriteAllText(Path.Combine(_dataFilePath, "global-journal.json"), globalJournalText);
         
     }
 
     public void ReadDataFiles()
     {
-        string taskText = File.ReadAllText(Path.Combine(_dataFilePath, "task.json"));
-        TaskCategories = JsonSerializer.Deserialize<ObservableCollection<TaskCategory>>(taskText) ?? [];
-        
-        string sleepText = File.ReadAllText(Path.Combine(_dataFilePath, "sleep.json"));
-        SleepRecords = JsonSerializer.Deserialize<ObservableCollection<Sleep>>(sleepText) ?? [];
-        
-        string exerciseText = File.ReadAllText(Path.Combine(_dataFilePath, "exercise.json"));
-        Exercises = JsonSerializer.Deserialize<ObservableCollection<Exercise>>(exerciseText) ?? [];
-        
-        string workoutText = File.ReadAllText(Path.Combine(_dataFilePath, "workout.json"));
-        WorkoutList = JsonSerializer.Deserialize<ObservableCollection<Workout>>(workoutText) ?? [];
-        
-        string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "journal.json"));
-        JournalRecords = JsonSerializer.Deserialize<ObservableCollection<Journal>>(journalText) ?? [];
-
         try
         {
-            string globalJournalText = File.ReadAllText(Path.Combine(_dataFilePath, "global-journal.json"));
-            Journal.GlobalJournal = JsonSerializer.Deserialize<string>(globalJournalText) ?? "";
+            string taskText = File.ReadAllText(Path.Combine(_dataFilePath, "task.json"));
+            TaskCategories = JsonSerializer.Deserialize<ObservableList<TaskCategory>>(taskText) ?? [];
         }
         catch (FileNotFoundException e)
         {
+            Console.WriteLine("task.json file not found");
+            Console.WriteLine(e);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine("failed to parse task.json");
             Console.WriteLine(e);
         }
         
+        try
+        {
+            string sleepText = File.ReadAllText(Path.Combine(_dataFilePath, "sleep.json"));
+            _sleepValues = JsonSerializer.Deserialize<SleepValues>(sleepText);
+            _SetSleepStart(_sleepValues.SleepStart);
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("sleep.json file not found");
+            Console.WriteLine(e);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine("failed to parse sleep.json");
+            Console.WriteLine(e);
+        }
+        
+        try
+        {
+            string exerciseText = File.ReadAllText(Path.Combine(_dataFilePath, "exercise.json"));
+            Exercises = JsonSerializer.Deserialize<ObservableCollection<Exercise>>(exerciseText) ?? [];
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("exercise.json file not found");
+            Console.WriteLine(e);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine("failed to parse exercise.json");
+            Console.WriteLine(e);
+        }
+        
+        try
+        {
+            string workoutText = File.ReadAllText(Path.Combine(_dataFilePath, "workout.json"));
+            WorkoutList = JsonSerializer.Deserialize<ObservableCollection<Workout>>(workoutText) ?? [];
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("workout.json file not found");
+            Console.WriteLine(e);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine("failed to parse workout.json");
+            Console.WriteLine(e);
+        }
+        
+        try
+        {
+            string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "journal.json"));
+            JournalRecords = JsonSerializer.Deserialize<JournalValues>(journalText) ?? new JournalValues();
+            
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("journal.json file not found");
+            Console.WriteLine(e);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine("failed to parse journal.json");
+            Console.WriteLine(e);
+        }
     }
 
     public static void Main()
@@ -148,7 +257,7 @@ public class TaskTwig : ObservableObject
             ParentTask = twig.TaskCategories[0].Tasks[0]
         });
         
-        twig.SleepRecords.Add(new Sleep()
+        twig.SleepRecords.Add(Today, new Sleep()
         {
             StartTime = DateTime.Now, 
             EndTime = DateTime.Now
@@ -171,13 +280,18 @@ public class TaskTwig : ObservableObject
             }
         });
         
-        twig.JournalRecords.Add(new Journal
+        twig.JournalRecords.Journals.Add(Today, new Journal
         {
-            Date = TaskTwig.Today,
             JournalText = "Testing journal"
         });
         // twig.ReadDataFiles();
         
         twig.WriteDataFiles();
+    }
+
+    private void _SetSleepStart(DateTime? dateTime)
+    {
+        _sleepValues.SleepStart = dateTime;
+        IsSleeping = dateTime is not null;
     }
 }

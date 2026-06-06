@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.Core;
@@ -60,7 +61,9 @@ public partial class Task : ObservableObject
     }
 
     [ObservableProperty]
-    private partial DateOnly? LastDone { get; set; }
+    public partial DateOnly? LastDone { get; set; }
+
+    partial void OnLastDoneChanged(DateOnly? value) => _UpdateStatusVars();
     
     public ObservableCollection<SubTask> SubTasks { get; init; } = [];
     
@@ -91,10 +94,12 @@ public partial class Task : ObservableObject
         
         return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
     }
-
+    
     public void SetDone(bool done)
     {
+        Console.WriteLine($"Set done {done}");
         LastDone = done ? TaskTwig.Today : null;
+        Console.WriteLine($"IsDone {IsDone}");
 
         if (Interval is RepeatingInterval repeatingInterval)
         {
@@ -119,12 +124,17 @@ public partial class Task : ObservableObject
                 }
             }
         }
+        
+        _UpdateStatusVars();
     }
 
     private bool _IsToday()
     {
         if (IsDone)
             return false;
+        
+        if (Interval is NoInterval)
+            return true;
 
         if (Interval.NextOccurrence is null)
             return false;

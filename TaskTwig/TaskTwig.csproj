@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia"/>
+        <PackageReference Include="Avalonia.Controls.ItemsRepeater" />
         <PackageReference Include="Avalonia.Themes.Fluent"/>
         <PackageReference Include="Avalonia.Fonts.Inter"/>
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
@@ -20,5 +21,18 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Irihi.Avalonia.Shared" />
+        <PackageReference Include="Irihi.Ursa" />
+        <PackageReference Include="Irihi.Ursa.Themes.Semi" />
+        <PackageReference Include="MyToolkit" />
+        <PackageReference Include="ObservableCollections" />
+        <PackageReference Include="Semi.Avalonia" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\DateTimeDialog.axaml.cs">
+        <DependentUpon>DateTimeDialog.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>

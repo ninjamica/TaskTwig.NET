@@ -3,6 +3,8 @@
                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                 xmlns:vm="using:TaskTwig.ViewModels"
+                xmlns:u="https://irihi.tech/ursa"
+                xmlns:core="clr-namespace:TaskTwig.Core"
                 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                 x:Class="TaskTwig.Views.MainView"
                 x:DataType="vm:MainViewModel">
@@ -13,44 +15,163 @@ to set the actual DataContext for runtime, set the DataContext property in code 
     </Design.DataContext>
 
     
-    <TabControl x:Name="TabControl" Margin="5">
-        
-        <TabItem Header="Tasks">
-            <ScrollViewer>
-            <StackPanel>
-                <ListBox ItemsSource="{Binding TaskCategoryList}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Spacing="5">
-                                <TextBox Text="{Binding Name}"/>
-                                <ListBox ItemsSource="{Binding Tasks}">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <CheckBox IsChecked="{Binding IsDone}"></CheckBox>
-                                                <TextBox Text="{Binding Name}"></TextBox>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                                <Button Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" CommandParameter="{Binding}" Margin="20, 0, 0, 0"> Add Task+</Button>
+    <Panel>
+        <TabControl x:Name="TabControl" Margin="5">
+            
+            <TabItem Header="Today">
+                <ScrollViewer>
+                    <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}"/>
+                                    <ItemsRepeater ItemsSource="{Binding TodayTasks}"
+                                                   Margin="10, 5, 0, 10">
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
+                                                              Command="{Binding SetDone}"
+                                                              CommandParameter="{Binding $self.IsChecked}"/>
+                                                    <TextBlock Text="{Binding Name}"/>
+                                                    <TextBlock Text="{Binding IsToday}"></TextBlock>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Tasks">
+                <ScrollViewer>
+                <StackPanel Spacing="10" Margin="10">
+                    <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="10"/>
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="5">
+                                    <TextBox Text="{Binding Name}"/>
+                                    <ItemsRepeater ItemsSource="{Binding Tasks}">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Spacing="10"/>
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
+                                                              Command="{Binding SetDone}"
+                                                              CommandParameter="{Binding $self.IsChecked}"
+                                                              VerticalAlignment="Center"/>
+                                                    <TextBox Text="{Binding Name}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                    <Button Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" 
+                                            CommandParameter="{Binding}" 
+                                            Margin="20, 0, 0, 0"
+                                            Content="Add Task+"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                    <Button Command="{Binding CreateTaskCategory}"
+                            Content="Add Task Category+"/>
+                </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Sleep">
+                <ScrollViewer>
+                <StackPanel>
+                    <u:ButtonGroup>
+                        <Button x:Name="SleepButton" 
+                                Content="{Binding SleepButtonText}"
+                                Command="{Binding OnSleepButton}"/>
+                        <Button Content="+" Command="{Binding OnSleepAddButton}"/>
+                    </u:ButtonGroup>
+                    <ListBox ItemsSource="{Binding SleepList}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="{}{0}: slept from {1:t} to {2:t} for {3:F1} hours">
+                                            <Binding Path="Key"></Binding>
+                                            <Binding Path="Value.StartTime"></Binding>
+                                            <Binding Path="Value.EndTime"></Binding>
+                                            <Binding Path="Value.Length.TotalHours"></Binding>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Journal">
+                <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, Auto, *" RowDefinitions="*">
+                    
+                    <u:UrsaGroupBox Grid.Column="0" 
+                                    Padding="4, 10, 4, 4"
+                                    Background="{DynamicResource SemiColorBackground1}"
+                                    BorderBrush="{DynamicResource SemiColorBackground2}">
+                        <u:UrsaGroupBox.Header>
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="Journal:"
+                                           Classes="H4"
+                                           Theme="{StaticResource TitleTextBlock}"/>
+                                <TextBlock Text="{Binding DailyJournalDate}"
+                                           Classes="H6 Secondary"
+                                           Theme="{StaticResource TitleTextBlock}"
+                                           VerticalAlignment="Center"/>
                             </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <Button Command="{Binding CreateTaskCategory}">Add Task Category+</Button>
-            </StackPanel>
-            </ScrollViewer>
-        </TabItem>
-        
-        <TabItem Header="Journal">
-            <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, *">
-                <TextBox Grid.Column="0" Text="{Binding DailyJournal}" PlaceholderText="Daily Journal" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"/>
-                <TextBox Grid.Column="1" Text="{Binding GlobalJournal}" PlaceholderText="Global Journal" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"/>
-            </Grid>
-        </TabItem>
-        
-    </TabControl>
+                        </u:UrsaGroupBox.Header>
+                        <TextBox Text="{Binding DailyJournal}"
+                                 PlaceholderText="Daily Journal" 
+                                 AcceptsReturn="True" 
+                                 AcceptsTab="True" 
+                                 TextWrapping="Wrap"
+                                 VerticalAlignment="Stretch"
+                                 VerticalContentAlignment="Top"
+                                 Theme="{StaticResource LooklessTextBox}"
+                                 Foreground="{DynamicResource SemiColorText1}"/>
+                    </u:UrsaGroupBox>
+                    
+                    <GridSplitter Grid.Column="1"/>
+                    
+                    <u:UrsaGroupBox Grid.Column="2" 
+                                    Padding="4, 10, 4, 4"
+                                    Background="{DynamicResource SemiColorBackground1}"
+                                    BorderBrush="{DynamicResource SemiColorBackground2}">
+                        <u:UrsaGroupBox.Header>
+                            <TextBlock Text="Global Journal"
+                                       Classes="H4"
+                                       Theme="{StaticResource TitleTextBlock}"/>
+                        </u:UrsaGroupBox.Header>
+                        <TextBox Text="{Binding GlobalJournal}" 
+                                 PlaceholderText="Global Journal" 
+                                 AcceptsReturn="True" 
+                                 AcceptsTab="True" 
+                                 TextWrapping="Wrap"
+                                 VerticalAlignment="Stretch"
+                                 VerticalContentAlignment="Top"
+                                 Theme="{StaticResource LooklessTextBox}"
+                                 Foreground="{DynamicResource SemiColorText1}"/>
+                    </u:UrsaGroupBox>
+                </Grid>
+            </TabItem>
+            
+        </TabControl>
+        <u:OverlayDialogHost Name="DialogHost"/>
+    </Panel>
     
     
 </UserControl>
