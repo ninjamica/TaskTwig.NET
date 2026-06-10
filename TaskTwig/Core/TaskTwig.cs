@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
@@ -120,6 +118,13 @@ public partial class TaskTwig : ObservableObject
         {
             string taskText = File.ReadAllText(Path.Combine(_dataFilePath, "task.json"));
             TaskCategories = JsonSerializer.Deserialize<ObservableList<TaskCategory>>(taskText) ?? [];
+            foreach (var category in TaskCategories)
+            {
+                foreach (var task in category.Tasks)
+                {
+                    task.Category = category;
+                }
+            }
         }
         catch (FileNotFoundException e)
         {
@@ -219,8 +224,8 @@ public partial class TaskTwig : ObservableObject
                 UnitAmount = 2,
                 AutoRepeat = false
             },
-            OPattern = Task.OccurrencePattern.OccurOn,
-            EPattern = Task.AutoExtendPattern.Auto,
+            OPattern = OccurrencePattern.OccurOn,
+            EPattern = AutoExtendPattern.Auto,
             Points = 5
         });
         twig.TaskCategories[0].AddTask(new Task
@@ -233,8 +238,8 @@ public partial class TaskTwig : ObservableObject
                 WeekSpacing = 2,
                 AutoRepeat = false
             },
-            OPattern = Task.OccurrencePattern.StartOn,
-            EPattern = Task.AutoExtendPattern.FromCompletion,
+            OPattern = OccurrencePattern.StartOn,
+            EPattern = AutoExtendPattern.FromCompletion,
             Points = 10
         });
         twig.TaskCategories[0].AddTask(new Task

@@ -1,9 +1,7 @@
-using System;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
-using System.Diagnostics;
-using Avalonia.Data.Converters;
+using Avalonia.Input;
+using TaskTwig.Core;
+using TaskTwig.ViewModels;
 
 namespace TaskTwig.Views;
 
@@ -13,5 +11,4 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
     }
-
 }

@@ -67,7 +67,7 @@ public partial class MonthInterval : RepeatingInterval
         return Math.Min(32 - BitOperations.LeadingZeroCount(maskedMap == 0 ? daysMap : maskedMap), maxDaysInPrevMonth);
     }
 
-    private bool _IsOnDay(int day)
+    public bool IsOnDay(int day)
     {
         return (DaysOfMonthMap & (1 << (day - 1)) & 0x7FFF_FFFF) != 0;
     }

@@ -2,35 +2,34 @@ using System;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.Core;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum AutoExtendPattern
+{
+    NoExtend,
+    OnCompletion,
+    FromCompletion,
+    Auto
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum OccurrencePattern
+{
+    DueBy,
+    OccurOn,
+    StartOn
+}
+
 public partial class Task : ObservableObject
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum OccurrencePattern
-    {
-        DueBy,
-        OccurOn,
-        StartOn
-    }
-
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum AutoExtendPattern
-    {
-        NoExtend,
-        OnCompletion,
-        FromCompletion,
-        Auto
-    }
-    
     [ObservableProperty]
     public required partial string Name { get; set; }
     
     [JsonIgnore]
-    public TaskCategory? Category { get; set; }
+    public TaskCategory Category { get; set; }
     
     [ObservableProperty]
     public partial int Points { get; set; } = 1;
@@ -133,7 +132,7 @@ public partial class Task : ObservableObject
         if (IsDone)
             return false;
         
-        if (Interval is NoInterval)
+        if (Interval is NoInterval or DailyInterval)
             return true;
 
         if (Interval.NextOccurrence is null)

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
+using Avalonia.Input;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ObservableCollections;
@@ -37,16 +34,6 @@ public partial class MainViewModel : ViewModelBase
     private Core.TaskTwig _twig;
     private Journal _todaysJournal;
 
-    // public MyToolkit.Collections.ObservableDictionary<TaskCategory, NotifyCollectionChangedSynchronizedViewList<Task>>
-    //     TasksToday { get; init; } = new();
-    //
-    // public NotifyCollectionChangedSynchronizedViewList<Task> IsTodayFilter(TaskCategory category)
-    // {
-    //     var tasksView = category.Tasks.CreateView(task => task);
-    //     tasksView.AttachFilter(task => task.IsToday);
-    //     return tasksView.ToNotifyCollectionChanged();
-    // }
-
     [RelayCommand]
     public void CreateTaskCategory()
     {
@@ -56,11 +43,33 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void CreateTask(TaskCategory category)
     {
-        category.Tasks.Add(new Task()
+        var task = new Task()
         {
             Name = "New Task",
-            Interval = new NoInterval()
-        });
+            Interval = new NoInterval(),
+            Category = category
+        };
+        category.Tasks.Add(task);
+        EditTask(task);
+    }
+    
+    [RelayCommand]
+    public void EditTask(Task task)
+    {
+        var dialogOptions = new OverlayDialogOptions()
+        {
+            Title = "Edit Task",
+            Mode = DialogMode.Info,
+            Buttons = DialogButton.OKCancel,
+            CanLightDismiss = true,
+        };
+        var dialogViewModel = new TaskDialogViewModel(task);
+        OverlayDialog.ShowCustomAsync<TaskDialog, TaskDialogViewModel, bool>(dialogViewModel, options:dialogOptions)
+            .ContinueWith(result =>
+            {
+                if (result.Result)
+                    task.Category.Tasks.Remove(task);
+            });
     }
 
     [ObservableProperty] public partial string SleepButtonText { get; private set; }
@@ -75,13 +84,13 @@ public partial class MainViewModel : ViewModelBase
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
-        var dialogVM = new DateTimeDialogViewModel();
-        OverlayDialog.ShowStandardAsync<DateTimeDialog, DateTimeDialogViewModel>(dialogVM, options:dialogOptions)
+        var dialogViewModel = new DateTimeDialogViewModel();
+        OverlayDialog.ShowStandardAsync<DateTimeDialog, DateTimeDialogViewModel>(dialogViewModel, options:dialogOptions)
             .ContinueWith(task => 
             {
                 if (task.Result.HasFlag(DialogResult.OK))
                 {
-                    OnSleepDateTimeSubmit(dialogVM.DateTimeValue);
+                    OnSleepDateTimeSubmit(dialogViewModel.DateTimeValue);
                 }
             });
     }

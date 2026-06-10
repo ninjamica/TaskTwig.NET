@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public partial class SubTask() : ObservableObject
+public partial class SubTask : ObservableObject
 {
     [JsonIgnore]
     public Task ParentTask { get; init; }

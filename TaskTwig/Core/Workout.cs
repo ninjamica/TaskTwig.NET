@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core;
 
-public record Workout()
+public record Workout
 {
     public required DateTime StartTime { get; set; }
     public required DateTime EndTime { get; set; }
