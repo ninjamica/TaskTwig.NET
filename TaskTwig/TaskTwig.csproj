@@ -21,12 +21,14 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Dropbox.Api" />
         <PackageReference Include="Irihi.Avalonia.Shared" />
         <PackageReference Include="Irihi.Ursa" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" />
         <PackageReference Include="MyToolkit" />
         <PackageReference Include="ObservableCollections" />
         <PackageReference Include="Semi.Avalonia" />
+        <PackageReference Include="Sortable.Avalonia" />
     </ItemGroup>
 
     <ItemGroup>

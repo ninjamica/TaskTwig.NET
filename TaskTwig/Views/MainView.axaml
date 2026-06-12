@@ -4,6 +4,7 @@
                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                 xmlns:vm="using:TaskTwig.ViewModels"
                 xmlns:u="https://irihi.tech/ursa"
+                xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
                 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                 x:Class="TaskTwig.Views.MainView"
                 x:DataType="vm:MainViewModel">
@@ -19,64 +20,93 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             
             <TabItem Header="Today">
                 <ScrollViewer>
-                    <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Name}"/>
-                                    <ItemsRepeater ItemsSource="{Binding TodayTasks}"
-                                                   Margin="10, 5, 0, 10">
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <StackPanel>
+                        <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}"/>
+                                        <ItemsRepeater ItemsSource="{Binding TodayTasks}"
+                                                       Margin="10, 5, 0, 10">
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
                                                               Command="{Binding SetDone}"
-                                                              CommandParameter="{Binding $self.IsChecked}"/>
-                                                    <TextBlock Text="{Binding Name}"/>
-                                                    <TextBlock Text="{Binding IsToday}"></TextBlock>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
+                                                              CommandParameter="{Binding $self.IsChecked}"
+                                                              Content="{Binding Name}"/>
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <TextBlock Text="Done"/>
+                        <ItemsRepeater ItemsSource="{Binding DoneTodayTasks}"
+                                       Margin="10, 5, 0, 10">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
+                                                  Command="{Binding SetDone}"
+                                                  CommandParameter="{Binding $self.IsChecked}"/>
+                                        <TextBlock Text="{Binding Name}"
+                                                   TextDecorations="Strikethrough"
+                                                   Classes="Tertiary"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
                 </ScrollViewer>
             </TabItem>
             
             <TabItem Header="Tasks">
                 <ScrollViewer>
                 <StackPanel Spacing="10" Margin="10">
-                    <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
-                        <ItemsRepeater.Layout>
-                            <StackLayout Spacing="10"/>
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
+                    <ItemsControl ItemsSource="{Binding TaskCategoriesView}"
+                                   sortable:Sortable.Droppable="False">
+                        <!-- <ItemsControl.Layout> -->
+                        <!--     <StackLayout Spacing="10"/> -->
+                        <!-- </ItemsControl.Layout> -->
+                        <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Spacing="5">
                                     <TextBox Text="{Binding Name}"/>
-                                    <ItemsRepeater ItemsSource="{Binding Tasks}">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="10"/>
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
+                                    <ItemsControl ItemsSource="{Binding Tasks}"
+                                                  sortable:Sortable.IsSortable="True"
+                                                  sortable:Sortable.Droppable="True"
+                                                  sortable:Sortable.Group="tasks"
+                                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdate}"
+                                                  sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDrop}">
+                                        <!-- <ItemsControl.ItemsPanel> -->
+                                        <!--     <ItemsPanelTemplate> -->
+                                        <!--         <StackLayout Spacing="10"/> -->
+                                        <!--     </ItemsPanelTemplate> -->
+                                        <!-- </ItemsControl.ItemsPanel> -->
+                                        <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Content="{Binding Name}" 
-                                                        Background="Transparent"
-                                                        Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                <StackPanel Orientation="Horizontal"
+                                                            sortable:Sortable.IsSortable="True"
+                                                            sortable:Sortable.IsDroppable="True">
+                                                    <PathIcon Data="{StaticResource SemiIconHandle}"
+                                                              Cursor="Hand"/>
+                                                    <Button Content="{Binding Name}"
+                                                            Background="Transparent"
+                                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
                                             </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                     <Button Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" 
                                             CommandParameter="{Binding}" 
                                             Margin="20, 0, 0, 0"
                                             Content="Add Task+"/>
                                 </StackPanel>
                             </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <Button Command="{Binding CreateTaskCategory}"
                             Content="Add Task Category+"/>
                 </StackPanel>

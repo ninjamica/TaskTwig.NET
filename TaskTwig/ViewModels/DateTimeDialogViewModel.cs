@@ -5,11 +5,5 @@ namespace TaskTwig.ViewModels;
 
 public partial class DateTimeDialogViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    public partial DateTime? DateTimeValue { get; set; }
-    
-    public DateTimeDialogViewModel()
-    {
-        DateTimeValue = DateTime.Now;
-    }
+    [ObservableProperty] public partial DateTime? DateTimeValue { get; set; } = DateTime.Now;
 }

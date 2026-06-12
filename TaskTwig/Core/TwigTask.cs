@@ -23,7 +23,7 @@ public enum OccurrencePattern
     StartOn
 }
 
-public partial class Task : ObservableObject
+public partial class TwigTask : ObservableObject
 {
     [ObservableProperty]
     public required partial string Name { get; set; }

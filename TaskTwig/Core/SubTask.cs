@@ -7,7 +7,7 @@ namespace TaskTwig.Core;
 public partial class SubTask : ObservableObject
 {
     [JsonIgnore]
-    public Task ParentTask { get; init; }
+    public TwigTask ParentTask { get; init; }
     
     [ObservableProperty]
     public required partial string Name { get; set; }

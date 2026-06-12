@@ -8,18 +8,17 @@ namespace TaskTwig.Core;
 
 public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T : INotifyPropertyChanged
 {
-    
-    public List<string>? PropertyNames { get; init; }
-    
-    private ObservableCollection<T> _baseCollection;
-    private List<int> _indexes = [];
-    private Predicate<T> _filter;
+    private readonly ObservableCollection<T> _baseCollection;
+    private readonly List<int> _indices = [];
+    private readonly Predicate<T> _filter;
+    private string[]? _propertyNames;
 
 
-    public FilteredObservableList(ObservableCollection<T> baseCollection, Predicate<T> filter) : base([])
+    public FilteredObservableList(ObservableCollection<T> baseCollection, Predicate<T> filter, params string[]? propertyNames) : base([])
     {
         _baseCollection = baseCollection;
         _filter = filter;
+        _propertyNames = propertyNames;
         
         baseCollection.CollectionChanged += _HandleCollectionChanged;
         _ConstructList(_baseCollection);
@@ -28,18 +27,18 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
     private void _ConstructList(IEnumerable<T> items)
     {
         Items.Clear();
-        _indexes.Clear();
+        _indices.Clear();
         foreach (var item in items)
         {
             item.PropertyChanged += _HandlePropertyChanged;
             if (_filter.Invoke(item))
             {
                 Items.Add(item);
-                _indexes.Add(Items.Count - 1);
+                _indices.Add(Items.Count - 1);
             }
             else
             {
-                _indexes.Add(-1);
+                _indices.Add(-1);
             }
         }
     }
@@ -49,11 +48,11 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
         int insertIndex = _FindInsertIndex(baseIndex);
         Items.Insert(insertIndex, _baseCollection[baseIndex]);
 
-        _indexes[baseIndex] = insertIndex;
-        for (int i = baseIndex + 1; i < _indexes.Count; i++)
+        _indices[baseIndex] = insertIndex;
+        for (int i = baseIndex + 1; i < _indices.Count; i++)
         {
-            if (_indexes[i] >= 0)
-                _indexes[i]++;
+            if (_indices[i] >= 0)
+                _indices[i]++;
         }
     }
 
@@ -61,8 +60,8 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
     {
         for (int i = baseIndex - 1; i >= 0; i--)
         {
-            if (_indexes[i] >= 0)
-                return _indexes[i] + 1;
+            if (_indices[i] >= 0)
+                return _indices[i] + 1;
         }
 
         return 0;
@@ -70,12 +69,12 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
 
     private void _FilterOutItem(int baseIndex)
     {
-        Items.RemoveAt(_indexes[baseIndex]);
-        _indexes[baseIndex] = -1;
-        for (int i = baseIndex + 1; i < _indexes.Count; i++)
+        Items.RemoveAt(_indices[baseIndex]);
+        _indices[baseIndex] = -1;
+        for (int i = baseIndex + 1; i < _indices.Count; i++)
         {
-            if (_indexes[i] >= 0)
-                _indexes[i]--;
+            if (_indices[i] >= 0)
+                _indices[i]--;
         }
     }
 
@@ -83,7 +82,7 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
     {
         item.PropertyChanged += _HandlePropertyChanged;
         
-        _indexes.Insert(baseIndex, -1);
+        _indices.Insert(baseIndex, -1);
         
         if (_filter.Invoke(item))
             _FilterInItem(baseIndex);
@@ -93,10 +92,10 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
     {
         item.PropertyChanged -= _HandlePropertyChanged;
         
-        if (_indexes[oldBaseIndex] >= 0)
+        if (_indices[oldBaseIndex] >= 0)
             _FilterOutItem(oldBaseIndex);
         
-        _indexes.RemoveAt(oldBaseIndex);
+        _indices.RemoveAt(oldBaseIndex);
     }
 
     private void _ReplaceItem(int baseIndex, T oldItem, T newItem)
@@ -104,7 +103,7 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
         oldItem.PropertyChanged -= _HandlePropertyChanged;
         newItem.PropertyChanged += _HandlePropertyChanged;
         
-        bool wasFiltered = _indexes[baseIndex] >= 0;
+        bool wasFiltered = _indices[baseIndex] >= 0;
         bool filtered = _filter.Invoke(newItem);
         
         if (wasFiltered && !filtered)
@@ -115,12 +114,12 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
 
     private void _MoveItem(int oldBaseIndex, int newBaseIndex)
     {
-        int filteredIndex = _indexes[oldBaseIndex];
+        int filteredIndex = _indices[oldBaseIndex];
         if (filteredIndex >= 0)
             _FilterOutItem(oldBaseIndex);
         
-        _indexes.RemoveAt(oldBaseIndex);
-        _indexes.Insert(newBaseIndex, filteredIndex);
+        _indices.RemoveAt(oldBaseIndex);
+        _indices.Insert(newBaseIndex, filteredIndex);
         
         if (filteredIndex >= 0)
             _FilterInItem(newBaseIndex);
@@ -169,8 +168,8 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
 
     private void _HandlePropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (sender is T item && (PropertyNames is null ||
-                                 args.PropertyName is not null && PropertyNames.Contains(args.PropertyName)))
+        if (sender is T item && (_propertyNames is null ||
+                                 args.PropertyName is not null && _propertyNames.Contains(args.PropertyName)))
         {
             int baseIndex = _baseCollection.IndexOf(item);
             if (baseIndex == -1)
@@ -178,11 +177,11 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
             
             bool filtered = _filter.Invoke(item);
             
-            if (_indexes[baseIndex] == -1 && filtered)
+            if (_indices[baseIndex] == -1 && filtered)
             {
                 _FilterInItem(baseIndex);
             }
-            else if (_indexes[baseIndex] >= 0 && !filtered)
+            else if (_indices[baseIndex] >= 0 && !filtered)
             {
                 _FilterOutItem(baseIndex);
             }

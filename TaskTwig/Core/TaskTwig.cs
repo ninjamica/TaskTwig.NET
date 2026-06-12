@@ -11,6 +11,10 @@ namespace TaskTwig.Core;
 
 public partial class TaskTwig : ObservableObject
 {
+    
+    /// <summary>
+    /// The time at which the next day starts, it must be on or after midnight and should be in the morning.
+    /// </summary>
     public static TimeSpan DayStart
     {
         get;
@@ -21,8 +25,17 @@ public partial class TaskTwig : ObservableObject
         }
     } = new TimeSpan(5, 0, 0);
 
+    /// <summary>
+    /// The current effective date. If the current time is after midnight but before <c>DayStart</c>,
+    /// the value will be of the day before.
+    /// </summary>
     public static DateOnly Today { get; private set; } = EffectiveDate(DateTime.Now);
 
+    /// <summary>
+    /// Calculates the effective date of a timestamp (where the day only starts after <c>DayStart</c>.
+    /// </summary>
+    /// <param name="dateTime">Timestamp to calculate date from</param>
+    /// <returns></returns>
     public static DateOnly EffectiveDate(DateTime dateTime)
     {
         DateOnly date = DateOnly.FromDateTime(dateTime);
@@ -32,7 +45,9 @@ public partial class TaskTwig : ObservableObject
         
         return date;
     }
-
+    
+    
+    // Containers for storing data in a way that's directly serializable
     struct SleepValues()
     {
         public ObservableDictionary<DateOnly, Sleep> SleepRecords { get; set; } = [];
@@ -45,20 +60,49 @@ public partial class TaskTwig : ObservableObject
         [ObservableProperty] public partial string GlobalJournal { get; set; }
     }
 
+    
+    
     private SleepValues _sleepValues;
     public JournalValues JournalRecords { get; private set; } = new();
 
-    public ObservableList<TaskCategory> TaskCategories { get; private set; } = [];
+    public ObservableCollection<TaskCategory> TaskCategories
+    {
+        get;
+        private set
+        {
+            field = value;
+            DoneTodayTaskLists = new ObservableCollectionList<TwigTask, ReadOnlyObservableCollection<TwigTask>>(
+                new MappedObservableList<TaskCategory, ReadOnlyObservableCollection<TwigTask>>(value,
+                    category => category.DoneTodayTasks));
+        }
+    } = [];
+    public ReadOnlyObservableCollection<TwigTask> DoneTodayTaskLists { get; private set; }
+
     public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
     public ObservableCollection<Exercise> Exercises { get; private set; } = [];
     public ObservableCollection<Workout> WorkoutList { get; private set; } = [];
-    // public ObservableDictionary<DateOnly, Journal> JournalRecords => _journalValues.JournalRecords;
 
     [ObservableProperty]
     public partial bool IsSleeping { get; private set; }
 
-    private readonly string _dataFilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
+    private static readonly string _dataFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
+        "TaskTwig-NET");
+
+    private readonly DbxHandler _dbx;
+
     
+    public TaskTwig()
+    {
+        if (!Directory.Exists(_dataFilePath))
+            Directory.CreateDirectory(_dataFilePath);
+        
+        _dbx = new DbxHandler(_dataFilePath);
+        
+        Console.WriteLine(_dataFilePath);
+        
+        ReadDataFiles();
+    }
     
     public void StartSleeping(DateTime sleepStart)
     {
@@ -117,7 +161,7 @@ public partial class TaskTwig : ObservableObject
         try
         {
             string taskText = File.ReadAllText(Path.Combine(_dataFilePath, "task.json"));
-            TaskCategories = JsonSerializer.Deserialize<ObservableList<TaskCategory>>(taskText) ?? [];
+            TaskCategories = JsonSerializer.Deserialize<ObservableCollection<TaskCategory>>(taskText) ?? [];
             foreach (var category in TaskCategories)
             {
                 foreach (var task in category.Tasks)
@@ -208,88 +252,14 @@ public partial class TaskTwig : ObservableObject
     {
         TaskTwig twig = new();
         
-        twig.TaskCategories.Add(new TaskCategory
-        {
-            Name = "test",
-            Color = Color.Red
-        });
-        
-        twig.TaskCategories[0].AddTask(new Task
-        {
-            Name = "task1",
-            Category = twig.TaskCategories[0],
-            Interval = new UnitInterval()
-            {
-                Unit = DateUnit.Day,
-                UnitAmount = 2,
-                AutoRepeat = false
-            },
-            OPattern = OccurrencePattern.OccurOn,
-            EPattern = AutoExtendPattern.Auto,
-            Points = 5
-        });
-        twig.TaskCategories[0].AddTask(new Task
-        {
-            Name = "task2",
-            Category = twig.TaskCategories[0],
-            Interval = new WeekInterval()
-            {
-                DayOfWeekMap = DayOfWeekFlag.Monday | DayOfWeekFlag.Friday,
-                WeekSpacing = 2,
-                AutoRepeat = false
-            },
-            OPattern = OccurrencePattern.StartOn,
-            EPattern = AutoExtendPattern.FromCompletion,
-            Points = 10
-        });
-        twig.TaskCategories[0].AddTask(new Task
-        {
-            Name = "task3",
-            Category = twig.TaskCategories[0],
-            Interval = new DailyInterval(),
-            Points = 2
-        });
-        
-        twig.TaskCategories[0].Tasks[0].SubTasks.Add(new SubTask()
-        {
-            Name = "SubTask1",
-            ParentTask = twig.TaskCategories[0].Tasks[0]
-        });
-        
-        twig.TaskCategories[0].Tasks[0].SubTasks.Add(new SubTask()
-        {
-            Name = "SubTask2",
-            ParentTask = twig.TaskCategories[0].Tasks[0]
-        });
-        
-        twig.SleepRecords.Add(Today, new Sleep()
-        {
-            StartTime = DateTime.Now, 
-            EndTime = DateTime.Now
-        });
-        
-        twig.Exercises.Add(new Exercise()
-        {
-            Name = "push-up",
-            Unit = Exercise.ExerciseUnit.Count
-        });
-        Console.WriteLine(twig.Exercises[0].ToString());
-        
-        twig.WorkoutList.Add(new Workout()
-        {
-            StartTime = DateTime.Now,
-            EndTime = DateTime.Now,
-            Exercises =
-            {
-                [twig.Exercises[0]] = 5
-            }
-        });
-        
-        twig.JournalRecords.Journals.Add(Today, new Journal
-        {
-            JournalText = "Testing journal"
-        });
-        // twig.ReadDataFiles();
+        if (!twig._dbx.IsAccountConnected)
+            twig._dbx.AuthFromUrlConsole();
+
+        using (var stream = File.OpenRead(Path.Combine(_dataFilePath, "task.json")))
+            twig._dbx.UploadFileAsync(stream, "/task.json").Wait();
+
+        using (var fileStream = File.OpenWrite(Path.Combine(_dataFilePath, "test_task.json")))
+            twig._dbx.DownloadFileAsync(fileStream, "/task.json").Wait();
         
         twig.WriteDataFiles();
     }

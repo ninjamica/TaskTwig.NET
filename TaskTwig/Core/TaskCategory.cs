@@ -11,34 +11,44 @@ public partial class TaskCategory : ObservableObject
 
     [ObservableProperty] public partial Color Color { get; set; } = Color.White;
 
-    // public BindingList<Task> Tasks
-    // {
-    //     get;
-    //     init
-    //     {
-    //         field = value;
-    //         // field.WeakSubscribe((_, _) => _UpdateTodayTasks());
-    //         field.ListChanged += fieldOnListChanged;
-    //         _RefillTodayTasks();
-    //     }
-    // } = new();
-
-    public ObservableCollection<Task> Tasks
+    public ObservableCollection<TwigTask> Tasks
     {
         get;
         init
         {
             field = value;
-            TodayTasks = new FilteredObservableList<Task>(value, task => task.IsToday)
-            {
-                PropertyNames = ["IsToday"]
-            };
+            
+            if (_todayTasks is not null)
+                _todayTasks = new FilteredObservableList<TwigTask>(value, task => task.IsToday, "IsToday");
+
+            if (_doneTodayTasks is not null)
+                _doneTodayTasks =
+                    new FilteredObservableList<TwigTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
         }
     } = [];
+    
+    [JsonIgnore]
+    public FilteredObservableList<TwigTask> TodayTasks {
+        get
+        {
+            _todayTasks ??= new FilteredObservableList<TwigTask>(Tasks, task => task.IsToday, "IsToday");
+            return _todayTasks;
+        }
+    }
+    private FilteredObservableList<TwigTask>? _todayTasks;
+    
+    [JsonIgnore]
+    public FilteredObservableList<TwigTask> DoneTodayTasks {
+        get
+        {
+            _doneTodayTasks ??=
+                new FilteredObservableList<TwigTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
+            return _doneTodayTasks;
+        }
+    }
+    private FilteredObservableList<TwigTask>? _doneTodayTasks;
 
-    [JsonIgnore] public FilteredObservableList<Task> TodayTasks { get; private set; } = null!;
-
-    public void AddTask(Task task)
+    public void AddTask(TwigTask task)
     {
         if (task.Category is not null)
         {
