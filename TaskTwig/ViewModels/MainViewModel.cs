@@ -23,15 +23,13 @@ public partial class MainViewModel : ViewModelBase
     
     [ObservableProperty] public partial string DailyJournalDate { get; private set; }
     
-    [ObservableProperty]
-    public partial string GlobalJournal { get; set; }
+    public ObservableDictionary<string, Journal> GlobalJournals { get; set; }
 
     public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
     public ReadOnlyObservableCollection<TwigTask> DoneTodayTasks { get; set; }
 
     public NotifyCollectionChangedSynchronizedViewList<KeyValuePair<DateOnly, Sleep>> SleepList { get; init; }
-
-    partial void OnGlobalJournalChanged(string value) => _twig.JournalRecords.GlobalJournal = value;
+    
 
     private Core.TaskTwig _twig;
     private Journal _todaysJournal;
@@ -171,7 +169,7 @@ public partial class MainViewModel : ViewModelBase
         _todaysJournal = _twig.TodaysJournal();
         DailyJournal = _todaysJournal.JournalText;
         DailyJournalDate = Core.TaskTwig.Today.ToString("dddd MMMM d");
-        GlobalJournal = _twig.JournalRecords.GlobalJournal;
+        GlobalJournals = _twig.JournalRecords.GlobalJournals;
         TaskCategoriesView = _twig.TaskCategories;
         DoneTodayTasks = _twig.DoneTodayTaskLists;
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();

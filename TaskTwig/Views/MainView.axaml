@@ -182,15 +182,17 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                        Classes="H4"
                                        Theme="{StaticResource TitleTextBlock}"/>
                         </u:UrsaGroupBox.Header>
-                        <TextBox Text="{Binding GlobalJournal}" 
-                                 PlaceholderText="Global Journal" 
-                                 AcceptsReturn="True" 
-                                 AcceptsTab="True" 
-                                 TextWrapping="Wrap"
-                                 VerticalAlignment="Stretch"
-                                 VerticalContentAlignment="Top"
-                                 Theme="{StaticResource LooklessTextBox}"
-                                 Foreground="{DynamicResource SemiColorText1}"/>
+                        <StackPanel>
+                            <TextBox Text="{Binding GlobalJournals}" 
+                                     PlaceholderText="Global Journal" 
+                                     AcceptsReturn="True" 
+                                     AcceptsTab="True" 
+                                     TextWrapping="Wrap"
+                                     VerticalAlignment="Stretch"
+                                     VerticalContentAlignment="Top"
+                                     Theme="{StaticResource LooklessTextBox}"
+                                     Foreground="{DynamicResource SemiColorText1}"/>
+                        </StackPanel>
                     </u:UrsaGroupBox>
                 </Grid>
             </TabItem>

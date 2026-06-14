@@ -23,7 +23,7 @@ public partial class TaskTwig : ObservableObject
             field = value;
             Today = EffectiveDate(DateTime.Now);
         }
-    } = new TimeSpan(5, 0, 0);
+    } = new(5, 0, 0);
 
     /// <summary>
     /// The current effective date. If the current time is after midnight but before <c>DayStart</c>,
@@ -54,15 +54,15 @@ public partial class TaskTwig : ObservableObject
         public DateTime? SleepStart { get; set; }
     }
 
-    public partial class JournalValues : ObservableObject
+    public struct JournalValues()
     {
         public ObservableDictionary<DateOnly, Journal> Journals { get; set; } = [];
-        [ObservableProperty] public partial string GlobalJournal { get; set; }
+        public ObservableDictionary<string, Journal> GlobalJournals { get; set; } = [];
     }
 
     
     
-    private SleepValues _sleepValues;
+    private SleepValues _sleepValues = new();
     public JournalValues JournalRecords { get; private set; } = new();
 
     public ObservableCollection<TaskCategory> TaskCategories
@@ -82,8 +82,7 @@ public partial class TaskTwig : ObservableObject
     public ObservableCollection<Exercise> Exercises { get; private set; } = [];
     public ObservableCollection<Workout> WorkoutList { get; private set; } = [];
 
-    [ObservableProperty]
-    public partial bool IsSleeping { get; private set; }
+    [ObservableProperty] public partial bool IsSleeping { get; private set; }
 
     private static readonly string _dataFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
@@ -99,8 +98,6 @@ public partial class TaskTwig : ObservableObject
         
         _dbx = new DbxHandler(_dataFilePath);
         
-        Console.WriteLine(_dataFilePath);
-        
         ReadDataFiles();
     }
     
@@ -109,21 +106,20 @@ public partial class TaskTwig : ObservableObject
         _SetSleepStart(sleepStart);
     }
 
-    public bool FinishSleeping(DateTime sleepEnd, bool force)
+    public bool FinishSleeping(DateTime sleepEnd, bool overwrite)
     {
-        DateOnly endDate = DateOnly.FromDateTime(sleepEnd).AddDays(-1);
-        
-        if (!force && SleepRecords.ContainsKey(endDate))
+
+        if (_sleepValues.SleepStart is null)
             return false;
         
-        if (_sleepValues.SleepStart is { } sleepStart)
-        {
-            SleepRecords[endDate] = new Sleep(sleepStart, sleepEnd);
-            _SetSleepStart(null);
-            return true;
-        }
+        DateOnly endDate = DateOnly.FromDateTime(sleepEnd).AddDays(-1);
+        if (!overwrite && SleepRecords.ContainsKey(endDate))
+            return false;
+        
+        SleepRecords[endDate] = new Sleep(_sleepValues.SleepStart.Value, sleepEnd);
+        _SetSleepStart(null);
+        return true;
 
-        return false;
     }
 
     public Journal TodaysJournal()
@@ -233,7 +229,7 @@ public partial class TaskTwig : ObservableObject
         try
         {
             string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "journal.json"));
-            JournalRecords = JsonSerializer.Deserialize<JournalValues>(journalText) ?? new JournalValues();
+            JournalRecords = JsonSerializer.Deserialize<JournalValues>(journalText);
             
         }
         catch (FileNotFoundException e)
@@ -248,6 +244,12 @@ public partial class TaskTwig : ObservableObject
         }
     }
 
+    private void _SetSleepStart(DateTime? dateTime)
+    {
+        _sleepValues.SleepStart = dateTime;
+        IsSleeping = dateTime is not null;
+    }
+    
     public static void Main()
     {
         TaskTwig twig = new();
@@ -255,18 +257,12 @@ public partial class TaskTwig : ObservableObject
         if (!twig._dbx.IsAccountConnected)
             twig._dbx.AuthFromUrlConsole();
 
-        using (var stream = File.OpenRead(Path.Combine(_dataFilePath, "task.json")))
-            twig._dbx.UploadFileAsync(stream, "/task.json").Wait();
+        // using (var stream = File.OpenRead(Path.Combine(_dataFilePath, "task.json")))
+        //     twig._dbx.UploadFileAsync(stream, "/task.json").Wait();
 
-        using (var fileStream = File.OpenWrite(Path.Combine(_dataFilePath, "test_task.json")))
+        using (var fileStream = File.OpenWrite(Path.Combine(_dataFilePath, "task.json")))
             twig._dbx.DownloadFileAsync(fileStream, "/task.json").Wait();
         
-        twig.WriteDataFiles();
-    }
-
-    private void _SetSleepStart(DateTime? dateTime)
-    {
-        _sleepValues.SleepStart = dateTime;
-        IsSleeping = dateTime is not null;
+        // twig.WriteDataFiles();
     }
 }
