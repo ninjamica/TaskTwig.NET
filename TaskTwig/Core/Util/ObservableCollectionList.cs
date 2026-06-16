@@ -9,15 +9,17 @@ namespace TaskTwig.Core;
 
 public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T> where T : INotifyPropertyChanged where TList : IList<T>, INotifyCollectionChanged
 {
-    public ObservableCollection<TList> Sources { get; private init; }
+    public ReadOnlyObservableCollection<TList> Sources { get; }
     
     private List<int> _indices = [];
     
-    public ObservableCollectionList(IList<TList> sources) : base([])
+    public ObservableCollectionList(ReadOnlyObservableCollection<TList> sources) : base([])
     {
-        Sources = new ObservableCollection<TList>(sources);
-        Sources.CollectionChanged += _HandleSourcesChanged;
+        Sources = sources;
+        ((INotifyCollectionChanged)Sources).CollectionChanged += _HandleSourcesChanged;
         _RegisterAllSources();
+        
+        Console.WriteLine($"ObservableCollectionList.new(): {Sources}, {Sources.Count}");
     }
 
     private int _GetCountToSource(int sourceIndex)
@@ -99,6 +101,8 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        
+        Console.WriteLine($"ObservableCollectionList _HandleSourcesChanged: {args.Action}: {Items.Count}");
     }
     
     private void _HandleBaseCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
@@ -153,5 +157,7 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        
+        Console.WriteLine($"ObservableCollectionList _HandleBaseCollectionChanged: {args.Action}: {Items.Count}");
     }
 }

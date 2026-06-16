@@ -96,9 +96,7 @@ public partial class TwigTask : ObservableObject
     
     public void SetDone(bool done)
     {
-        Console.WriteLine($"Set done {done}");
         LastDone = done ? TaskTwig.Today : null;
-        Console.WriteLine($"IsDone {IsDone}");
 
         if (Interval is RepeatingInterval repeatingInterval)
         {

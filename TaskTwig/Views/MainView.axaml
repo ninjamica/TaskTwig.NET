@@ -5,6 +5,8 @@
                 xmlns:vm="using:TaskTwig.ViewModels"
                 xmlns:u="https://irihi.tech/ursa"
                 xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+                xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Runtime"
+                xmlns:core="clr-namespace:TaskTwig.Core"
                 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                 x:Class="TaskTwig.Views.MainView"
                 x:DataType="vm:MainViewModel">
@@ -16,9 +18,9 @@ to set the actual DataContext for runtime, set the DataContext property in code 
 
     
     <Panel>
-        <TabControl x:Name="TabControl" Margin="5">
+        <TabbedPage x:Name="TabControl" IsKeyboardNavigationEnabled="True">
             
-            <TabItem Header="Today">
+            <ContentPage Header="Today" Icon="{StaticResource SemiIconCalendar}">
                 <ScrollViewer>
                     <StackPanel>
                         <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
@@ -59,16 +61,13 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         </ItemsRepeater>
                     </StackPanel>
                 </ScrollViewer>
-            </TabItem>
+            </ContentPage>
             
-            <TabItem Header="Tasks">
+            <ContentPage Header="Tasks" Icon="{StaticResource SemiIconCheckList}">
                 <ScrollViewer>
                 <StackPanel Spacing="10" Margin="10">
                     <ItemsControl ItemsSource="{Binding TaskCategoriesView}"
                                    sortable:Sortable.Droppable="False">
-                        <!-- <ItemsControl.Layout> -->
-                        <!--     <StackLayout Spacing="10"/> -->
-                        <!-- </ItemsControl.Layout> -->
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Spacing="5">
@@ -79,11 +78,6 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                   sortable:Sortable.Group="tasks"
                                                   sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdate}"
                                                   sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDrop}">
-                                        <!-- <ItemsControl.ItemsPanel> -->
-                                        <!--     <ItemsPanelTemplate> -->
-                                        <!--         <StackLayout Spacing="10"/> -->
-                                        <!--     </ItemsPanelTemplate> -->
-                                        <!-- </ItemsControl.ItemsPanel> -->
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal"
@@ -111,9 +105,9 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             Content="Add Task Category+"/>
                 </StackPanel>
                 </ScrollViewer>
-            </TabItem>
+            </ContentPage>
             
-            <TabItem Header="Sleep">
+            <ContentPage Header="Sleep" Icon="{StaticResource SemiIconAlarm}">
                 <ScrollViewer>
                 <StackPanel>
                     <u:ButtonGroup>
@@ -140,12 +134,12 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                     </ListBox>
                 </StackPanel>
                 </ScrollViewer>
-            </TabItem>
+            </ContentPage>
             
-            <TabItem Header="Journal">
-                <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, Auto, *" RowDefinitions="*">
+            <ContentPage Header="Journal" Icon="{StaticResource SemiIconBook}">
+                <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, Auto, *, Auto" RowDefinitions="Auto, *">
                     
-                    <u:UrsaGroupBox Grid.Column="0" 
+                    <u:UrsaGroupBox Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
                                     Padding="4, 10, 4, 4"
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBackground2}">
@@ -171,21 +165,19 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                  Foreground="{DynamicResource SemiColorText1}"/>
                     </u:UrsaGroupBox>
                     
-                    <GridSplitter Grid.Column="1"/>
+                    <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"/>
                     
-                    <u:UrsaGroupBox Grid.Column="2" 
+                    <u:UrsaGroupBox Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"
                                     Padding="4, 10, 4, 4"
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBackground2}">
                         <u:UrsaGroupBox.Header>
-                            <TextBlock Text="Global Journal"
-                                       Classes="H4"
-                                       Theme="{StaticResource TitleTextBlock}"/>
+                            <TextBox Text="{Binding SelectedGlobalJournal.Title}"/>
                         </u:UrsaGroupBox.Header>
                         <StackPanel>
-                            <TextBox Text="{Binding GlobalJournals}" 
+                            <TextBox Text="{Binding SelectedGlobalJournal.Text}" 
                                      PlaceholderText="Global Journal" 
-                                     AcceptsReturn="True" 
+                                     AcceptsReturn="True"
                                      AcceptsTab="True" 
                                      TextWrapping="Wrap"
                                      VerticalAlignment="Stretch"
@@ -194,10 +186,30 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                      Foreground="{DynamicResource SemiColorText1}"/>
                         </StackPanel>
                     </u:UrsaGroupBox>
+                    
+                    <ScrollViewer Grid.Row="0" Grid.Column="3">
+                        <TabStrip ItemsSource="{Binding GlobalJournals}"
+                                  SelectedItem="{Binding SelectedGlobalJournal}">
+                            <TabStrip.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical"/>
+                                </ItemsPanelTemplate>
+                            </TabStrip.ItemsPanel>
+                            <TabStrip.ItemTemplate>
+                                <DataTemplate DataType="core:Journal">
+                                    <TextBlock Text="{Binding Title}"/>
+                                </DataTemplate>
+                            </TabStrip.ItemTemplate>
+                        </TabStrip>
+                    </ScrollViewer>
+                    
+                    <Button Grid.Row="1" Grid.Column="3" 
+                            Content="+" 
+                            Command="{Binding CreateGlobalJournal}"/>
                 </Grid>
-            </TabItem>
+            </ContentPage>
             
-        </TabControl>
+        </TabbedPage>
         <u:OverlayDialogHost Name="DialogHost"/>
     </Panel>
     

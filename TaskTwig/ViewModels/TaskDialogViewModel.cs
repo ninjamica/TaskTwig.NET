@@ -117,8 +117,6 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
 
     private void _UpdateMonthDateList(MonthInterval monthInterval)
     {
-        Console.WriteLine($"_UpdateMonthDateList({monthInterval.DaysOfMonthMap})");
-        
         StringBuilder list = new StringBuilder();
         for (int day = 1; day <= 31; day++)
         {
@@ -128,8 +126,6 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
         
         var listStr =  list.ToString();
         MonthDateList = listStr.Length > 3 ? listStr[..^2] : listStr;
-        
-        Console.WriteLine($"_UpdateMonthDateList result: {MonthDateList}");
     }
 
     partial void OnSelectedIntervalChanged(Type value)

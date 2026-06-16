@@ -164,6 +164,8 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        
+        Console.WriteLine($"FilteredObservableList._HandleCollectionChanged(): {args.Action}: {Items.Count}");
     }
 
     private void _HandlePropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -185,6 +187,10 @@ public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T
             {
                 _FilterOutItem(baseIndex);
             }
+            
+            Console.WriteLine($"FilteredObservableList._HandlePropertyChanged(): {args.PropertyName}({filtered}): {Items.Count}");
         }
+        else
+            Console.WriteLine($"FilteredObservableList._HandlePropertyChanged(): {string.Join(", ", _propertyNames ?? ["None"])}:{args.PropertyName}: {Items.Count}");
     }
 }

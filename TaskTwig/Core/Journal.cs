@@ -1,7 +1,15 @@
 
+using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace TaskTwig.Core;
 
-public class Journal
+public partial class Journal : ObservableObject
 {
-    public string JournalText { get; set; } = "";
+    [ObservableProperty]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public partial string? Title { get; set; }
+    
+    [ObservableProperty]
+    public partial string Text { get; set; } = "";
 }

@@ -57,7 +57,7 @@ public partial class TaskTwig : ObservableObject
     public struct JournalValues()
     {
         public ObservableDictionary<DateOnly, Journal> Journals { get; set; } = [];
-        public ObservableDictionary<string, Journal> GlobalJournals { get; set; } = [];
+        public ObservableCollection<Journal> GlobalJournals { get; set; } = [];
     }
 
     
@@ -76,7 +76,7 @@ public partial class TaskTwig : ObservableObject
                     category => category.DoneTodayTasks));
         }
     } = [];
-    public ReadOnlyObservableCollection<TwigTask> DoneTodayTaskLists { get; private set; }
+    public ObservableCollectionList<TwigTask, ReadOnlyObservableCollection<TwigTask>> DoneTodayTaskLists { get; private set; }
 
     public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
     public ObservableCollection<Exercise> Exercises { get; private set; } = [];
@@ -169,10 +169,11 @@ public partial class TaskTwig : ObservableObject
         catch (FileNotFoundException e)
         {
             Console.WriteLine("task.json file not found");
-            Console.WriteLine(e);
+            TaskCategories = new ObservableCollection<TaskCategory>();
         }
         catch (JsonException e)
         {
+            File.Move(Path.Combine(_dataFilePath, "task.json"), Path.Combine(_dataFilePath, "task_backup.json"));
             Console.WriteLine("failed to parse task.json");
             Console.WriteLine(e);
         }
@@ -186,10 +187,10 @@ public partial class TaskTwig : ObservableObject
         catch (FileNotFoundException e)
         {
             Console.WriteLine("sleep.json file not found");
-            Console.WriteLine(e);
         }
         catch (JsonException e)
         {
+            File.Move(Path.Combine(_dataFilePath, "sleep.json"), Path.Combine(_dataFilePath, "sleep_backup.json"));
             Console.WriteLine("failed to parse sleep.json");
             Console.WriteLine(e);
         }
@@ -202,10 +203,10 @@ public partial class TaskTwig : ObservableObject
         catch (FileNotFoundException e)
         {
             Console.WriteLine("exercise.json file not found");
-            Console.WriteLine(e);
         }
         catch (JsonException e)
         {
+            File.Move(Path.Combine(_dataFilePath, "exercise.json"), Path.Combine(_dataFilePath, "exercise_backup.json"));
             Console.WriteLine("failed to parse exercise.json");
             Console.WriteLine(e);
         }
@@ -218,10 +219,10 @@ public partial class TaskTwig : ObservableObject
         catch (FileNotFoundException e)
         {
             Console.WriteLine("workout.json file not found");
-            Console.WriteLine(e);
         }
         catch (JsonException e)
         {
+            File.Move(Path.Combine(_dataFilePath, "workout.json"), Path.Combine(_dataFilePath, "workout_backup.json"));
             Console.WriteLine("failed to parse workout.json");
             Console.WriteLine(e);
         }
@@ -235,10 +236,10 @@ public partial class TaskTwig : ObservableObject
         catch (FileNotFoundException e)
         {
             Console.WriteLine("journal.json file not found");
-            Console.WriteLine(e);
         }
         catch (JsonException e)
         {
+            File.Move(Path.Combine(_dataFilePath, "journal.json"), Path.Combine(_dataFilePath, "journal_backup.json"));
             Console.WriteLine("failed to parse journal.json");
             Console.WriteLine(e);
         }

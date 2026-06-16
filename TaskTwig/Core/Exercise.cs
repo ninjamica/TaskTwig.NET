@@ -35,7 +35,6 @@ public readonly record struct Exercise
         public override void Write(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
         {
             // JsonSerializer.Serialize(writer, value, value.GetType(), options);
-            Console.WriteLine($"{value.Name}:{value.Unit}");
             writer.WriteStringValue($"{value.Name}:{value.Unit}");
         }
     
@@ -51,7 +50,6 @@ public readonly record struct Exercise
         
         public override void WriteAsPropertyName(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
         {
-            Console.WriteLine($"{value.Name}:{value.Unit}");
             writer.WritePropertyName($"{value.Name}:{value.Unit}");
         }
     }

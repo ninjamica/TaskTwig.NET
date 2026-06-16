@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using Avalonia.Input;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,11 +20,20 @@ public partial class MainViewModel : ViewModelBase
 {
     [ObservableProperty]
     public partial string DailyJournal { get; set; }
-    partial void OnDailyJournalChanged(string value) => _todaysJournal.JournalText = value;
+    partial void OnDailyJournalChanged(string value) => _todaysJournal.Text = value;
     
     [ObservableProperty] public partial string DailyJournalDate { get; private set; }
     
-    public ObservableDictionary<string, Journal> GlobalJournals { get; set; }
+    public ObservableCollection<Journal> GlobalJournals { get; set; }
+    [ObservableProperty] public partial Journal SelectedGlobalJournal { get; set; }
+
+    [RelayCommand]
+    public void CreateGlobalJournal()
+    {
+        var newJournal = new Journal { Title = "New Global Journal" };
+        _twig.JournalRecords.GlobalJournals.Add(newJournal);
+        SelectedGlobalJournal = newJournal;
+    }
 
     public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
     public ReadOnlyObservableCollection<TwigTask> DoneTodayTasks { get; set; }
@@ -75,28 +85,15 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void TaskListUpdate(SortableUpdateEventArgs args)
     {
-        Console.WriteLine($"TaskListUpdate: {args}");
         args.ApplyUpdateMutation();
     }
 
     [RelayCommand]
     public void TaskListDrop(SortableDropEventArgs args)
     {
-        Console.WriteLine($"TaskListDrop: {args}");
         args.IsAccepted = true;
         args.TransferMode = SortableTransferMode.Move;
         args.ApplyDropMutation();
-
-        // if (args is { SourceCollection: not null, TargetCollection: not null })
-        // {
-        //     args.IsAccepted = true;
-        //     args.TransferMode = SortableTransferMode.Move;
-        //     Console.WriteLine(args.ApplyDropMutation());
-        //
-        //     // var task = args.SourceCollection[args.OldIndex];
-        //     // args.SourceCollection.RemoveAt(args.OldIndex);
-        //     // args.TargetCollection.Insert(args.NewIndex, task);
-        // }
     }
 
     [ObservableProperty] public partial string SleepButtonText { get; private set; }
@@ -167,9 +164,11 @@ public partial class MainViewModel : ViewModelBase
         _twig.ReadDataFiles();
 
         _todaysJournal = _twig.TodaysJournal();
-        DailyJournal = _todaysJournal.JournalText;
+        DailyJournal = _todaysJournal.Text;
         DailyJournalDate = Core.TaskTwig.Today.ToString("dddd MMMM d");
         GlobalJournals = _twig.JournalRecords.GlobalJournals;
+        if (GlobalJournals.Count > 0)
+            SelectedGlobalJournal = GlobalJournals.First();
         TaskCategoriesView = _twig.TaskCategories;
         DoneTodayTasks = _twig.DoneTodayTaskLists;
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
