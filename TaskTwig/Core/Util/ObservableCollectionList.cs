@@ -19,7 +19,7 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
         ((INotifyCollectionChanged)Sources).CollectionChanged += _HandleSourcesChanged;
         _RegisterAllSources();
         
-        Console.WriteLine($"ObservableCollectionList.new(): {Sources}, {Sources.Count}");
+        // Console.WriteLine($"ObservableCollectionList.new(): {Sources}, {Sources.Count}");
     }
 
     private int _GetCountToSource(int sourceIndex)
@@ -102,7 +102,7 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
                 throw new ArgumentOutOfRangeException();
         }
         
-        Console.WriteLine($"ObservableCollectionList _HandleSourcesChanged: {args.Action}: {Items.Count}");
+        // Console.WriteLine($"ObservableCollectionList _HandleSourcesChanged: {args.Action}: {Items.Count}");
     }
     
     private void _HandleBaseCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
@@ -158,6 +158,6 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
                 throw new ArgumentOutOfRangeException();
         }
         
-        Console.WriteLine($"ObservableCollectionList _HandleBaseCollectionChanged: {args.Action}: {Items.Count}");
+        // Console.WriteLine($"ObservableCollectionList _HandleBaseCollectionChanged: {args.Action}: {Items.Count}");
     }
 }

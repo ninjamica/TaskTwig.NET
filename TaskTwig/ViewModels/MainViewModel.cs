@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Input;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Dropbox.Api;
 using ObservableCollections;
 using Sortable.Avalonia;
 using TaskTwig.Core;
@@ -129,12 +131,12 @@ public partial class MainViewModel : ViewModelBase
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
-        var dialogVM = new DualDateTimeDialogViewModel();
-        OverlayDialog.ShowStandardAsync<DualDateTimeDialog, DualDateTimeDialogViewModel>(dialogVM, options:dialogOptions)
+        var dialogVm = new DualDateTimeDialogViewModel();
+        OverlayDialog.ShowStandardAsync<DualDateTimeDialog, DualDateTimeDialogViewModel>(dialogVm, options:dialogOptions)
             .ContinueWith(task => 
             {
                 if (task.Result.HasFlag(DialogResult.OK) && 
-                    dialogVM is { StartDateTimeValue: { } startDateTime, EndDateTimeValue: { } endDateTime })
+                    dialogVm is { StartDateTimeValue: { } startDateTime, EndDateTimeValue: { } endDateTime })
                 {
                     _twig.StartSleeping(startDateTime);
                     _twig.FinishSleeping(endDateTime, true);
@@ -158,6 +160,82 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    public async Task SaveFiles()
+    {
+        IsSaveFilesLoading = true;
+        await _twig.WriteDataFiles();
+        IsSaveFilesLoading = false;
+    }
+    [ObservableProperty]
+    public partial bool IsSaveFilesLoading { get; private set; } = false;
+
+    [RelayCommand]
+    public async Task BackupFiles()
+    {
+        IsBackupFilesLoading = true;
+        await _twig.BackupFiles();
+        IsBackupFilesLoading = false;
+    }
+    [ObservableProperty]
+    public partial bool IsBackupFilesLoading { get; private set; } = false;
+
+    [RelayCommand]
+    public async Task PushDbx()
+    {
+        IsPushDbxLoading = true;
+        await _twig.PushDbx();
+        IsPushDbxLoading = false;
+    }
+    [ObservableProperty]
+    public partial bool IsPushDbxLoading { get; private set; } = false;
+
+    [RelayCommand]
+    public async Task PullDbx()
+    {
+        IsPullDbxLoading = true;
+        await _twig.PullDbx();
+        IsPullDbxLoading = false;
+    }
+    [ObservableProperty]
+    public partial bool IsPullDbxLoading { get; private set; } = false;
+
+    [RelayCommand]
+    public async Task DbxSignIn()
+    {
+        var oAuth = new PKCEOAuthFlow();
+        var url = _twig.DbxHandler.GenDbxAuthUrl(oAuth);
+        Console.WriteLine(url.OriginalString);
+        
+        var dialogOptions = new OverlayDialogOptions()
+        {
+            Title = "Log In to Dropbox",
+            Mode = DialogMode.Question,
+            Buttons = DialogButton.OKCancel,
+            CanLightDismiss = true,
+        };
+        var dialogVm = new DbxDialogModelView(url);
+        var result = await OverlayDialog.ShowStandardAsync<DbxDialog, DbxDialogModelView>(dialogVm, options:dialogOptions);
+        
+        if (result.HasFlag(DialogResult.OK) && 
+            dialogVm is { CodeText: { } code })
+        {
+            _twig.DbxHandler.AuthFromCode(oAuth, code);
+        }
+        
+        // try
+        // {
+        //     DbxAccountName = _twig.DbxHandler.GetAccountName();
+        // }
+        // catch (InvalidOperationException e)
+        // {
+        //     DbxAccountName = "No Account";
+        // }
+    }
+    
+    [ObservableProperty]
+    public partial string DbxAccountName { get; set; }
+
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
@@ -173,10 +251,20 @@ public partial class MainViewModel : ViewModelBase
         DoneTodayTasks = _twig.DoneTodayTaskLists;
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
 
-        // foreach (var category in _twig.TaskCategories)
+        DbxAccountName = "No Account";
+        Task.Run(async () =>
+        {
+            DbxAccountName = await _twig.DbxHandler.GetAccountName();
+        });
+        // try
         // {
-        //     TasksToday[category] = IsTodayFilter(category);
+        //     DbxAccountName = _twig.DbxHandler.GetAccountName();
         // }
+        // catch (InvalidOperationException e)
+        // {
+        //     DbxAccountName = "No Account";
+        // }
+                
         
         SleepButtonText = _twig.IsSleeping ? "Wake Up" : "Go To Sleep";
 
@@ -196,6 +284,6 @@ public partial class MainViewModel : ViewModelBase
 
     public void Cleanup()
     {
-        _twig.WriteDataFiles();
+        // _twig.WriteDataFiles();
     }
 }

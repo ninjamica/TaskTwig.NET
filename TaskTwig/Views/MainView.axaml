@@ -209,6 +209,25 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 </Grid>
             </ContentPage>
             
+            <ContentPage Header="Settings" Icon="{StaticResource SemiIconSetting}">
+                <StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding DbxAccountName}"/>
+                    <Button Content="DbxSignIn" Command="{Binding DbxSignIn}"/>
+                    <u:IconButton Content="Save" 
+                                  Command="{Binding SaveFiles}"
+                                  IsLoading="{Binding IsSaveFilesLoading}"/>
+                    <u:IconButton Content="Backup" 
+                                  Command="{Binding BackupFiles}"
+                                  IsLoading="{Binding IsBackupFilesLoading}"/>
+                    <u:IconButton Content="Push" 
+                                  Command="{Binding PushDbx}" 
+                                  IsLoading="{Binding IsPushDbxLoading}"/>
+                    <u:IconButton Content="Pull" 
+                                  Command="{Binding PullDbx}"
+                                  IsLoading="{Binding IsPullDbxLoading}"/>
+                </StackPanel>
+            </ContentPage>                                      
+            
         </TabbedPage>
         <u:OverlayDialogHost Name="DialogHost"/>
     </Panel>

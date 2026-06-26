@@ -19,7 +19,7 @@ public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection
         
         _baseCollection.CollectionChanged += _HandleCollectionChanged;
         
-        Console.WriteLine($"MappedObservableList: {Items.Count}");
+        // Console.WriteLine($"MappedObservableList: {Items.Count}");
     }
 
     private void _ResetItems()
@@ -72,7 +72,7 @@ public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection
             _ResetItems();
         }
         
-        Console.WriteLine($"MappedObservableList._HandleCollectionChanged(): {args.Action}: {Items.Count}");
+        // Console.WriteLine($"MappedObservableList._HandleCollectionChanged(): {args.Action}: {Items.Count}");
     }
 
     private void _HandleItemPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -84,6 +84,6 @@ public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection
             Items[index] = _mapper(item);
         }
         
-        Console.WriteLine($"MappedObservableList._HandleItemPropertyChanged(): {string.Join(", ", _propertyNames ?? ["None"])}:{args.PropertyName}: {Items.Count}");
+        // Console.WriteLine($"MappedObservableList._HandleItemPropertyChanged(): {string.Join(", ", _propertyNames ?? ["None"])}:{args.PropertyName}: {Items.Count}");
     }
 }

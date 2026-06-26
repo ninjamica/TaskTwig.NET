@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="using:TaskTwig.ViewModels"
+             x:Class="TaskTwig.Views.DbxDialog"
+             x:DataType="vm:DbxDialogModelView">
+    
+    <StackPanel>
+        <TextBlock>Click on the following link and copy the provided code below:</TextBlock>
+        <HyperlinkButton NavigateUri="{Binding UrlLinkText}"
+                         Content="{Binding UrlLinkText}"/>
+        <TextBox Text="{Binding CodeText}"/>
+    </StackPanel>
+    
+</UserControl>

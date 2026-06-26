@@ -25,7 +25,6 @@
         <PackageReference Include="Irihi.Avalonia.Shared" />
         <PackageReference Include="Irihi.Ursa" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" />
-        <PackageReference Include="MyToolkit" />
         <PackageReference Include="ObservableCollections" />
         <PackageReference Include="Semi.Avalonia" />
         <PackageReference Include="Sortable.Avalonia" />
