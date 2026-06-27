@@ -7,7 +7,7 @@
                 xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
                 xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Runtime"
                 xmlns:core="clr-namespace:TaskTwig.Core"
-                mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
                 x:Class="TaskTwig.Views.MainView"
                 x:DataType="vm:MainViewModel">
     <Design.DataContext>
@@ -70,9 +70,21 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                    sortable:Sortable.Droppable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Spacing="5">
-                                    <TextBox Text="{Binding Name}"/>
-                                    <ItemsControl ItemsSource="{Binding Tasks}"
+                                <Grid RowSpacing="5" ColumnSpacing="5" Margin="5, 10, 5, 10"
+                                      RowDefinitions="Auto, *, Auto" ColumnDefinitions="Auto, *">
+                                    
+                                    <u:IconButton Grid.Row="0" Grid.Column="0"
+                                                  Icon="{StaticResource SemiIconChevronRight}"
+                                                  Classes="Tertiary"
+                                                  Theme="{DynamicResource BorderlessIconButton}"/>
+                                    <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
+                                            Content="{Binding Name}"
+                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategory}"
+                                            CommandParameter="{Binding}"
+                                            Theme="{DynamicResource OutlineButton}"/>
+                                    
+                                    <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                  ItemsSource="{Binding Tasks}"
                                                   sortable:Sortable.IsSortable="True"
                                                   sortable:Sortable.Droppable="True"
                                                   sortable:Sortable.Group="tasks"
@@ -86,18 +98,20 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                     <PathIcon Data="{StaticResource SemiIconHandle}"
                                                               Cursor="Hand"/>
                                                     <Button Content="{Binding Name}"
-                                                            Background="Transparent"
+                                                            Classes="Tertiary"
+                                                            Theme="{DynamicResource BorderlessButton}"
                                                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
                                                             CommandParameter="{Binding}"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <Button Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" 
+                                    <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" 
                                             CommandParameter="{Binding}" 
                                             Margin="20, 0, 0, 0"
                                             Content="Add Task+"/>
-                                </StackPanel>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -137,37 +151,36 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             </ContentPage>
             
             <ContentPage Header="Journal" Icon="{StaticResource SemiIconBook}">
-                <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, Auto, *, Auto" RowDefinitions="Auto, *">
-                    
+                <u:UrsaGroupBox Margin="30"
+                                Padding="4, 10, 4, 4"
+                                Background="{DynamicResource SemiColorBackground1}"
+                                BorderBrush="{DynamicResource SemiColorBackground2}">
+                    <u:UrsaGroupBox.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="Journal:"
+                                       Classes="H4"
+                                       Theme="{StaticResource TitleTextBlock}"/>
+                            <TextBlock Text="{Binding DailyJournalDate}"
+                                       Classes="H6 Secondary"
+                                       Theme="{StaticResource TitleTextBlock}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </u:UrsaGroupBox.Header>
+                    <TextBox Text="{Binding DailyJournal}"
+                             PlaceholderText="Daily Journal" 
+                             AcceptsReturn="True" 
+                             AcceptsTab="True" 
+                             TextWrapping="Wrap"
+                             VerticalAlignment="Stretch"
+                             VerticalContentAlignment="Top"
+                             Theme="{StaticResource LooklessTextBox}"
+                             Foreground="{DynamicResource SemiColorText1}"/>
+                </u:UrsaGroupBox>
+            </ContentPage>
+            
+            <ContentPage Header="Notes" Icon="{StaticResource SemiIconEdit2}">
+                <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, Auto" RowDefinitions="Auto, *">
                     <u:UrsaGroupBox Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
-                                    Padding="4, 10, 4, 4"
-                                    Background="{DynamicResource SemiColorBackground1}"
-                                    BorderBrush="{DynamicResource SemiColorBackground2}">
-                        <u:UrsaGroupBox.Header>
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="Journal:"
-                                           Classes="H4"
-                                           Theme="{StaticResource TitleTextBlock}"/>
-                                <TextBlock Text="{Binding DailyJournalDate}"
-                                           Classes="H6 Secondary"
-                                           Theme="{StaticResource TitleTextBlock}"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </u:UrsaGroupBox.Header>
-                        <TextBox Text="{Binding DailyJournal}"
-                                 PlaceholderText="Daily Journal" 
-                                 AcceptsReturn="True" 
-                                 AcceptsTab="True" 
-                                 TextWrapping="Wrap"
-                                 VerticalAlignment="Stretch"
-                                 VerticalContentAlignment="Top"
-                                 Theme="{StaticResource LooklessTextBox}"
-                                 Foreground="{DynamicResource SemiColorText1}"/>
-                    </u:UrsaGroupBox>
-                    
-                    <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"/>
-                    
-                    <u:UrsaGroupBox Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"
                                     Padding="4, 10, 4, 4"
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBackground2}">
@@ -187,7 +200,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         </StackPanel>
                     </u:UrsaGroupBox>
                     
-                    <ScrollViewer Grid.Row="0" Grid.Column="3">
+                    <ScrollViewer Grid.Row="0" Grid.Column="1">
                         <TabStrip ItemsSource="{Binding GlobalJournals}"
                                   SelectedItem="{Binding SelectedGlobalJournal}">
                             <TabStrip.ItemsPanel>
@@ -197,13 +210,18 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             </TabStrip.ItemsPanel>
                             <TabStrip.ItemTemplate>
                                 <DataTemplate DataType="core:Journal">
-                                    <TextBlock Text="{Binding Title}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                                        <Button Content="x" 
+                                                Command="{Binding #TabControl.((vm:MainViewModel)DataContext).DeleteNote}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </TabStrip.ItemTemplate>
                         </TabStrip>
                     </ScrollViewer>
                     
-                    <Button Grid.Row="1" Grid.Column="3" 
+                    <Button Grid.Row="1" Grid.Column="1" VerticalAlignment="Top"
                             Content="+" 
                             Command="{Binding CreateGlobalJournal}"/>
                 </Grid>

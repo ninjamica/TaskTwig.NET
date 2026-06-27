@@ -1,0 +1,50 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="using:TaskTwig.ViewModels"
+             x:Class="TaskTwig.Views.TaskCategoryDialog"
+             x:DataType="vm:TaskCategoryDialogViewModel">
+    <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
+        
+        <TextBlock Grid.Row="0"
+                   Margin="8"
+                   FontSize="16"
+                   FontWeight="600"
+                   Text="Edit Task"/>
+        
+        <u:Form Grid.Row="1" LabelPosition="Left" LabelWidth="*">
+            <u:FormItem Label="Name">
+                <TextBox Text="{Binding Category.Name}"/>
+            </u:FormItem>
+            <u:FormItem Label="Color">
+                <!-- TODO: Implement when color support is updated in TaskCategory -->
+            </u:FormItem>
+        </u:Form>
+        
+        <DockPanel Grid.Row="2">
+            
+            <Button Command="{Binding Delete}"
+                    Classes="Danger"
+                    Theme="{StaticResource SolidButton}"
+                    HorizontalAlignment="Left"
+                    DockPanel.Dock="Left">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <PathIcon Data="{DynamicResource SemiIconDelete}"/>
+                    <TextBlock Text="Delete"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Content="Okay"
+                    Command="{Binding Close}"
+                    Theme="{StaticResource SolidButton}"
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Right"/>
+            
+        </DockPanel>
+        
+    </Grid>
+    
+</UserControl>

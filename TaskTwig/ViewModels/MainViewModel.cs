@@ -37,6 +37,12 @@ public partial class MainViewModel : ViewModelBase
         SelectedGlobalJournal = newJournal;
     }
 
+    [RelayCommand]
+    public void DeleteNote(Journal note)
+    {
+        _twig.JournalRecords.GlobalJournals.Remove(note);
+    }
+
     public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
     public ReadOnlyObservableCollection<TwigTask> DoneTodayTasks { get; set; }
 
@@ -49,7 +55,32 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void CreateTaskCategory()
     {
-        _twig.TaskCategories.Add(new TaskCategory());
+        var category = new TaskCategory();
+        _twig.TaskCategories.Add(category);
+        EditTaskCategory(category);
+    }
+
+    [RelayCommand]
+    public void EditTaskCategory(TaskCategory category)
+    {
+        var dialogOptions = new OverlayDialogOptions()
+        {
+            Mode = DialogMode.Info,
+            CanLightDismiss = true,
+        };
+        var dialogViewModel = new TaskCategoryDialogViewModel(category);
+        OverlayDialog.ShowCustomAsync<TaskCategoryDialog, TaskCategoryDialogViewModel, bool>(dialogViewModel, options: dialogOptions)
+            .ContinueWith(result =>
+            {
+                if (result.Result)
+                    _twig.TaskCategories.Remove(category);
+            });
+    }
+
+    [RelayCommand]
+    public void DeleteTaskCategory(TaskCategory category)
+    {
+        _twig.TaskCategories.Remove(category);
     }
 
     [RelayCommand]
@@ -70,9 +101,7 @@ public partial class MainViewModel : ViewModelBase
     {
         var dialogOptions = new OverlayDialogOptions()
         {
-            Title = "Edit Task",
             Mode = DialogMode.Info,
-            Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
         var dialogViewModel = new TaskDialogViewModel(task);
