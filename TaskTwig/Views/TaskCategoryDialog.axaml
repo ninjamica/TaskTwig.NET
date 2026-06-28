@@ -3,17 +3,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="230"
              xmlns:vm="using:TaskTwig.ViewModels"
              x:Class="TaskTwig.Views.TaskCategoryDialog"
              x:DataType="vm:TaskCategoryDialogViewModel">
+    
     <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
         
         <TextBlock Grid.Row="0"
                    Margin="8"
                    FontSize="16"
                    FontWeight="600"
-                   Text="Edit Task"/>
+                   Text="Edit Task Category"/>
         
         <u:Form Grid.Row="1" LabelPosition="Left" LabelWidth="*">
             <u:FormItem Label="Name">

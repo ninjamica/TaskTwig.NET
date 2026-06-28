@@ -57,24 +57,18 @@ public partial class TaskTwig : ObservableObject
         public ObservableDictionary<DateOnly, Sleep> SleepRecords { get; init; } = [];
         public DateTime? SleepStart { get; set; }
     }
-
-    public readonly struct JournalValues()
-    {
-        public ObservableDictionary<DateOnly, Journal> Journals { get; init; } = [];
-        public ObservableCollection<Journal> GlobalJournals { get; init; } = [];
-    }
-
-    
     
     private SleepValues _sleepValues = new();
-    public JournalValues JournalRecords { get; } = new();
 
     public ObservableCollection<TaskCategory> TaskCategories { get; } = [];
     public ObservableCollectionList<TwigTask, ReadOnlyObservableCollection<TwigTask>> DoneTodayTaskLists { get; }
 
     public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
     public ObservableCollection<Exercise> Exercises { get; } = [];
+    
     public ObservableCollection<Workout> WorkoutList { get; } = [];
+    public ObservableDictionary<DateOnly, Journal> Journals { get; init; } = [];
+    public ObservableCollection<Note> Notes { get; init; } = [];
 
     [ObservableProperty] public partial bool IsSleeping { get; private set; }
 
@@ -94,7 +88,8 @@ public partial class TaskTwig : ObservableObject
         new("sleep", "json"),
         new("exercise", "json"),
         new("workout", "json"),
-        new("journal", "json")
+        new("journal", "json"),
+        new("note", "json")
     ];
 
     public readonly DbxHandler DbxHandler;
@@ -137,10 +132,10 @@ public partial class TaskTwig : ObservableObject
 
     public Journal TodaysJournal()
     {
-        if (!JournalRecords.Journals.ContainsKey(Today))
-            JournalRecords.Journals[Today] = new Journal();
+        if (!Journals.ContainsKey(Today))
+            Journals[Today] = new Journal();
 
-        return JournalRecords.Journals[Today];
+        return Journals[Today];
     }
 
     public async Task WriteDataFiles()
@@ -157,8 +152,11 @@ public partial class TaskTwig : ObservableObject
         string workoutText = JsonSerializer.Serialize(WorkoutList);
         await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "workout.json"), workoutText);
         
-        string journalText = JsonSerializer.Serialize(JournalRecords);
+        string journalText = JsonSerializer.Serialize(Journals);
         await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "journal.json"), journalText);
+        
+        string noteText = JsonSerializer.Serialize(Notes);
+        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "note.json"), noteText);
     }
 
     public void ReadDataFiles()
@@ -256,16 +254,12 @@ public partial class TaskTwig : ObservableObject
         try
         {
             string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "journal.json"));
-            var journalRecords = JsonSerializer.Deserialize<JournalValues>(journalText);
+            var journalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(journalText);
             
-            JournalRecords.Journals.Clear();
-            JournalRecords.GlobalJournals.Clear();
+            Journals.Clear();
             
-            foreach (var journal in journalRecords.Journals)
-                JournalRecords.Journals[journal.Key] = journal.Value;
-            
-            foreach (var journal in journalRecords.GlobalJournals)
-                JournalRecords.GlobalJournals.Add(journal);
+            foreach (var journal in journalRecords)
+                Journals[journal.Key] = journal.Value;
             
         }
         catch (FileNotFoundException e)
@@ -276,6 +270,28 @@ public partial class TaskTwig : ObservableObject
         {
             File.Copy(Path.Combine(_dataFilePath, "journal.json"), Path.Combine(_dataFilePath, "journal_backup.json"), true);
             Console.WriteLine("failed to parse journal.json");
+            Console.WriteLine(e);
+        }
+        
+        try
+        {
+            string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "note.json"));
+            var noteRecords = JsonSerializer.Deserialize<List<Note>>(journalText);
+
+            Notes.Clear();
+            
+            foreach (var note in noteRecords)
+                Notes.Add(note);
+            
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("note.json file not found");
+        }
+        catch (JsonException e)
+        {
+            File.Copy(Path.Combine(_dataFilePath, "note.json"), Path.Combine(_dataFilePath, "note_backup.json"), true);
+            Console.WriteLine("failed to parse note.json");
             Console.WriteLine(e);
         }
     }

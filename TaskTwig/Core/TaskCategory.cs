@@ -11,6 +11,8 @@ public partial class TaskCategory : ObservableObject
 
     [ObservableProperty] public partial Color Color { get; set; } = Color.White;
 
+    [ObservableProperty] public partial bool Expanded { get; set; } = true;
+
     public ObservableCollection<TwigTask> Tasks
     {
         get;

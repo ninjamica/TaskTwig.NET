@@ -67,24 +67,40 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 <ScrollViewer>
                 <StackPanel Spacing="10" Margin="10">
                     <ItemsControl ItemsSource="{Binding TaskCategoriesView}"
-                                   sortable:Sortable.Droppable="False">
+                                  sortable:Sortable.Sortable="True" 
+                                  sortable:Sortable.Droppable="False"
+                                  sortable:Sortable.Group="categories"
+                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).CategoryListUpdate}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid RowSpacing="5" ColumnSpacing="5" Margin="5, 10, 5, 10"
-                                      RowDefinitions="Auto, *, Auto" ColumnDefinitions="Auto, *">
-                                    
-                                    <u:IconButton Grid.Row="0" Grid.Column="0"
-                                                  Icon="{StaticResource SemiIconChevronRight}"
-                                                  Classes="Tertiary"
-                                                  Theme="{DynamicResource BorderlessIconButton}"/>
-                                    <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
+                                      RowDefinitions="Auto, *, Auto" ColumnDefinitions="Auto, Auto, *"
+                                      sortable:Sortable.IsSortable="True">
+                                    <PathIcon Grid.Row="0" Grid.Column="0"
+                                              Data="{StaticResource SemiIconHandle}"
+                                              Cursor="Hand"/>
+                                    <ToggleButton Grid.Row="0" Grid.Column="1"
+                                                  IsChecked="{Binding Expanded}"
+                                                  Classes="Expander" Theme="{x:Null}"
+                                                  Cursor="Hand">
+                                        <Panel>
+                                            <PathIcon Data="{StaticResource SemiIconChevronDown}"
+                                                      Width="12" Height="12"
+                                                      IsVisible="{Binding Expanded}"/>
+                                            <PathIcon Data="{StaticResource SemiIconChevronRight}"
+                                                      Width="12" Height="12"
+                                                      IsVisible="{Binding !Expanded}"/>
+                                        </Panel>
+                                    </ToggleButton>
+                                    <Button Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left"
                                             Content="{Binding Name}"
                                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategory}"
                                             CommandParameter="{Binding}"
                                             Theme="{DynamicResource OutlineButton}"/>
                                     
-                                    <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                    <ItemsControl Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                                   ItemsSource="{Binding Tasks}"
+                                                  IsVisible="{Binding Expanded}"
                                                   sortable:Sortable.IsSortable="True"
                                                   sortable:Sortable.Droppable="True"
                                                   sortable:Sortable.Group="tasks"
@@ -106,11 +122,12 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                                    <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" 
                                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" 
                                             CommandParameter="{Binding}" 
                                             Margin="20, 0, 0, 0"
-                                            Content="Add Task+"/>
+                                            Content="Add Task+"
+                                            IsVisible="{Binding Expanded}"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -185,11 +202,11 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBackground2}">
                         <u:UrsaGroupBox.Header>
-                            <TextBox Text="{Binding SelectedGlobalJournal.Title}"/>
+                            <TextBox Text="{Binding SelectedNote.Title}"/>
                         </u:UrsaGroupBox.Header>
                         <StackPanel>
-                            <TextBox Text="{Binding SelectedGlobalJournal.Text}" 
-                                     PlaceholderText="Global Journal" 
+                            <TextBox Text="{Binding SelectedNote.Text}" 
+                                     PlaceholderText="Type Note Here" 
                                      AcceptsReturn="True"
                                      AcceptsTab="True" 
                                      TextWrapping="Wrap"
@@ -201,15 +218,15 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                     </u:UrsaGroupBox>
                     
                     <ScrollViewer Grid.Row="0" Grid.Column="1">
-                        <TabStrip ItemsSource="{Binding GlobalJournals}"
-                                  SelectedItem="{Binding SelectedGlobalJournal}">
+                        <TabStrip ItemsSource="{Binding Notes}"
+                                  SelectedItem="{Binding SelectedNote}">
                             <TabStrip.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Orientation="Vertical"/>
                                 </ItemsPanelTemplate>
                             </TabStrip.ItemsPanel>
                             <TabStrip.ItemTemplate>
-                                <DataTemplate DataType="core:Journal">
+                                <DataTemplate DataType="core:Note">
                                     <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
                                         <Button Content="x" 
@@ -223,7 +240,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                     
                     <Button Grid.Row="1" Grid.Column="1" VerticalAlignment="Top"
                             Content="+" 
-                            Command="{Binding CreateGlobalJournal}"/>
+                            Command="{Binding CreateNote}"/>
                 </Grid>
             </ContentPage>
             
@@ -250,5 +267,32 @@ to set the actual DataContext for runtime, set the DataContext property in code 
         <u:OverlayDialogHost Name="DialogHost"/>
     </Panel>
     
+    <UserControl.Styles>
+        <Style Selector="ToggleButton.Expander">
+            <!-- 1. Reset base properties to prevent inherited spacing -->
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="LightGray"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
     
+            <!-- 2. Overwrite the control template completely -->
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      Background="{TemplateBinding Background}"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                </ControlTemplate>
+            </Setter>
+            
+            <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="White"/>
+            </Style>
+        </Style>
+
+    </UserControl.Styles>
 </UserControl>

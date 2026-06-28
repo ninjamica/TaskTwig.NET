@@ -26,21 +26,21 @@ public partial class MainViewModel : ViewModelBase
     
     [ObservableProperty] public partial string DailyJournalDate { get; private set; }
     
-    public ObservableCollection<Journal> GlobalJournals { get; set; }
-    [ObservableProperty] public partial Journal SelectedGlobalJournal { get; set; }
+    public ObservableCollection<Note> Notes { get; set; }
+    [ObservableProperty] public partial Note SelectedNote { get; set; }
 
     [RelayCommand]
-    public void CreateGlobalJournal()
+    public void CreateNote()
     {
-        var newJournal = new Journal { Title = "New Global Journal" };
-        _twig.JournalRecords.GlobalJournals.Add(newJournal);
-        SelectedGlobalJournal = newJournal;
+        var newNote = new Note { Title = "New Note" };
+        _twig.Notes.Add(newNote);
+        SelectedNote = newNote;
     }
 
     [RelayCommand]
-    public void DeleteNote(Journal note)
+    public void DeleteNote(Note note)
     {
-        _twig.JournalRecords.GlobalJournals.Remove(note);
+        _twig.Notes.Remove(note);
     }
 
     public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
@@ -81,6 +81,12 @@ public partial class MainViewModel : ViewModelBase
     public void DeleteTaskCategory(TaskCategory category)
     {
         _twig.TaskCategories.Remove(category);
+    }
+
+    [RelayCommand]
+    public void CategoryListUpdate(SortableUpdateEventArgs args)
+    {
+        args.ApplyUpdateMutation();
     }
 
     [RelayCommand]
@@ -273,9 +279,9 @@ public partial class MainViewModel : ViewModelBase
         _todaysJournal = _twig.TodaysJournal();
         DailyJournal = _todaysJournal.Text;
         DailyJournalDate = Core.TaskTwig.Today.ToString("dddd MMMM d");
-        GlobalJournals = _twig.JournalRecords.GlobalJournals;
-        if (GlobalJournals.Count > 0)
-            SelectedGlobalJournal = GlobalJournals.First();
+        Notes = _twig.Notes;
+        if (Notes.Count > 0)
+            SelectedNote = Notes.First();
         TaskCategoriesView = _twig.TaskCategories;
         DoneTodayTasks = _twig.DoneTodayTaskLists;
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
