@@ -44,7 +44,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
-    public ReadOnlyObservableCollection<TwigTask> DoneTodayTasks { get; set; }
+    public ReadOnlyObservableCollection<TwTask> DoneTodayTasks { get; set; }
 
     public NotifyCollectionChangedSynchronizedViewList<KeyValuePair<DateOnly, Sleep>> SleepList { get; init; }
     
@@ -92,7 +92,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void CreateTask(TaskCategory category)
     {
-        var task = new TwigTask()
+        var task = new TwTask()
         {
             Name = "New Task",
             Interval = new NoInterval(),
@@ -103,7 +103,7 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [RelayCommand]
-    public void EditTask(TwigTask task)
+    public void EditTask(TwTask task)
     {
         var dialogOptions = new OverlayDialogOptions()
         {

@@ -1,11 +1,14 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.IO.Hashing;
+using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public partial class TaskCategory : ObservableObject
+public partial class TaskCategory : ObservableObject, IHashable
 {
     [ObservableProperty] public partial string Name { get; set; } = "New Task Category";
 
@@ -13,7 +16,7 @@ public partial class TaskCategory : ObservableObject
 
     [ObservableProperty] public partial bool Expanded { get; set; } = true;
 
-    public ObservableCollection<TwigTask> Tasks
+    public ObservableCollection<TwTask> Tasks
     {
         get;
         init
@@ -21,36 +24,36 @@ public partial class TaskCategory : ObservableObject
             field = value;
             
             if (_todayTasks is not null)
-                _todayTasks = new FilteredObservableList<TwigTask>(value, task => task.IsToday, "IsToday");
+                _todayTasks = new FilteredObservableList<TwTask>(value, task => task.IsToday, "IsToday");
 
             if (_doneTodayTasks is not null)
                 _doneTodayTasks =
-                    new FilteredObservableList<TwigTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
+                    new FilteredObservableList<TwTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
         }
     } = [];
     
     [JsonIgnore]
-    public FilteredObservableList<TwigTask> TodayTasks {
+    public FilteredObservableList<TwTask> TodayTasks {
         get
         {
-            _todayTasks ??= new FilteredObservableList<TwigTask>(Tasks, task => task.IsToday, "IsToday");
+            _todayTasks ??= new FilteredObservableList<TwTask>(Tasks, task => task.IsToday, "IsToday");
             return _todayTasks;
         }
     }
-    private FilteredObservableList<TwigTask>? _todayTasks;
+    private FilteredObservableList<TwTask>? _todayTasks;
     
     [JsonIgnore]
-    public FilteredObservableList<TwigTask> DoneTodayTasks {
+    public FilteredObservableList<TwTask> DoneTodayTasks {
         get
         {
             _doneTodayTasks ??=
-                new FilteredObservableList<TwigTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
+                new FilteredObservableList<TwTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
             return _doneTodayTasks;
         }
     }
-    private FilteredObservableList<TwigTask>? _doneTodayTasks;
+    private FilteredObservableList<TwTask>? _doneTodayTasks;
 
-    public void AddTask(TwigTask task)
+    public void AddTask(TwTask task)
     {
         if (task.Category is not null)
         {
@@ -58,5 +61,15 @@ public partial class TaskCategory : ObservableObject
         }
         Tasks.Add(task);
         task.Category = this;
+    }
+
+    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
+        hashAlgorithm.Append(BitConverter.GetBytes(Color.ToArgb()));
+        hashAlgorithm.Append(BitConverter.GetBytes(Expanded));
+        
+        foreach (var task in Tasks) 
+            task.AppendHash(hashAlgorithm);
     }
 }

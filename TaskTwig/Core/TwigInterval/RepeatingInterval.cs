@@ -1,4 +1,6 @@
 using System;
+using System.IO.Hashing;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -75,4 +77,16 @@ public abstract partial class RepeatingInterval : ObservableObject, ITwigInterva
     partial void OnReferenceDateChanged(DateOnly value) => UpdateOccurrences();
     partial void OnAutoRepeatChanged(bool value) => UpdateOccurrences();
     partial void OnRepeatToChanged(RepeatPattern value) => UpdateOccurrences();
+
+
+    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        _AppendHash(hashAlgorithm);
+        
+        hashAlgorithm.Append(BitConverter.GetBytes(ReferenceDate.DayNumber));
+        hashAlgorithm.Append(BitConverter.GetBytes(AutoRepeat));
+        hashAlgorithm.Append(BitConverter.GetBytes((int)RepeatTo));
+    }
+    
+    protected abstract void _AppendHash(NonCryptographicHashAlgorithm hashAlgorithm);
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO.Hashing;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core.TwigInterval;
@@ -61,6 +62,13 @@ public partial class WeekInterval : RepeatingInterval
             prevDate = prevDate.AddDays(-7 * WeekSpacing);
         
         return prevDate;
+    }
+
+    protected override void _AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append("WeekInterval"u8);
+        hashAlgorithm.Append(BitConverter.GetBytes(WeekSpacing));
+        hashAlgorithm.Append(BitConverter.GetBytes((int)DayOfWeekMap));
     }
 
     private int _getNextDayOfWeek(int day)

@@ -1,4 +1,5 @@
 using System;
+using System.IO.Hashing;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -42,7 +43,14 @@ public partial class UnitInterval : RepeatingInterval
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    
+
+    protected override void _AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append("UnityInterval"u8);
+        hashAlgorithm.Append(BitConverter.GetBytes(UnitAmount));
+        hashAlgorithm.Append(BitConverter.GetBytes((int)Unit));
+    }
+
     partial void OnUnitAmountChanged(int value) => UpdateOccurrences();
     partial void OnUnitChanged(DateUnit value) => UpdateOccurrences();
 }

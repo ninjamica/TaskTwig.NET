@@ -1,5 +1,8 @@
 using System;
+using System.Buffers;
 using System.Collections.ObjectModel;
+using System.IO.Hashing;
+using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TaskTwig.Core.TwigInterval;
@@ -23,7 +26,7 @@ public enum OccurrencePattern
     StartOn
 }
 
-public partial class TwigTask : ObservableObject
+public partial class TwTask : ObservableObject, IHashable
 {
     [ObservableProperty]
     public required partial string Name { get; set; }
@@ -183,11 +186,26 @@ public partial class TwigTask : ObservableObject
             repeatingInterval.AutoRepeat = pattern is AutoExtendPattern.Auto;
         }
     }
-    
-    protected void _UpdateStatusVars()
+
+    private void _UpdateStatusVars()
     {
         IsDone = _IsDone(LastDone);
         IsToday = _IsToday();
         IsOverdue = _IsOverdue();
+    }
+
+    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
+        hashAlgorithm.Append(BitConverter.GetBytes(Points));
+        Interval.AppendHash(hashAlgorithm);
+        hashAlgorithm.Append(BitConverter.GetBytes((int)OPattern));
+        hashAlgorithm.Append(BitConverter.GetBytes((int)EPattern));
+        
+        if (LastDone is { } lastDone)
+            hashAlgorithm.Append(BitConverter.GetBytes(lastDone.DayNumber));
+        
+        foreach (var subTask in SubTasks)
+            subTask.AppendHash(hashAlgorithm);
     }
 }

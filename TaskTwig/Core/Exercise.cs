@@ -1,11 +1,13 @@
 using System;
+using System.IO.Hashing;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core;
 
 [JsonConverter(typeof(ExerciseJsonConverter))]
-public readonly record struct Exercise
+public readonly record struct Exercise : IHashable
 {
     [JsonConverter(typeof(JsonStringEnumConverter<ExerciseUnit>))]
     public enum ExerciseUnit
@@ -52,5 +54,11 @@ public readonly record struct Exercise
         {
             writer.WritePropertyName($"{value.Name}:{value.Unit}");
         }
+    }
+
+    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
+        hashAlgorithm.Append(BitConverter.GetBytes((int)Unit));
     }
 }

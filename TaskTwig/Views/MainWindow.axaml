@@ -6,7 +6,7 @@
         xmlns:views="using:TaskTwig.Views"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
         x:Class="TaskTwig.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/TaskTwig.ico"
         Title="TaskTwig"
         Width="600"
         Height="700">

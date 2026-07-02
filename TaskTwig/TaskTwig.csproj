@@ -28,6 +28,7 @@
         <PackageReference Include="ObservableCollections" />
         <PackageReference Include="Semi.Avalonia" />
         <PackageReference Include="Sortable.Avalonia" />
+        <PackageReference Include="System.IO.Hashing" />
     </ItemGroup>
 
     <ItemGroup>

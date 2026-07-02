@@ -12,7 +12,7 @@ namespace TaskTwig.ViewModels;
 
 public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
 {
-    public TwigTask Task { get; }
+    public TwTask Task { get; }
 
     [ObservableProperty] public partial Type SelectedInterval { get; set; }
     [ObservableProperty] public partial DateOnly? ReferenceDate { get; set; }
@@ -51,7 +51,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
 
     private bool _isFinishedSetup = false;
 
-    public TaskDialogViewModel(TwigTask task)
+    public TaskDialogViewModel(TwTask task)
     {
         Task = task;
         SelectedInterval = task.Interval.GetType();

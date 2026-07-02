@@ -1,4 +1,5 @@
 using System;
+using System.IO.Hashing;
 using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core.TwigInterval;
@@ -10,4 +11,9 @@ public class DailyInterval : ITwigInterval
     public DateOnly? NextOccurrence => TaskTwig.Today;
     [JsonIgnore]
     public DateOnly? PreviousOccurrence => TaskTwig.Today.AddDays(-1);
+
+    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append("DailyInterval"u8);
+    }
 }

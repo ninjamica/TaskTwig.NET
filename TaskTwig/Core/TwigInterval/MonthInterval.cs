@@ -1,4 +1,5 @@
 using System;
+using System.IO.Hashing;
 using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -43,6 +44,13 @@ public partial class MonthInterval : RepeatingInterval
             return new DateOnly(refDate.Year, refDate.Month, prevDay);
         else
             return new DateOnly(prevMonthDate.Year, prevMonthDate.Month, prevDay);
+    }
+
+    protected override void _AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append("MonthInterval"u8);
+        hashAlgorithm.Append(BitConverter.GetBytes(MonthSpacing));
+        hashAlgorithm.Append(BitConverter.GetBytes(DaysOfMonthMap));
     }
 
     private int _FindNextDay(int day, int maxDaysInMonth, int maxDaysInNextMonth)

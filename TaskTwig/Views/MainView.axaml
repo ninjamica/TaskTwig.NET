@@ -26,10 +26,26 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Name}"/>
-                                        <ItemsRepeater ItemsSource="{Binding TodayTasks}"
-                                                       Margin="10, 5, 0, 10">
+                                    <Grid RowDefinitions="Auto, *" ColumnDefinitions="Auto, *" ColumnSpacing="5">
+                                        <ToggleButton Grid.Row="0" Grid.Column="0"
+                                                      IsChecked="{Binding Expanded}"
+                                                      Classes="Expander" Theme="{x:Null}"
+                                                      Cursor="Hand">
+                                            <Panel>
+                                                <PathIcon Data="{StaticResource SemiIconChevronDown}"
+                                                          Width="12" Height="12"
+                                                          IsVisible="{Binding Expanded}"/>
+                                                <PathIcon Data="{StaticResource SemiIconChevronRight}"
+                                                          Width="12" Height="12"
+                                                          IsVisible="{Binding !Expanded}"/>
+                                            </Panel>
+                                        </ToggleButton>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
+                                                   Text="{Binding Name}"
+                                                   FontSize="16"/>
+                                        <ItemsRepeater Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TodayTasks}"
+                                                       Margin="0, 5, 0, 10"
+                                                       IsVisible="{Binding Expanded}">
                                             <ItemsRepeater.ItemTemplate>
                                                 <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
@@ -39,11 +55,11 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                 </DataTemplate>
                                             </ItemsRepeater.ItemTemplate>
                                         </ItemsRepeater>
-                                    </StackPanel>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
-                        <TextBlock Text="Done"/>
+                        <TextBlock Text="Done" FontSize="16"/>
                         <ItemsRepeater ItemsSource="{Binding DoneTodayTasks}"
                                        Margin="10, 5, 0, 10">
                             <ItemsRepeater.ItemTemplate>
@@ -206,7 +222,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         </u:UrsaGroupBox.Header>
                         <StackPanel>
                             <TextBox Text="{Binding SelectedNote.Text}" 
-                                     PlaceholderText="Type Note Here" 
+                                     PlaceholderText="Type Note Here"
                                      AcceptsReturn="True"
                                      AcceptsTab="True" 
                                      TextWrapping="Wrap"

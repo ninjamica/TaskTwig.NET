@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.Hashing;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -12,6 +14,23 @@ using TaskTwig.Core.TwigInterval;
 using Color = System.Drawing.Color;
 
 namespace TaskTwig.Core;
+
+public enum DataFile
+{
+    Task,
+    Sleep,
+    Exercise,
+    Workout,
+    Journal,
+    Note
+}
+    
+public readonly struct DataFilePaths(string dataFileDir, string filename, string extension)
+{
+    public string LocalPath { get; } = Path.Combine(dataFileDir, $"{filename}.{extension}");
+    public string BackupPath { get; } = Path.Combine(dataFileDir, $"{filename}_backup.{extension}");
+    public string DbxPath { get; } = $"/{filename}.{extension}";
+}
 
 public partial class TaskTwig : ObservableObject
 {
@@ -61,7 +80,7 @@ public partial class TaskTwig : ObservableObject
     private SleepValues _sleepValues = new();
 
     public ObservableCollection<TaskCategory> TaskCategories { get; } = [];
-    public ObservableCollectionList<TwigTask, ReadOnlyObservableCollection<TwigTask>> DoneTodayTaskLists { get; }
+    public ObservableCollectionList<TwTask, ReadOnlyObservableCollection<TwTask>> DoneTodayTaskLists { get; }
 
     public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
     public ObservableCollection<Exercise> Exercises { get; } = [];
@@ -76,29 +95,23 @@ public partial class TaskTwig : ObservableObject
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
         "TaskTwig-NET");
     
-    public readonly struct DataFile(string filename, string extension)
+    public Dictionary<DataFile, DataFilePaths> DataFiles { get; } = new()
     {
-        public string LocalPath { get; } = Path.Combine(_dataFilePath, $"{filename}.{extension}");
-        public string BackupPath { get; } = Path.Combine(_dataFilePath, $"{filename}_backup.{extension}");
-        public string DbxPath { get; } = $"/{filename}.{extension}";
-    }
-    
-    public DataFile[] DataFiles { get; } = [
-        new("task", "json"),
-        new("sleep", "json"),
-        new("exercise", "json"),
-        new("workout", "json"),
-        new("journal", "json"),
-        new("note", "json")
-    ];
+        { DataFile.Task, new(_dataFilePath, "task", "json") },
+        { DataFile.Sleep, new(_dataFilePath, "sleep", "json") },
+        { DataFile.Exercise, new(_dataFilePath, "exercise", "json") },
+        { DataFile.Workout, new(_dataFilePath, "workout", "json") },
+        { DataFile.Journal, new(_dataFilePath, "journal", "json") },
+        { DataFile.Note, new(_dataFilePath, "note", "json") }
+    };
 
     public readonly DbxHandler DbxHandler;
 
     
     public TaskTwig()
     {
-        DoneTodayTaskLists = new ObservableCollectionList<TwigTask, ReadOnlyObservableCollection<TwigTask>>(
-            new MappedObservableList<TaskCategory, ReadOnlyObservableCollection<TwigTask>>(
+        DoneTodayTaskLists = new ObservableCollectionList<TwTask, ReadOnlyObservableCollection<TwTask>>(
+            new MappedObservableList<TaskCategory, ReadOnlyObservableCollection<TwTask>>(
                 TaskCategories, category => category.DoneTodayTasks));
         
         if (!Directory.Exists(_dataFilePath))
@@ -119,12 +132,13 @@ public partial class TaskTwig : ObservableObject
 
         if (_sleepValues.SleepStart is null)
             return false;
+
+        var sleep = new Sleep(_sleepValues.SleepStart.Value, sleepEnd);
         
-        DateOnly endDate = DateOnly.FromDateTime(sleepEnd).AddDays(-1);
-        if (!overwrite && SleepRecords.ContainsKey(endDate))
+        if (!overwrite && SleepRecords.ContainsKey(sleep.Date))
             return false;
         
-        SleepRecords[endDate] = new Sleep(_sleepValues.SleepStart.Value, sleepEnd);
+        SleepRecords[sleep.Date] = sleep;
         _SetSleepStart(null);
         return true;
 
@@ -140,182 +154,263 @@ public partial class TaskTwig : ObservableObject
 
     public async Task WriteDataFiles()
     {
-        string taskText = JsonSerializer.Serialize(TaskCategories);
-        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "task.json"), taskText);
-        
-        string sleepText = JsonSerializer.Serialize(_sleepValues);
-        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "sleep.json"), sleepText);
-        
-        string exerciseText = JsonSerializer.Serialize(Exercises);
-        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "exercise.json"), exerciseText);
-        
-        string workoutText = JsonSerializer.Serialize(WorkoutList);
-        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "workout.json"), workoutText);
-        
-        string journalText = JsonSerializer.Serialize(Journals);
-        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "journal.json"), journalText);
-        
-        string noteText = JsonSerializer.Serialize(Notes);
-        await File.WriteAllTextAsync(Path.Combine(_dataFilePath, "note.json"), noteText);
+        var tasks = Enum.GetValues<DataFile>().Select(WriteDataFile);
+        await Task.WhenAll(tasks);
     }
 
-    public void ReadDataFiles()
+    public async Task WriteDataFile(DataFile file)
     {
-        try
+        string jsonValue = file switch
         {
-            string taskText = File.ReadAllText(Path.Combine(_dataFilePath, "task.json"));
-            var taskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(taskText) ?? [];
-            
-            TaskCategories.Clear();
-            foreach (var category in taskCategories)
-            {
-                TaskCategories.Add(category);
-                foreach (var task in category.Tasks)
-                {
-                    task.Category = category;
-                }
-            }
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine("task.json file not found");
-        }
-        catch (JsonException e)
-        {
-            File.Copy(Path.Combine(_dataFilePath, "task.json"), Path.Combine(_dataFilePath, "task_backup.json"), true);
-            Console.WriteLine("failed to parse task.json");
-            Console.WriteLine(e);
-        }
+            DataFile.Task => JsonSerializer.Serialize(TaskCategories),
+            DataFile.Sleep => JsonSerializer.Serialize(_sleepValues),
+            DataFile.Exercise => JsonSerializer.Serialize(Exercises),
+            DataFile.Workout => JsonSerializer.Serialize(WorkoutList),
+            DataFile.Journal => JsonSerializer.Serialize(Journals),
+            DataFile.Note => JsonSerializer.Serialize(Notes),
+            _ => throw new ArgumentOutOfRangeException(nameof(file), file, null)
+        };
         
-        try
-        {
-            string sleepText = File.ReadAllText(Path.Combine(_dataFilePath, "sleep.json"));
-            var sleepValues = JsonSerializer.Deserialize<SleepValues>(sleepText);
-            
-            _sleepValues.SleepRecords.Clear();
-            foreach (var sleep in sleepValues.SleepRecords)
-            {
-                _sleepValues.SleepRecords[sleep.Key] = sleep.Value;
-            }
-            
-            _SetSleepStart(sleepValues.SleepStart);
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine("sleep.json file not found");
-        }
-        catch (JsonException e)
-        {
-            File.Copy(Path.Combine(_dataFilePath, "sleep.json"), Path.Combine(_dataFilePath, "sleep_backup.json"), true);
-            Console.WriteLine("failed to parse sleep.json");
-            Console.WriteLine(e);
-        }
-        
-        try
-        {
-            string exerciseText = File.ReadAllText(Path.Combine(_dataFilePath, "exercise.json"));
-            var exercises = JsonSerializer.Deserialize<List<Exercise>>(exerciseText) ?? [];
-
-            Exercises.Clear();
-            foreach (var exercise in exercises)
-                Exercises.Add(exercise);
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine("exercise.json file not found");
-        }
-        catch (JsonException e)
-        {
-            File.Copy(Path.Combine(_dataFilePath, "exercise.json"), Path.Combine(_dataFilePath, "exercise_backup.json"), true);
-            Console.WriteLine("failed to parse exercise.json");
-            Console.WriteLine(e);
-        }
-        
-        try
-        {
-            string workoutText = File.ReadAllText(Path.Combine(_dataFilePath, "workout.json"));
-            var workoutList = JsonSerializer.Deserialize<List<Workout>>(workoutText) ?? [];
-            
-            WorkoutList.Clear();
-            foreach (var workout in workoutList)
-                WorkoutList.Add(workout);
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine("workout.json file not found");
-        }
-        catch (JsonException e)
-        {
-            File.Copy(Path.Combine(_dataFilePath, "workout.json"), Path.Combine(_dataFilePath, "workout_backup.json"), true);
-            Console.WriteLine("failed to parse workout.json");
-            Console.WriteLine(e);
-        }
-        
-        try
-        {
-            string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "journal.json"));
-            var journalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(journalText);
-            
-            Journals.Clear();
-            
-            foreach (var journal in journalRecords)
-                Journals[journal.Key] = journal.Value;
-            
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine("journal.json file not found");
-        }
-        catch (JsonException e)
-        {
-            File.Copy(Path.Combine(_dataFilePath, "journal.json"), Path.Combine(_dataFilePath, "journal_backup.json"), true);
-            Console.WriteLine("failed to parse journal.json");
-            Console.WriteLine(e);
-        }
-        
-        try
-        {
-            string journalText = File.ReadAllText(Path.Combine(_dataFilePath, "note.json"));
-            var noteRecords = JsonSerializer.Deserialize<List<Note>>(journalText);
-
-            Notes.Clear();
-            
-            foreach (var note in noteRecords)
-                Notes.Add(note);
-            
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine("note.json file not found");
-        }
-        catch (JsonException e)
-        {
-            File.Copy(Path.Combine(_dataFilePath, "note.json"), Path.Combine(_dataFilePath, "note_backup.json"), true);
-            Console.WriteLine("failed to parse note.json");
-            Console.WriteLine(e);
-        }
+        await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonValue);
     }
-
+    
     public async Task BackupFiles()
     {
         await WriteDataFiles();
         Console.WriteLine("Done WriteDataFiles");
 
-        foreach (var file in DataFiles)
-        {
-            if (!File.Exists(file.BackupPath))
-                await File.Create(file.BackupPath).DisposeAsync();
-            File.Copy(file.LocalPath, file.BackupPath, true);
-            
-        }
+        var tasks = Enum.GetValues<DataFile>().Select(BackupDataFile);
+        await Task.WhenAll(tasks);
         Console.WriteLine("Done Backup");
+    }
+
+    public async Task BackupDataFile(DataFile file)
+    {
+        var filePaths = DataFiles[file];
+        
+        if (!File.Exists(filePaths.BackupPath))
+            await File.Create(filePaths.BackupPath).DisposeAsync();
+        
+        File.Copy(filePaths.LocalPath, filePaths.BackupPath, true);
+    }
+
+    public async Task ReadDataFiles()
+    {
+        var tasks = Enum.GetValues<DataFile>().Select(ReadDataFile);
+        await Task.WhenAll(tasks);
+    }
+
+    public async Task ReadDataFile(DataFile file)
+    {
+        string jsonText = await File.ReadAllTextAsync(DataFiles[file].LocalPath);
+
+        try
+        {
+            switch (file)
+            {
+                case DataFile.Task:
+                    _ReadTasks(jsonText);
+                    break;
+                case DataFile.Sleep:
+                    _ReadSleep(jsonText);
+                    break;
+                case DataFile.Exercise:
+                    _ReadExercise(jsonText);
+                    break;
+                case DataFile.Workout:
+                    _ReadWorkoutList(jsonText);
+                    break;
+                case DataFile.Journal:
+                    _ReadJournal(jsonText);
+                    break;
+                case DataFile.Note:
+                    _ReadNote(jsonText);
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(file), file, null);
+            }
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine($"{file.ToString()} not found at location {DataFiles[file].LocalPath}");
+        }
+        catch (JsonException e)
+        {
+            await BackupDataFile(file);
+            Console.WriteLine($"Failed to parse {file.ToString()} with the following error:");
+            Console.WriteLine(e);
+        }
+    }
+
+    private void _ReadTasks(string jsonText)
+    {
+        var taskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(jsonText) ?? [];
+            
+        TaskCategories.Clear();
+        foreach (var category in taskCategories)
+        {
+            TaskCategories.Add(category);
+            foreach (var task in category.Tasks)
+            {
+                task.Category = category;
+            }
+        }
+    }
+
+    private void _ReadSleep(string jsonText)
+    {
+        var sleepValues = JsonSerializer.Deserialize<SleepValues>(jsonText);
+            
+        _sleepValues.SleepRecords.Clear();
+        foreach (var sleep in sleepValues.SleepRecords)
+        {
+            _sleepValues.SleepRecords[sleep.Key] = sleep.Value;
+        }
+            
+        _SetSleepStart(sleepValues.SleepStart);
+    }
+
+    private void _ReadExercise(string jsonText)
+    {
+        var exercises = JsonSerializer.Deserialize<List<Exercise>>(jsonText) ?? [];
+
+        Exercises.Clear();
+        foreach (var exercise in exercises)
+            Exercises.Add(exercise);
+    }
+
+    private void _ReadWorkoutList(string jsonText)
+    {
+        var workoutList = JsonSerializer.Deserialize<List<Workout>>(jsonText) ?? [];
+            
+        WorkoutList.Clear();
+        foreach (var workout in workoutList)
+            WorkoutList.Add(workout);
+    }
+
+    private void _ReadJournal(string jsonText)
+    {
+        var journalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(jsonText) ?? [];
+            
+        Journals.Clear();
+            
+        foreach (var journal in journalRecords)
+            Journals[journal.Key] = journal.Value;
+    }
+
+    private void _ReadNote(string jsonText)
+    {
+        var noteRecords = JsonSerializer.Deserialize<List<Note>>(jsonText) ?? [];
+
+        Notes.Clear();
+            
+        foreach (var note in noteRecords)
+            Notes.Add(note);
+    }
+
+    public async Task<IDictionary<DataFile, byte[]>> HashLiveData()
+    {
+        var hashes = new ConcurrentDictionary<DataFile, byte[]>();
+        
+        var hashTasks = Enum.GetValues<DataFile>().Select(
+            file => new Task(() => hashes[file] = HashDataFile(file)));
+
+        await Task.WhenAll(hashTasks);
+        return hashes;
+    }
+
+    public byte[] HashDataFile(DataFile dataFile)
+    {
+        return dataFile switch
+        {
+            DataFile.Task => _HashTasks(),
+            DataFile.Sleep => _hashSleep(),
+            DataFile.Exercise => _hashExercise(),
+            DataFile.Workout => _hashWorkout(),
+            DataFile.Journal => _hashJournal(),
+            DataFile.Note => _hashNote(),
+            _ => throw new ArgumentOutOfRangeException(nameof(dataFile), dataFile, null)
+        };
+    }
+
+    private byte[] _HashTasks()
+    {
+        var hashAlgorithm = new XxHash3();
+
+        foreach (var taskCategory in TaskCategories) 
+            taskCategory.AppendHash(hashAlgorithm);
+
+        return hashAlgorithm.GetCurrentHash();
+    }
+
+    private byte[] _hashSleep()
+    {
+        var hashAlgorithm = new XxHash3();
+
+        hashAlgorithm.Append( _sleepValues.SleepStart switch
+        {
+            { } sleepStart => BitConverter.GetBytes(sleepStart.ToBinary()),
+            _ => "null"u8
+        });
+
+        foreach (var sleepPair in _sleepValues.SleepRecords)
+        {
+            hashAlgorithm.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
+            sleepPair.Value.AppendHash(hashAlgorithm);
+        }
+        
+        return hashAlgorithm.GetCurrentHash();
+    }
+
+    private byte[] _hashExercise()
+    {
+        var hashAlgorithm = new XxHash3();
+
+        foreach (var exercise in Exercises) 
+            exercise.AppendHash(hashAlgorithm);
+        
+        return hashAlgorithm.GetCurrentHash();
+    }
+
+    private byte[] _hashWorkout()
+    {
+        var hashAlgorithm = new XxHash3();
+        
+        foreach (var workout in WorkoutList)
+            workout.AppendHash(hashAlgorithm);
+        
+        return hashAlgorithm.GetCurrentHash();
+    }
+
+    private byte[] _hashJournal()
+    {
+        var hashAlgorithm = new XxHash3();
+
+        foreach (var journalPair in Journals)
+        {
+            hashAlgorithm.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
+            journalPair.Value.AppendHash(hashAlgorithm);
+        }
+        
+        return hashAlgorithm.GetCurrentHash();
+    }
+    
+    private byte[] _hashNote()
+    {
+        var hashAlgorithm = new XxHash3();
+        
+        foreach (var note in Notes)
+            note.AppendHash(hashAlgorithm);
+        
+        return hashAlgorithm.GetCurrentHash();
     }
 
     public async Task PushDbx()
     {
         await WriteDataFiles();
 
-        var tasks = DataFiles.Select(file =>
+        var tasks = DataFiles.Values.Select(file =>
         {
             var stream = File.OpenRead(file.LocalPath);
             return DbxHandler.UploadFileAsync(stream, file.DbxPath);
@@ -329,7 +424,7 @@ public partial class TaskTwig : ObservableObject
     {
         await BackupFiles();
         
-        var tasks = DataFiles.Select(file =>
+        var tasks = DataFiles.Values.Select(file =>
         {
             var stream = File.OpenWrite(file.LocalPath);
             return DbxHandler.DownloadFileAsync(stream, file.DbxPath);
