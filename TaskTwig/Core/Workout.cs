@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO.Hashing;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core;
@@ -19,7 +20,7 @@ public record Workout : IHashable
         hashAlgorithm.Append(BitConverter.GetBytes(StartTime.ToBinary()));
         hashAlgorithm.Append(BitConverter.GetBytes(EndTime.ToBinary()));
         
-        foreach (var exercisePair in Exercises)
+        foreach (var exercisePair in Exercises.OrderBy(pair => pair.Key))
         {
             exercisePair.Key.AppendHash(hashAlgorithm);
             hashAlgorithm.Append(BitConverter.GetBytes(exercisePair.Value));

@@ -108,6 +108,15 @@ public class DbxHandler
         return oAuthFlow.GetAuthorizeUri(OAuthResponseType.Code, ApiKey, tokenAccessType:TokenAccessType.Offline);
     }
 
+    public async Task<Stream> DownloadContentStreamAsync(string dbxFilePath)
+    {
+        if (_dropboxClient is null)
+            throw new InvalidOperationException("Dropbox client not initialized!");
+        
+        var download = await _dropboxClient.Files.DownloadAsync(dbxFilePath);
+        return await download.GetContentAsStreamAsync();
+    }
+
     public async Task DownloadFileAsync(Stream fileStream, string dbxFilePath)
     {
         if (_dropboxClient is null)

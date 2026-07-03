@@ -1,3 +1,4 @@
+using System;
 using System.IO.Hashing;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,6 +13,7 @@ public partial class Journal : ObservableObject, IHashable
 
     public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
-        hashAlgorithm.Append(Encoding.UTF8.GetBytes(Text));
+        if (!string.IsNullOrWhiteSpace(Text))
+            hashAlgorithm.Append(Encoding.UTF8.GetBytes(Text));
     }
 }

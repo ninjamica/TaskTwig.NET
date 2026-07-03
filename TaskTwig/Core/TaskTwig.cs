@@ -7,6 +7,7 @@ using System.IO.Hashing;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ObservableCollections;
@@ -15,6 +16,7 @@ using Color = System.Drawing.Color;
 
 namespace TaskTwig.Core;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum DataFile
 {
     Task,
@@ -30,6 +32,13 @@ public readonly struct DataFilePaths(string dataFileDir, string filename, string
     public string LocalPath { get; } = Path.Combine(dataFileDir, $"{filename}.{extension}");
     public string BackupPath { get; } = Path.Combine(dataFileDir, $"{filename}_backup.{extension}");
     public string DbxPath { get; } = $"/{filename}.{extension}";
+}
+
+public struct HashCommit()
+{
+    public int Schema { get; init; } = 1;
+    public byte[] OverallHash { get; set; } = []; 
+    public ConcurrentDictionary<DataFile, byte[]> FileHashes { get; init; } = new();
 }
 
 public partial class TaskTwig : ObservableObject
@@ -104,6 +113,9 @@ public partial class TaskTwig : ObservableObject
         { DataFile.Journal, new(_dataFilePath, "journal", "json") },
         { DataFile.Note, new(_dataFilePath, "note", "json") }
     };
+    
+    public readonly DataFilePaths CommitFile = new(_dataFilePath, "commit", "json");
+    public HashCommit Hashes { get; private set; } = new();
 
     public readonly DbxHandler DbxHandler;
 
@@ -118,8 +130,6 @@ public partial class TaskTwig : ObservableObject
             Directory.CreateDirectory(_dataFilePath);
         
         DbxHandler = new DbxHandler(_dataFilePath);
-        
-        ReadDataFiles();
     }
     
     public void StartSleeping(DateTime sleepStart)
@@ -151,49 +161,7 @@ public partial class TaskTwig : ObservableObject
 
         return Journals[Today];
     }
-
-    public async Task WriteDataFiles()
-    {
-        var tasks = Enum.GetValues<DataFile>().Select(WriteDataFile);
-        await Task.WhenAll(tasks);
-    }
-
-    public async Task WriteDataFile(DataFile file)
-    {
-        string jsonValue = file switch
-        {
-            DataFile.Task => JsonSerializer.Serialize(TaskCategories),
-            DataFile.Sleep => JsonSerializer.Serialize(_sleepValues),
-            DataFile.Exercise => JsonSerializer.Serialize(Exercises),
-            DataFile.Workout => JsonSerializer.Serialize(WorkoutList),
-            DataFile.Journal => JsonSerializer.Serialize(Journals),
-            DataFile.Note => JsonSerializer.Serialize(Notes),
-            _ => throw new ArgumentOutOfRangeException(nameof(file), file, null)
-        };
-        
-        await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonValue);
-    }
     
-    public async Task BackupFiles()
-    {
-        await WriteDataFiles();
-        Console.WriteLine("Done WriteDataFiles");
-
-        var tasks = Enum.GetValues<DataFile>().Select(BackupDataFile);
-        await Task.WhenAll(tasks);
-        Console.WriteLine("Done Backup");
-    }
-
-    public async Task BackupDataFile(DataFile file)
-    {
-        var filePaths = DataFiles[file];
-        
-        if (!File.Exists(filePaths.BackupPath))
-            await File.Create(filePaths.BackupPath).DisposeAsync();
-        
-        File.Copy(filePaths.LocalPath, filePaths.BackupPath, true);
-    }
-
     public async Task ReadDataFiles()
     {
         var tasks = Enum.GetValues<DataFile>().Select(ReadDataFile);
@@ -237,12 +205,174 @@ public partial class TaskTwig : ObservableObject
         }
         catch (JsonException e)
         {
-            await BackupDataFile(file);
+            await _BackupDataFile(file);
             Console.WriteLine($"Failed to parse {file.ToString()} with the following error:");
             Console.WriteLine(e);
         }
     }
 
+    private async Task _ReadLocalHashes()
+    {
+        string jsonText = await File.ReadAllTextAsync(CommitFile.LocalPath);
+        Hashes = JsonSerializer.Deserialize<HashCommit>(jsonText);
+    }
+
+    private async Task<HashCommit> _DownloadDbxHashes()
+    {
+        await using var downloadStream = await DbxHandler.DownloadContentStreamAsync(CommitFile.DbxPath);
+        return JsonSerializer.Deserialize<HashCommit>(downloadStream);
+    }
+
+    public async Task WriteDataFiles()
+    {
+        // await _HashLiveData();
+        await _WriteDataFiles();
+    }
+
+    private async Task _WriteDataFiles()
+    {
+        var tasks = Enum.GetValues<DataFile>().Select(_WriteDataFile);
+        await Task.WhenAll(tasks);
+        await _WriteLocalHashes();
+    }
+
+    private async Task _WriteDataFile(DataFile file)
+    {
+        string jsonText = file switch
+        {
+            DataFile.Task => JsonSerializer.Serialize(TaskCategories),
+            DataFile.Sleep => JsonSerializer.Serialize(_sleepValues),
+            DataFile.Exercise => JsonSerializer.Serialize(Exercises),
+            DataFile.Workout => JsonSerializer.Serialize(WorkoutList),
+            DataFile.Journal => JsonSerializer.Serialize(Journals),
+            DataFile.Note => JsonSerializer.Serialize(Notes),
+            _ => throw new ArgumentOutOfRangeException(nameof(file), file, null)
+        };
+        
+        await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonText);
+    }
+
+    private async Task _WriteLocalHashes()
+    {
+        string jsonText = JsonSerializer.Serialize(Hashes);
+        await File.WriteAllTextAsync(CommitFile.LocalPath, jsonText);
+    }
+    
+    public async Task BackupFiles()
+    {
+        await WriteDataFiles();
+        Console.WriteLine("Done WriteDataFiles");
+
+        var tasks = Enum.GetValues<DataFile>().Select(_BackupDataFile);
+        await Task.WhenAll(tasks.Append(_BackupLocalHashes()));
+        Console.WriteLine("Done Backup");
+    }
+
+    private async Task _BackupDataFile(DataFile file)
+    {
+        var filePaths = DataFiles[file];
+        
+        if (!File.Exists(filePaths.BackupPath))
+            await File.Create(filePaths.BackupPath).DisposeAsync();
+        
+        File.Copy(filePaths.LocalPath, filePaths.BackupPath, true);
+    }
+
+    private async Task _BackupLocalHashes()
+    {
+        if (!File.Exists(CommitFile.BackupPath))
+            await File.Create(CommitFile.BackupPath).DisposeAsync();
+        
+        File.Copy(CommitFile.LocalPath, CommitFile.BackupPath, true);
+    }
+
+    private async Task _HashLiveData()
+    {
+        var hashTasks = Enum.GetValues<DataFile>().Select(
+            file => new Task(() =>
+            {
+                try
+                {
+                    Hashes.FileHashes[file] = _HashDataFile(file);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }));
+
+        await Task.WhenAll(hashTasks);
+    }
+
+    private byte[] _HashDataFile(DataFile dataFile)
+    {
+        return dataFile switch
+        {
+            DataFile.Task => _HashTasks(),
+            DataFile.Sleep => _hashSleep(),
+            DataFile.Exercise => _hashExercise(),
+            DataFile.Workout => _hashWorkout(),
+            DataFile.Journal => _hashJournal(),
+            DataFile.Note => _hashNote(),
+            _ => throw new ArgumentOutOfRangeException(nameof(dataFile), dataFile, null)
+        };
+    }
+
+    public async Task PushDbx()
+    {
+        await WriteDataFiles();
+
+        var tasks = DataFiles.Values.Select(file =>
+        {
+            var stream = File.OpenRead(file.LocalPath);
+            return DbxHandler.UploadFileAsync(stream, file.DbxPath);
+        });
+        
+        await Task.WhenAll(tasks);
+        Console.WriteLine("Done Push");
+    }
+
+    public async Task PullDbx()
+    {
+        await BackupFiles();
+        
+        var tasks = DataFiles.Values.Select(file =>
+        {
+            var stream = File.OpenWrite(file.LocalPath);
+            return DbxHandler.DownloadFileAsync(stream, file.DbxPath);
+        });
+        
+        await Task.WhenAll(tasks);
+        Console.WriteLine("Done Pull");
+        
+        await ReadDataFiles();
+        Console.WriteLine("Done ReadDataFiles");
+    }
+
+    private void _SetSleepStart(DateTime? dateTime)
+    {
+        _sleepValues.SleepStart = dateTime;
+        IsSleeping = dateTime is not null;
+    }
+    
+    public static void Main()
+    {
+        TaskTwig twig = new();
+        
+        if (!twig.DbxHandler.IsAccountConnected)
+            twig.DbxHandler.AuthFromUrlConsole();
+
+        // using (var stream = File.OpenRead(Path.Combine(_dataFilePath, "task.json")))
+        //     twig._dbx.UploadFileAsync(stream, "/task.json").Wait();
+
+        using (var fileStream = File.OpenWrite(Path.Combine(_dataFilePath, "task.json")))
+            twig.DbxHandler.DownloadFileAsync(fileStream, "/task.json").Wait();
+        
+        // twig.WriteDataFiles();
+    }
+    
+    
+    
     private void _ReadTasks(string jsonText)
     {
         var taskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(jsonText) ?? [];
@@ -308,32 +438,7 @@ public partial class TaskTwig : ObservableObject
         foreach (var note in noteRecords)
             Notes.Add(note);
     }
-
-    public async Task<IDictionary<DataFile, byte[]>> HashLiveData()
-    {
-        var hashes = new ConcurrentDictionary<DataFile, byte[]>();
-        
-        var hashTasks = Enum.GetValues<DataFile>().Select(
-            file => new Task(() => hashes[file] = HashDataFile(file)));
-
-        await Task.WhenAll(hashTasks);
-        return hashes;
-    }
-
-    public byte[] HashDataFile(DataFile dataFile)
-    {
-        return dataFile switch
-        {
-            DataFile.Task => _HashTasks(),
-            DataFile.Sleep => _hashSleep(),
-            DataFile.Exercise => _hashExercise(),
-            DataFile.Workout => _hashWorkout(),
-            DataFile.Journal => _hashJournal(),
-            DataFile.Note => _hashNote(),
-            _ => throw new ArgumentOutOfRangeException(nameof(dataFile), dataFile, null)
-        };
-    }
-
+    
     private byte[] _HashTasks()
     {
         var hashAlgorithm = new XxHash3();
@@ -354,7 +459,7 @@ public partial class TaskTwig : ObservableObject
             _ => "null"u8
         });
 
-        foreach (var sleepPair in _sleepValues.SleepRecords)
+        foreach (var sleepPair in SleepRecords.OrderBy(pair => pair.Key))
         {
             hashAlgorithm.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
             sleepPair.Value.AppendHash(hashAlgorithm);
@@ -387,7 +492,7 @@ public partial class TaskTwig : ObservableObject
     {
         var hashAlgorithm = new XxHash3();
 
-        foreach (var journalPair in Journals)
+        foreach (var journalPair in Journals.OrderBy(pair => pair.Key))
         {
             hashAlgorithm.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
             journalPair.Value.AppendHash(hashAlgorithm);
@@ -404,58 +509,5 @@ public partial class TaskTwig : ObservableObject
             note.AppendHash(hashAlgorithm);
         
         return hashAlgorithm.GetCurrentHash();
-    }
-
-    public async Task PushDbx()
-    {
-        await WriteDataFiles();
-
-        var tasks = DataFiles.Values.Select(file =>
-        {
-            var stream = File.OpenRead(file.LocalPath);
-            return DbxHandler.UploadFileAsync(stream, file.DbxPath);
-        });
-        
-        await Task.WhenAll(tasks);
-        Console.WriteLine("Done Push");
-    }
-
-    public async Task PullDbx()
-    {
-        await BackupFiles();
-        
-        var tasks = DataFiles.Values.Select(file =>
-        {
-            var stream = File.OpenWrite(file.LocalPath);
-            return DbxHandler.DownloadFileAsync(stream, file.DbxPath);
-        });
-        
-        await Task.WhenAll(tasks);
-        Console.WriteLine("Done Pull");
-        
-        ReadDataFiles();
-        Console.WriteLine("Done ReadDataFiles");
-    }
-
-    private void _SetSleepStart(DateTime? dateTime)
-    {
-        _sleepValues.SleepStart = dateTime;
-        IsSleeping = dateTime is not null;
-    }
-    
-    public static void Main()
-    {
-        TaskTwig twig = new();
-        
-        if (!twig.DbxHandler.IsAccountConnected)
-            twig.DbxHandler.AuthFromUrlConsole();
-
-        // using (var stream = File.OpenRead(Path.Combine(_dataFilePath, "task.json")))
-        //     twig._dbx.UploadFileAsync(stream, "/task.json").Wait();
-
-        using (var fileStream = File.OpenWrite(Path.Combine(_dataFilePath, "task.json")))
-            twig.DbxHandler.DownloadFileAsync(fileStream, "/task.json").Wait();
-        
-        // twig.WriteDataFiles();
     }
 }
