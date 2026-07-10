@@ -46,7 +46,7 @@ public partial class UnitInterval : RepeatingInterval
 
     protected override void _AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
-        hashAlgorithm.Append("UnityInterval"u8);
+        hashAlgorithm.Append("UnitInterval"u8);
         hashAlgorithm.Append(BitConverter.GetBytes(UnitAmount));
         hashAlgorithm.Append(BitConverter.GetBytes((int)Unit));
     }

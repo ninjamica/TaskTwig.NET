@@ -266,6 +266,29 @@ public partial class MainViewModel : ViewModelBase
         // }
     }
     
+    private static async Task<Dictionary<DataFile, DataFileAction>> SyncConflictCallback(Dictionary<DataFile, DataFileAction> actions)
+    {
+        var dialogOptions = new OverlayDialogOptions()
+        {
+            Title = "Sync Conflict!", Mode = DialogMode.Question, Buttons = DialogButton.OKCancel, CanLightDismiss = false,
+        };
+        var dialogVm = new SyncConflictDialogViewModel(actions);
+        var result = await OverlayDialog.ShowStandardAsync<SyncConflictDialog, SyncConflictDialogViewModel>(dialogVm, options: dialogOptions);
+
+        return result.HasFlag(DialogResult.OK) ? dialogVm.GetActions() : new Dictionary<DataFile, DataFileAction>();
+    }
+    
+    [ObservableProperty]
+    public partial bool IsSyncDbxLoading { get; private set; } = false;
+
+    [RelayCommand]
+    public async Task DbxSync()
+    {
+        IsSyncDbxLoading = true;
+        await _twig.SyncWithDbx(SyncConflictCallback);
+        IsSyncDbxLoading = false;
+    }
+
     [ObservableProperty]
     public partial string DbxAccountName { get; set; }
 
