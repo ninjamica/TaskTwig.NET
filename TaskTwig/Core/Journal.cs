@@ -5,13 +5,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public partial class Journal : ObservableObject, IHashable
+public partial class Journal : HashableObject
 {
     
     [ObservableProperty]
     public partial string Text { get; set; } = "";
 
-    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         if (!string.IsNullOrWhiteSpace(Text))
             hashAlgorithm.Append(Encoding.UTF8.GetBytes(Text));

@@ -1,7 +1,9 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO.Hashing;
+using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -26,7 +28,7 @@ public enum OccurrencePattern
     StartOn
 }
 
-public partial class TwTask : ObservableObject, IHashable
+public partial class TwTask : HashableObject
 {
     [ObservableProperty]
     public required partial string Name { get; set; }
@@ -194,18 +196,26 @@ public partial class TwTask : ObservableObject, IHashable
         IsOverdue = _IsOverdue();
     }
 
-    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
         hashAlgorithm.Append(BitConverter.GetBytes(Points));
-        Interval.AppendHash(hashAlgorithm);
+        // Interval.AppendHash(hashAlgorithm);
         hashAlgorithm.Append(BitConverter.GetBytes((int)OPattern));
         hashAlgorithm.Append(BitConverter.GetBytes((int)EPattern));
         
         if (LastDone is { } lastDone)
             hashAlgorithm.Append(BitConverter.GetBytes(lastDone.DayNumber));
         
-        foreach (var subTask in SubTasks)
-            subTask.AppendHash(hashAlgorithm);
+        // foreach (var subTask in SubTasks)
+        //     subTask.AppendHash(hashAlgorithm);
+    }
+
+    protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
+    {
+        ((HashableObject)Interval).AppendHashAndChildren(mainHasher, childHasher);
+        
+        foreach (var subTask in SubTasks) 
+            subTask.AppendHashAndChildren(mainHasher, childHasher);
     }
 }

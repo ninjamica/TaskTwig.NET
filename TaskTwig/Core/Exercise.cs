@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace TaskTwig.Core;
 
 [JsonConverter(typeof(ExerciseJsonConverter))]
-public readonly record struct Exercise : IHashable
+public readonly struct Exercise
 {
     [JsonConverter(typeof(JsonStringEnumConverter<ExerciseUnit>))]
     public enum ExerciseUnit

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core;
 
-public readonly record struct Sleep : IHashable
+public class Sleep : HashableObject
 {
     public required DateTime StartTime { get; init; }
     public required DateTime EndTime { get; init; }
@@ -23,7 +23,7 @@ public readonly record struct Sleep : IHashable
     [JsonIgnore]
     public DateOnly Date => DateOnly.FromDateTime(EndTime).AddDays(-1);
 
-    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append(BitConverter.GetBytes(StartTime.ToBinary()));
         hashAlgorithm.Append(BitConverter.GetBytes(EndTime.ToBinary()));

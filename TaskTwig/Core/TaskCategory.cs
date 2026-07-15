@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public partial class TaskCategory : ObservableObject, IHashable
+public partial class TaskCategory : HashableObject
 {
     [ObservableProperty] public partial string Name { get; set; } = "New Task Category";
 
@@ -63,13 +63,19 @@ public partial class TaskCategory : ObservableObject, IHashable
         task.Category = this;
     }
 
-    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
         hashAlgorithm.Append(BitConverter.GetBytes(Color.ToArgb()));
         hashAlgorithm.Append(BitConverter.GetBytes(Expanded));
         
+        // foreach (var task in Tasks) 
+        //     task.AppendHash(hashAlgorithm);
+    }
+
+    protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
+    {
         foreach (var task in Tasks) 
-            task.AppendHash(hashAlgorithm);
+            task.AppendHashAndChildren(mainHasher, childHasher);
     }
 }

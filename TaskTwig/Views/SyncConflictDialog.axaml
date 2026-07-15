@@ -8,16 +8,18 @@
              x:Class="TaskTwig.Views.SyncConflictDialog"
              x:DataType="vm:SyncConflictDialogViewModel">
     
-    <ListBox ItemsSource="{Binding FileActionResponses}">
-        <ListBox.ItemTemplate>
-            <DataTemplate>
-                <StackLayout Orientation="Horizontal">
-                    <!-- <TextBlock Text="{Binding File}"/> -->
-                    <!-- <RadioButton IsChecked="{Binding Download}" Content="Download"/> -->
-                    <!-- <RadioButton IsChecked="{Binding Upload}" Content="Upload"/> -->
-                </StackLayout>
-            </DataTemplate>
-        </ListBox.ItemTemplate>
-    </ListBox>
+    <!-- <ListBox ItemsSource="{Binding FileActionResponses}"> -->
+    <!--     <ListBox.ItemTemplate> -->
+    <!--         <DataTemplate> -->
+    <!--             <StackLayout Orientation="Horizontal"> -->
+    <!--                 <TextBlock>Test</TextBlock> -->
+    <!--                 ~1~ <TextBlock Text="{Binding File}"/> @1@ -->
+    <!--                 ~1~ <RadioButton IsChecked="{Binding Download}" Content="Download"/> @1@ -->
+    <!--                 ~1~ <RadioButton IsChecked="{Binding Upload}" Content="Upload"/> @1@ -->
+    <!--             </StackLayout> -->
+    <!--         </DataTemplate> -->
+    <!--     </ListBox.ItemTemplate> -->
+    <!-- </ListBox> -->
+    <TextBlock>Test</TextBlock>
     
 </UserControl>

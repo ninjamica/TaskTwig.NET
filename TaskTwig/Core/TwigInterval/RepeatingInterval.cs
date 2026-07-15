@@ -13,7 +13,7 @@ public enum RepeatPattern
     OnBefore
 }
 
-public abstract partial class RepeatingInterval : ObservableObject, ITwigInterval
+public abstract partial class RepeatingInterval : HashableObject, ITwigInterval
 {
     [ObservableProperty] public partial DateOnly ReferenceDate { get; set; } = TaskTwig.Today;
     [ObservableProperty] public partial bool AutoRepeat { get; set; } = false;
@@ -79,7 +79,7 @@ public abstract partial class RepeatingInterval : ObservableObject, ITwigInterva
     partial void OnRepeatToChanged(RepeatPattern value) => UpdateOccurrences();
 
 
-    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         _AppendHash(hashAlgorithm);
         

@@ -338,15 +338,16 @@ public partial class TaskTwig : ObservableObject
 
     private byte[] _HashDataFile(DataFile dataFile)
     {
-        var hashAlgorithm = new XxHash3();
+        var mainHasher = new XxHash3();
+        var childHasher = new XxHash3();
         return dataFile switch
         {
-            DataFile.Task => _HashTasks(hashAlgorithm),
-            DataFile.Sleep => _HashSleep(hashAlgorithm),
-            DataFile.Exercise => _HashExercise(hashAlgorithm),
-            DataFile.Workout => _HashWorkout(hashAlgorithm),
-            DataFile.Journal => _HashJournal(hashAlgorithm),
-            DataFile.Note => _HashNote(hashAlgorithm),
+            DataFile.Task => _HashTasks(mainHasher, childHasher),
+            DataFile.Sleep => _HashSleep(mainHasher, childHasher),
+            DataFile.Exercise => _HashExercise(mainHasher),
+            DataFile.Workout => _HashWorkout(mainHasher, childHasher),
+            DataFile.Journal => _HashJournal(mainHasher, childHasher),
+            DataFile.Note => _HashNote(mainHasher, childHasher),
             _ => throw new ArgumentOutOfRangeException(nameof(dataFile), dataFile, null)
         };
     }
@@ -559,17 +560,17 @@ public partial class TaskTwig : ObservableObject
             Notes.Add(note);
     }
     
-    private byte[] _HashTasks(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _HashTasks(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
         foreach (var taskCategory in TaskCategories) 
-            taskCategory.AppendHash(hashAlgorithm);
+            taskCategory.AppendHashAndChildren(mainHasher, childHasher);
 
-        return hashAlgorithm.GetCurrentHash();
+        return mainHasher.GetCurrentHash();
     }
 
-    private byte[] _HashSleep(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _HashSleep(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        hashAlgorithm.Append( _sleepValues.SleepStart switch
+        mainHasher.Append( _sleepValues.SleepStart switch
         {
             { } sleepStart => BitConverter.GetBytes(sleepStart.ToBinary()),
             _ => "null"u8
@@ -577,45 +578,45 @@ public partial class TaskTwig : ObservableObject
 
         foreach (var sleepPair in SleepRecords.OrderBy(pair => pair.Key))
         {
-            hashAlgorithm.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
-            sleepPair.Value.AppendHash(hashAlgorithm);
+            mainHasher.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
+            sleepPair.Value.AppendHashAndChildren(mainHasher, childHasher);
         }
         
-        return hashAlgorithm.GetCurrentHash();
+        return mainHasher.GetCurrentHash();
     }
 
-    private byte[] _HashExercise(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _HashExercise(NonCryptographicHashAlgorithm mainHasher)
     {
         foreach (var exercise in Exercises) 
-            exercise.AppendHash(hashAlgorithm);
+            exercise.AppendHash(mainHasher);
         
-        return hashAlgorithm.GetCurrentHash();
+        return mainHasher.GetCurrentHash();
     }
 
-    private byte[] _HashWorkout(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _HashWorkout(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
         foreach (var workout in WorkoutList)
-            workout.AppendHash(hashAlgorithm);
+            workout.AppendHashAndChildren(mainHasher, childHasher);
         
-        return hashAlgorithm.GetCurrentHash();
+        return mainHasher.GetCurrentHash();
     }
 
-    private byte[] _HashJournal(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _HashJournal(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
         foreach (var journalPair in Journals.OrderBy(pair => pair.Key))
         {
-            hashAlgorithm.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
-            journalPair.Value.AppendHash(hashAlgorithm);
+            mainHasher.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
+            journalPair.Value.AppendHashAndChildren(mainHasher, childHasher);
         }
         
-        return hashAlgorithm.GetCurrentHash();
+        return mainHasher.GetCurrentHash();
     }
     
-    private byte[] _HashNote(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _HashNote(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
         foreach (var note in Notes)
-            note.AppendHash(hashAlgorithm);
+            note.AppendHashAndChildren(mainHasher, childHasher);
         
-        return hashAlgorithm.GetCurrentHash();
+        return mainHasher.GetCurrentHash();
     }
 }

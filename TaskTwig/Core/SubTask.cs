@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
-public partial class SubTask : ObservableObject, IHashable
+public partial class SubTask : HashableObject
 {
     [JsonIgnore]
     public TwTask ParentTask { get; init; }
@@ -25,7 +25,7 @@ public partial class SubTask : ObservableObject, IHashable
     [ObservableProperty]
     private partial DateOnly? LastDone { get; set; }
 
-    public void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
         

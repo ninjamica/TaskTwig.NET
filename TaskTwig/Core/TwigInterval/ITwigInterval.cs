@@ -9,7 +9,7 @@ namespace TaskTwig.Core.TwigInterval;
 [JsonDerivedType(typeof(UnitInterval), typeDiscriminator: "Unit")]
 [JsonDerivedType(typeof(WeekInterval), typeDiscriminator: "Week")]
 [JsonDerivedType(typeof(MonthInterval), typeDiscriminator: "Month")]
-public interface ITwigInterval : IHashable
+public interface ITwigInterval
 {
     [JsonIgnore]
     DateOnly? NextOccurrence { get; }
