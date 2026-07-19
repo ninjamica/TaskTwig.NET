@@ -49,7 +49,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                             <ItemsRepeater.ItemTemplate>
                                                 <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
-                                                              Command="{Binding SetDone}"
+                                                              Command="{Binding SetDoneCommand}"
                                                               CommandParameter="{Binding $self.IsChecked}"
                                                               Content="{Binding Name}"/>
                                                 </DataTemplate>
@@ -66,7 +66,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
-                                                  Command="{Binding SetDone}"
+                                                  Command="{Binding SetDoneCommand}"
                                                   CommandParameter="{Binding $self.IsChecked}"/>
                                         <TextBlock Text="{Binding Name}"
                                                    TextDecorations="Strikethrough"
@@ -86,7 +86,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                   sortable:Sortable.Sortable="True" 
                                   sortable:Sortable.Droppable="False"
                                   sortable:Sortable.Group="categories"
-                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).CategoryListUpdate}">
+                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).CategoryListUpdateCommand}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid RowSpacing="5" ColumnSpacing="5" Margin="5, 10, 5, 10"
@@ -110,7 +110,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     </ToggleButton>
                                     <Button Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left"
                                             Content="{Binding Name}"
-                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategory}"
+                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
                                             CommandParameter="{Binding}"
                                             Theme="{DynamicResource OutlineButton}"/>
                                     
@@ -120,8 +120,8 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                   sortable:Sortable.IsSortable="True"
                                                   sortable:Sortable.Droppable="True"
                                                   sortable:Sortable.Group="tasks"
-                                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdate}"
-                                                  sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDrop}">
+                                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdateCommand}"
+                                                  sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDropCommand}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal"
@@ -139,7 +139,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                     <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" 
-                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTask}" 
+                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}" 
                                             CommandParameter="{Binding}" 
                                             Margin="20, 0, 0, 0"
                                             Content="Add Task+"
@@ -246,7 +246,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
                                         <Button Content="x" 
-                                                Command="{Binding #TabControl.((vm:MainViewModel)DataContext).DeleteNote}"
+                                                Command="{Binding #TabControl.((vm:MainViewModel)DataContext).DeleteNoteCommand}"
                                                 CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </DataTemplate>

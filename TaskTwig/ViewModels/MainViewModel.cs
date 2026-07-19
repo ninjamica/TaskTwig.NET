@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dropbox.Api;
@@ -13,11 +15,15 @@ using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
 using TaskTwig.Views;
 using Ursa.Controls;
+using Notification = Ursa.Controls.Notification;
+using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
 namespace TaskTwig.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
+    public WindowNotificationManager? NotificationManager { get; set; }
+    
     [ObservableProperty]
     public partial string DailyJournal { get; set; }
     partial void OnDailyJournalChanged(string value) => _todaysJournal.Text = value;
@@ -25,7 +31,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] public partial string DailyJournalDate { get; private set; }
     
     public ObservableCollection<Note> Notes { get; set; }
-    [ObservableProperty] public partial Note SelectedNote { get; set; }
+    [ObservableProperty] public partial Note? SelectedNote { get; set; }
 
     [RelayCommand]
     public void CreateNote()
@@ -113,7 +119,7 @@ public partial class MainViewModel : ViewModelBase
             .ContinueWith(result =>
             {
                 if (result.Result)
-                    task.Category.Tasks.Remove(task);
+                    task.Category?.Tasks.Remove(task);
             });
     }
 
@@ -285,8 +291,22 @@ public partial class MainViewModel : ViewModelBase
     public async Task DbxSync()
     {
         IsSyncDbxLoading = true;
-        await _twig.SyncWithDbx(SyncConflictCallback);
+        var actions = await _twig.SyncWithDbx(SyncConflictCallback);
         IsSyncDbxLoading = false;
+        
+        NotificationManager?.Show(
+            new Notification("Sync Completed", _SyncActionsToMessage(actions)),
+            type: NotificationType.Success,
+            classes: ["Light"]);
+    }
+
+    private string _SyncActionsToMessage(Dictionary<DataFile, DataFileAction> actions)
+    {
+        return actions.Count > 0
+            ? string.Join(
+                ", ",
+                actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "⬇" : "⬆")}"))
+            : "Nothing to do";
     }
 
     [ObservableProperty]

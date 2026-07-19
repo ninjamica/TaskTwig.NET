@@ -167,7 +167,7 @@ public partial class TaskTwig : ObservableObject
     public Journal TodaysJournal()
     {
         if (!Journals.ContainsKey(Today))
-            Journals[Today] = new Journal();
+            Journals[Today] = new Journal { Date = Today };
 
         return Journals[Today];
     }
@@ -278,17 +278,36 @@ public partial class TaskTwig : ObservableObject
 
     private async Task _WriteDataFile(DataFile file)
     {
-        string jsonText = file switch
+        string jsonText;
+        switch (file)
         {
-            DataFile.Task => JsonSerializer.Serialize(TaskCategories),
-            DataFile.Sleep => JsonSerializer.Serialize(_sleepValues),
-            DataFile.Exercise => JsonSerializer.Serialize(Exercises),
-            DataFile.Workout => JsonSerializer.Serialize(WorkoutList),
-            DataFile.Journal => JsonSerializer.Serialize(Journals),
-            DataFile.Note => JsonSerializer.Serialize(Notes),
-            _ => throw new ArgumentOutOfRangeException(nameof(file), file, null)
-        };
-        
+            case DataFile.Task:
+                jsonText = JsonSerializer.Serialize(TaskCategories);
+                break;
+            case DataFile.Sleep:
+                jsonText = JsonSerializer.Serialize(_sleepValues);
+                break;
+            case DataFile.Exercise:
+                jsonText = JsonSerializer.Serialize(Exercises);
+                break;
+            case DataFile.Workout:
+                jsonText = JsonSerializer.Serialize(WorkoutList);
+                break;
+            case DataFile.Journal:
+                foreach (var journalPair in Journals)
+                {
+                    if (journalPair.Key != Today && journalPair.Value.IsEmpty())
+                        Journals.Remove(journalPair.Key);
+                }
+                jsonText = JsonSerializer.Serialize(Journals);
+                break;
+            case DataFile.Note:
+                jsonText = JsonSerializer.Serialize(Notes);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(file), file, null);
+        }
+
         await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonText);
     }
 
@@ -406,14 +425,14 @@ public partial class TaskTwig : ObservableObject
         await _UploadDbxHashes(DbxCommitFile);
     }
 
-    public async Task SyncWithDbx(Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>>> conflictCallback)
+    public async Task<Dictionary<DataFile, DataFileAction>> SyncWithDbx(Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>>> conflictCallback)
     {
         await WriteDataFiles();
         var lastSynced = await _ReadLastSyncedHashes();
         var remote = await _DownloadDbxHashes();
 
         var actions = remote is null
-            ? DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Upload)
+            ? DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Conflict)
             : CompareHashes(Hashes, remote, lastSynced);
 
         if (actions.ContainsValue(DataFileAction.Conflict)) 
@@ -425,6 +444,7 @@ public partial class TaskTwig : ObservableObject
         }
         
         await PerformSyncTransactions(actions);
+        return actions;
     }
 
     public async Task PushDbx()
@@ -578,7 +598,7 @@ public partial class TaskTwig : ObservableObject
 
         foreach (var sleepPair in SleepRecords.OrderBy(pair => pair.Key))
         {
-            mainHasher.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
+            // mainHasher.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
             sleepPair.Value.AppendHashAndChildren(mainHasher, childHasher);
         }
         
@@ -605,8 +625,9 @@ public partial class TaskTwig : ObservableObject
     {
         foreach (var journalPair in Journals.OrderBy(pair => pair.Key))
         {
-            mainHasher.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
-            journalPair.Value.AppendHashAndChildren(mainHasher, childHasher);
+            // mainHasher.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
+            if (!journalPair.Value.IsEmpty())
+                journalPair.Value.AppendHashAndChildren(mainHasher, childHasher);
         }
         
         return mainHasher.GetCurrentHash();

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.Core;
@@ -34,7 +35,8 @@ public partial class TwTask : HashableObject
     public required partial string Name { get; set; }
     
     [JsonIgnore]
-    public TaskCategory Category { get; set; }
+    [ObservableProperty]
+    public partial TaskCategory? Category { get; set; }
     
     [ObservableProperty]
     public partial int Points { get; set; } = 1;
@@ -66,9 +68,8 @@ public partial class TwTask : HashableObject
 
     [ObservableProperty]
     public partial DateOnly? LastDone { get; set; }
-
     partial void OnLastDoneChanged(DateOnly? value) => _UpdateStatusVars();
-    
+
     public ObservableCollection<SubTask> SubTasks { get; init; } = [];
     
     
@@ -99,6 +100,7 @@ public partial class TwTask : HashableObject
         return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
     }
     
+    [RelayCommand]
     public void SetDone(bool done)
     {
         LastDone = done ? TaskTwig.Today : null;

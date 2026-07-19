@@ -40,6 +40,7 @@ public partial class TaskCategory : HashableObject
             return _todayTasks;
         }
     }
+    [JsonIgnore]
     private FilteredObservableList<TwTask>? _todayTasks;
     
     [JsonIgnore]
@@ -51,14 +52,12 @@ public partial class TaskCategory : HashableObject
             return _doneTodayTasks;
         }
     }
+    [JsonIgnore]
     private FilteredObservableList<TwTask>? _doneTodayTasks;
 
     public void AddTask(TwTask task)
     {
-        if (task.Category is not null)
-        {
-            task.Category.Tasks.Remove(task);
-        }
+        task.Category?.Tasks.Remove(task);
         Tasks.Add(task);
         task.Category = this;
     }
