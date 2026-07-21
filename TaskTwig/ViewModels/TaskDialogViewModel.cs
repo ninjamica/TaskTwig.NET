@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.Input;
 using Irihi.Avalonia.Shared.Contracts;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
-using Ursa.Controls;
 
 namespace TaskTwig.ViewModels;
 

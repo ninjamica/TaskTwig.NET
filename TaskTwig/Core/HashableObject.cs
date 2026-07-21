@@ -1,14 +1,12 @@
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO.Hashing;
-using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TaskTwig.Core;
 
 public abstract class HashableObject : ObservableObject
 {
-    private byte[]? _cachedHash = null;
+    private byte[]? _cachedHash;
     
     protected void InvalidateCachedHash() => _cachedHash = null;
 

@@ -3,23 +3,20 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
+using System.Diagnostics;
 
-namespace TaskTwig.Core;
+namespace TaskTwig.Core.Util;
 
 public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T> where T : INotifyPropertyChanged where TList : IList<T>, INotifyCollectionChanged
 {
-    public ReadOnlyObservableCollection<TList> Sources { get; }
-    
-    private List<int> _indices = [];
+    private readonly ReadOnlyObservableCollection<TList> _sources;
+    private readonly List<int> _indices = [];
     
     public ObservableCollectionList(ReadOnlyObservableCollection<TList> sources) : base([])
     {
-        Sources = sources;
-        ((INotifyCollectionChanged)Sources).CollectionChanged += _HandleSourcesChanged;
+        _sources = sources;
+        ((INotifyCollectionChanged)_sources).CollectionChanged += _HandleSourcesChanged;
         _RegisterAllSources();
-        
-        // Console.WriteLine($"ObservableCollectionList.new(): {Sources}, {Sources.Count}");
     }
 
     private int _GetCountToSource(int sourceIndex)
@@ -27,14 +24,14 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
         if (sourceIndex == 0)
             return 0;
         
-        return _indices[sourceIndex - 1] + Sources[sourceIndex - 1].Count;
+        return _indices[sourceIndex - 1] + _sources[sourceIndex - 1].Count;
     }
 
     private void _RegisterAllSources()
     {
         Items.Clear();
         _indices.Clear();
-        foreach (var source in Sources)
+        foreach (var source in _sources)
         {
             source.CollectionChanged += _HandleBaseCollectionChanged;
             
@@ -101,14 +98,13 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
             default:
                 throw new ArgumentOutOfRangeException();
         }
-        
-        // Console.WriteLine($"ObservableCollectionList _HandleSourcesChanged: {args.Action}: {Items.Count}");
     }
     
     private void _HandleBaseCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
     {
+        Debug.Assert(sender != null, nameof(sender) + " != null");
         var sourceList = (TList)sender;
-        int sourceIndex = Sources.IndexOf(sourceList);
+        int sourceIndex = _sources.IndexOf(sourceList);
         int baseIndex = _indices[sourceIndex];
         switch (args.Action)
         {
@@ -157,7 +153,5 @@ public class ObservableCollectionList<T, TList> : ReadOnlyObservableCollection<T
             default:
                 throw new ArgumentOutOfRangeException();
         }
-        
-        // Console.WriteLine($"ObservableCollectionList _HandleBaseCollectionChanged: {args.Action}: {Items.Count}");
     }
 }

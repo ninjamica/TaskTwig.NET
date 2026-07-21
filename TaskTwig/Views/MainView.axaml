@@ -5,7 +5,6 @@
                 xmlns:vm="using:TaskTwig.ViewModels"
                 xmlns:u="https://irihi.tech/ursa"
                 xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
-                xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Runtime"
                 xmlns:core="clr-namespace:TaskTwig.Core"
                 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
                 x:Class="TaskTwig.Views.MainView"

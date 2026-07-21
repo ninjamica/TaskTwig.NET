@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -26,7 +25,7 @@ public partial class MainViewModel : ViewModelBase
     
     [ObservableProperty]
     public partial string DailyJournal { get; set; }
-    partial void OnDailyJournalChanged(string value) => _todaysJournal.Text = value;
+    partial void OnDailyJournalChanged(string value) => _todaysJournal?.Text = value;
     
     [ObservableProperty] public partial string DailyJournalDate { get; private set; }
     
@@ -53,8 +52,8 @@ public partial class MainViewModel : ViewModelBase
     public NotifyCollectionChangedSynchronizedViewList<KeyValuePair<DateOnly, Sleep>> SleepList { get; init; }
     
 
-    private Core.TaskTwig _twig;
-    private Journal _todaysJournal;
+    private readonly Core.TaskTwig _twig;
+    private Journal? _todaysJournal;
 
     [RelayCommand]
     public void CreateTaskCategory()
@@ -305,7 +304,7 @@ public partial class MainViewModel : ViewModelBase
         return actions.Count > 0
             ? string.Join(
                 ", ",
-                actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "⬇" : "⬆")}"))
+                actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
             : "Nothing to do";
     }
 
@@ -315,36 +314,24 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
-        _twig.ReadDataFiles();
-
-        _todaysJournal = _twig.TodaysJournal();
-        DailyJournal = _todaysJournal.Text;
-        DailyJournalDate = Core.TaskTwig.Today.ToString("dddd MMMM d");
-        Notes = _twig.Notes;
-        if (Notes.Count > 0)
-            SelectedNote = Notes.First();
+        _twig.PropertyChanged += OnTwigOnPropertyChanged;
+        
+        _twig.InitDataFromFiles().ContinueWith(_ =>
+        {
+            if (_twig.Notes.Count > 0)
+                SelectedNote = _twig.Notes.First();
+        });
+        
         TaskCategoriesView = _twig.TaskCategories;
         DoneTodayTasks = _twig.DoneTodayTaskLists;
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
+        Notes = _twig.Notes;
 
-        DbxAccountName = "No Account";
-        Task.Run(async () =>
-        {
-            DbxAccountName = await _twig.DbxHandler.GetAccountName();
-        });
-        // try
-        // {
-        //     DbxAccountName = _twig.DbxHandler.GetAccountName();
-        // }
-        // catch (InvalidOperationException e)
-        // {
-        //     DbxAccountName = "No Account";
-        // }
-                
-        
         SleepButtonText = _twig.IsSleeping ? "Wake Up" : "Go To Sleep";
+        DbxAccountName = "No Account";
+        Task.Run(async () => DbxAccountName = await _twig.DbxHandler.GetAccountName());
+        
 
-        _twig.PropertyChanged += OnTwigOnPropertyChanged;
     }
 
     private void OnTwigOnPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -354,6 +341,15 @@ public partial class MainViewModel : ViewModelBase
             if (args.PropertyName == nameof(_twig.IsSleeping))
             {
                 SleepButtonText = _twig.IsSleeping ? "Wake Up" : "Go To Sleep";
+            }
+            else if (args.PropertyName == nameof(_twig.TodaysJournal))
+            {
+                _todaysJournal = _twig.TodaysJournal;
+                if (_todaysJournal is not null)
+                {
+                    DailyJournal = _todaysJournal.Text;
+                    DailyJournalDate = _todaysJournal.Date.ToString("dddd MMMM d");
+                }
             }
         }
     }

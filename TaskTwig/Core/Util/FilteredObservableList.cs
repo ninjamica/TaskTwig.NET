@@ -4,14 +4,14 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-namespace TaskTwig.Core;
+namespace TaskTwig.Core.Util;
 
 public class FilteredObservableList<T> : ReadOnlyObservableCollection<T> where T : INotifyPropertyChanged
 {
     private readonly ObservableCollection<T> _baseCollection;
     private readonly List<int> _indices = [];
     private readonly Predicate<T> _filter;
-    private string[]? _propertyNames;
+    private readonly string[]? _propertyNames;
 
 
     public FilteredObservableList(ObservableCollection<T> baseCollection, Predicate<T> filter, params string[]? propertyNames) : base([])

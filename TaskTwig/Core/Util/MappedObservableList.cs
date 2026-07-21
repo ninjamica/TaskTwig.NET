@@ -3,23 +3,22 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-namespace TaskTwig.Core;
+namespace TaskTwig.Core.Util;
 
 public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection<TMapped> where TBase : INotifyPropertyChanged
 {
-    private ObservableCollection<TBase> _baseCollection;
-    private Func<TBase, TMapped> _mapper;
-    private string[]? _propertyNames;
+    private readonly ObservableCollection<TBase> _baseCollection;
+    private readonly Func<TBase, TMapped> _mapper;
+    private readonly string[]? _propertyNames;
 
-    public MappedObservableList(ObservableCollection<TBase> baseCollection, Func<TBase, TMapped> mapper) : base([])
+    public MappedObservableList(ObservableCollection<TBase> baseCollection, Func<TBase, TMapped> mapper, params string[]? propertyNames) : base([])
     {
         _baseCollection = baseCollection;
         _mapper = mapper;
+        _propertyNames = propertyNames;
+        
         _ResetItems();
-        
         _baseCollection.CollectionChanged += _HandleCollectionChanged;
-        
-        // Console.WriteLine($"MappedObservableList: {Items.Count}");
     }
 
     private void _ResetItems()
@@ -71,8 +70,6 @@ public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection
         {
             _ResetItems();
         }
-        
-        // Console.WriteLine($"MappedObservableList._HandleCollectionChanged(): {args.Action}: {Items.Count}");
     }
 
     private void _HandleItemPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -83,7 +80,5 @@ public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection
             int index = _baseCollection.IndexOf(item);
             Items[index] = _mapper(item);
         }
-        
-        // Console.WriteLine($"MappedObservableList._HandleItemPropertyChanged(): {string.Join(", ", _propertyNames ?? ["None"])}:{args.PropertyName}: {Items.Count}");
     }
 }

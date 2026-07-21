@@ -9,7 +9,7 @@ namespace TaskTwig.Core;
 public partial class SubTask : HashableObject
 {
     [JsonIgnore]
-    public TwTask ParentTask { get; init; }
+    public TwTask? ParentTask { get; init; }
     
     [ObservableProperty]
     public required partial string Name { get; set; }
@@ -18,7 +18,7 @@ public partial class SubTask : HashableObject
     [JsonIgnore]
     public bool IsDone
     {
-        get => ParentTask._IsDone(LastDone);
+        get => ParentTask?._IsDone(LastDone) ?? false;
         set => LastDone = value ? TaskTwig.Today : null;
     }
     
