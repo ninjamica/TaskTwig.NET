@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO.Hashing;
+using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,6 +17,9 @@ public partial class TaskCategory : HashableObject
     [ObservableProperty] public partial Color Color { get; set; } = Color.White;
 
     [ObservableProperty] public partial bool Expanded { get; set; } = true;
+    
+    public int CompletedPoints => DoneTodayTasks.Sum(task  => task.Points);
+    public int TotalPoints => TodayTasks.Sum(task => task.Points) + DoneTodayTasks.Sum(task => task.Points);
 
     public ObservableCollection<TwTask> Tasks
     {

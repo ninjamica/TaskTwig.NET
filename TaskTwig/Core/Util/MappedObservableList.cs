@@ -74,7 +74,6 @@ public class MappedObservableList<TBase, TMapped> : ReadOnlyObservableCollection
 
     private void _HandleItemPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        Console.WriteLine($"_HandleItemPropertyChanged: {args.PropertyName}");
         if (sender is TBase item && (_propertyNames is null || _propertyNames.Contains(args.PropertyName)))
         {
             int index = _baseCollection.IndexOf(item);

@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="clr-namespace:TaskTwig.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskTwig.Views.ExpanderButton">
+                
+    
+    <Panel Cursor="Hand">
+        <PathIcon Data="{StaticResource SemiIconChevronDown}"
+                  Classes="Expander" Width="12" Height="12"
+                  IsVisible="{Binding $parent[views:ExpanderButton].IsExpanded}"/>
+        <PathIcon Data="{StaticResource SemiIconChevronRight}"
+                  Classes="Expander" Width="12" Height="12"
+                  IsVisible="{Binding !$parent[views:ExpanderButton].IsExpanded}"/>
+    </Panel>
+    
+    <UserControl.Styles>
+        <Style Selector="PathIcon.Expander">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="LightGray"/>
+    
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="White"/>
+            </Style>
+        </Style>
+    
+    </UserControl.Styles>
+    
+</UserControl>

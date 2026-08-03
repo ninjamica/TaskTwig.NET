@@ -22,6 +22,9 @@ namespace TaskTwig.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     public WindowNotificationManager? NotificationManager { get; set; }
+
+    [ObservableProperty]
+    public partial bool TodayDoneExpanded { get; set; } = true;
     
     [ObservableProperty]
     public partial string DailyJournal { get; set; }
