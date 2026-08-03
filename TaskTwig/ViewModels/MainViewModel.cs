@@ -274,7 +274,7 @@ public partial class MainViewModel : ViewModelBase
         // }
     }
     
-    private static async Task<Dictionary<DataFile, DataFileAction>> SyncConflictCallback(Dictionary<DataFile, DataFileAction> actions)
+    private static async Task<Dictionary<DataFile, DataFileAction>?> SyncConflictCallback(Dictionary<DataFile, DataFileAction> actions)
     {
         var dialogOptions = new OverlayDialogOptions()
         {
@@ -283,7 +283,7 @@ public partial class MainViewModel : ViewModelBase
         var dialogVm = new SyncConflictDialogViewModel(actions);
         var result = await OverlayDialog.ShowStandardAsync<SyncConflictDialog, SyncConflictDialogViewModel>(dialogVm, options: dialogOptions);
 
-        return result.HasFlag(DialogResult.OK) ? dialogVm.GetActions() : new Dictionary<DataFile, DataFileAction>();
+        return result.HasFlag(DialogResult.OK) ? dialogVm.GetActions() : null;
     }
     
     [ObservableProperty]
@@ -295,11 +295,21 @@ public partial class MainViewModel : ViewModelBase
         IsSyncDbxLoading = true;
         var actions = await _twig.SyncWithDbx(SyncConflictCallback);
         IsSyncDbxLoading = false;
-        
-        NotificationManager?.Show(
-            new Notification("Sync Completed", _SyncActionsToMessage(actions)),
-            type: NotificationType.Success,
-            classes: ["Light"]);
+
+        if (actions is null)
+        {
+            NotificationManager?.Show(
+                new Notification("Sync Canceled", null),
+                type: NotificationType.Warning,
+                classes: ["Light"]);
+        }
+        else
+        {
+            NotificationManager?.Show(
+                new Notification("Sync Completed", _SyncActionsToMessage(actions)),
+                type: NotificationType.Success,
+                classes: ["Light"]);
+        }
     }
 
     private string _SyncActionsToMessage(Dictionary<DataFile, DataFileAction> actions)

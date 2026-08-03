@@ -236,18 +236,22 @@ public partial class TaskTwig : ObservableObject
         }
     }
 
+    private static async Task<HashCommit?> _ReadHashFile(string path)
+    {
+        await using var file = File.OpenRead(path);
+        return await JsonSerializer.DeserializeAsync<HashCommit>(file);
+    }
+
     private async Task _ReadLocalHashes()
     {
-        string jsonText = await File.ReadAllTextAsync(CommitFile.LocalPath);
-        _liveHashes.SetFrom(JsonSerializer.Deserialize<HashCommit>(jsonText));
+        _liveHashes.SetFrom(await _ReadHashFile(CommitFile.LocalPath));
     }
 
     private async Task _ReadLastSyncedHashes()
     {
         try
         {
-            // string jsonText = await File.ReadAllTextAsync(DbxCommitFile.LocalPath);
-            _lastSyncedHashes.SetFrom(await JsonSerializer.DeserializeAsync<HashCommit>(File.OpenRead(DbxCommitFile.LocalPath)));
+            _lastSyncedHashes.SetFrom(await _ReadHashFile(DbxCommitFile.LocalPath));
         }
         catch (FileNotFoundException)
         {
@@ -279,14 +283,14 @@ public partial class TaskTwig : ObservableObject
     public async Task WriteDataFiles()
     {
         await _HashLiveData();
-        await _WriteDataFiles();
-    }
-
-    private async Task _WriteDataFiles()
-    {
-        // var tasks = Enum.GetValues<DataFile>().Select(_WriteDataFile);
-        // await Task.WhenAll(tasks);
-        await Parallel.ForEachAsync(Enum.GetValues<DataFile>(), async (file, _) => await _WriteDataFile(file));
+        var fileHashes = await _ReadHashFile(CommitFile.LocalPath);
+        var diffFiles = fileHashes is null ? _liveHashes.FileHashes.Keys : _FindHashDiffs(_liveHashes, fileHashes);
+        
+        await Parallel.ForEachAsync(diffFiles, async (file, _) =>
+        {
+            Console.WriteLine($"Saving {file}");
+            await _WriteDataFile(file);
+        });
         await _WriteLocalHashes(CommitFile);
     }
 
@@ -385,7 +389,16 @@ public partial class TaskTwig : ObservableObject
         };
     }
 
-    public Dictionary<DataFile, DataFileAction> CompareHashes(HashCommit? remoteHashes)
+    private static IEnumerable<DataFile> _FindHashDiffs(HashCommit hash1, HashCommit hash2)
+    {
+        return hash1.OverallHash.SequenceEqual(hash2.OverallHash)
+            ? []
+            : hash1.FileHashes.Keys.Union(hash2.FileHashes.Keys).Where(file =>
+                hash1.FileHashes.ContainsKey(file) ^ hash2.FileHashes.ContainsKey(file) ||
+                !hash1.FileHashes[file].SequenceEqual(hash2.FileHashes[file]));
+    }
+
+    public Dictionary<DataFile, DataFileAction> CompareRemoteHashes(HashCommit? remoteHashes)
     {
         if (remoteHashes is null)
             return DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Conflict);
@@ -394,13 +407,18 @@ public partial class TaskTwig : ObservableObject
             throw new InvalidOperationException("Hash schema versions do not match (TODO: implement handling of this)");
 
         Dictionary<DataFile, DataFileAction> diffs = new();
-        foreach (var (file, liveHash) in _liveHashes.FileHashes)
+        foreach (var file in _liveHashes.FileHashes.Keys.Union(_lastSyncedHashes.FileHashes.Keys)
+                     .Union(remoteHashes.FileHashes.Keys))
         {
+            _liveHashes.FileHashes.TryGetValue(file, out var liveHash);
             _lastSyncedHashes.FileHashes.TryGetValue(file, out var lastSyncedHash);
             remoteHashes.FileHashes.TryGetValue(file, out var remoteHash);
 
             if (remoteHash is null)
                 diffs[file] = DataFileAction.Upload;
+            
+            else if (liveHash is null)
+                diffs[file] = DataFileAction.Download;
             
             else if (!liveHash.SequenceEqual(remoteHash))
             {
@@ -448,23 +466,28 @@ public partial class TaskTwig : ObservableObject
 
         await ReadDataFiles();
         await _HashLiveData();
+        await _WriteLocalHashes(CommitFile);
+        
         _lastSyncedHashes.SetFrom(_liveHashes);
-        await _WriteLocalHashes(CommitFile); 
         await _WriteLocalHashes(DbxCommitFile);
         
         if (actions.ContainsValue(DataFileAction.Upload))
             await _UploadDbxHashes(DbxCommitFile);
     }
 
-    public async Task<Dictionary<DataFile, DataFileAction>> SyncWithDbx(Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>>> conflictCallback)
+    public async Task<Dictionary<DataFile, DataFileAction>?> SyncWithDbx(Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>?>> conflictCallback)
     {
         await WriteDataFiles();
         var remoteHashes = await _DownloadDbxHashes();
 
-        var actions = CompareHashes(remoteHashes);
+        var actions = CompareRemoteHashes(remoteHashes);
 
-        if (actions.ContainsValue(DataFileAction.Conflict)) 
+        if (actions.ContainsValue(DataFileAction.Conflict))
+        {
             actions = await conflictCallback(actions);
+            if (actions is null)
+                return null;
+        }
         
         foreach (var dataFileAction in actions)
         {
