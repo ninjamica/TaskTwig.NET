@@ -3,6 +3,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using TaskTwig.Core;
 using TaskTwig.ViewModels;
 using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
@@ -26,6 +28,24 @@ public partial class MainView : UserControl
         mainViewModel.NotificationManager = WindowNotificationManager.TryGetNotificationManager(topLevel, out var manager)
             ? manager
             : new WindowNotificationManager(topLevel);
+    }
+
+    private void TodayNameClicked(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Control { DataContext: TaskCategory category })
+        {
+            category.Expanded = !category.Expanded;
+            Console.WriteLine(category.Expanded);
+            Console.WriteLine(e.Source?.GetType());
+        }
+    }
+
+    private void DoneNameClicked(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is MainViewModel mainViewModel)
+        {
+            mainViewModel.TodayDoneExpanded = !mainViewModel.TodayDoneExpanded;
+        }
     }
 
     private void TaskDragStarted(object? sender, PointerPressedEventArgs e)

@@ -38,7 +38,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
     [ObservableProperty] public partial bool IsOnSa { get; set; }
     [ObservableProperty] public partial bool IsOnSu { get; set; }
 
-    [ObservableProperty] public partial string MonthDateList { get; set; } = "";
+    [ObservableProperty] public partial uint MonthDateMap { get; set; } = 0u;
     
     [ObservableProperty] public partial bool ShowOPattern { get; set; } = false;
     [ObservableProperty] public partial bool ShowEPattern { get; set; } = false;
@@ -89,7 +89,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
             case MonthInterval monthInterval:
                 ReferenceDate = monthInterval.ReferenceDate;
                 IntervalSpacing = monthInterval.MonthSpacing;
-                _UpdateMonthDateList(monthInterval);
+                MonthDateMap = monthInterval.DaysOfMonthMap;
                 ShowOPattern = true;
                 ShowEPattern = true;
                 ShowReferenceDate = true;
@@ -112,19 +112,6 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
         IsOnF  = days.HasFlag(DayOfWeekFlag.Friday);
         IsOnSa = days.HasFlag(DayOfWeekFlag.Saturday);
         IsOnSu = days.HasFlag(DayOfWeekFlag.Sunday);
-    }
-
-    private void _UpdateMonthDateList(MonthInterval monthInterval)
-    {
-        StringBuilder list = new StringBuilder();
-        for (int day = 1; day <= 31; day++)
-        {
-            if (monthInterval.IsOnDay(day))
-                list.Append($"{day}, ");
-        }
-        
-        var listStr =  list.ToString();
-        MonthDateList = listStr.Length > 3 ? listStr[..^2] : listStr;
     }
 
     partial void OnSelectedIntervalChanged(Type value)
@@ -169,7 +156,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
                 Task.Interval = monthInterval;
                 IntervalSpacing = monthInterval.MonthSpacing;
                 ReferenceDate = monthInterval.ReferenceDate;
-                _UpdateMonthDateList(monthInterval);
+                MonthDateMap = monthInterval.DaysOfMonthMap;
                 
                 ShowUnitInterval = false;
                 ShowWeekInterval = false;
@@ -365,28 +352,14 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
         }
     }
 
-    partial void OnMonthDateListChanged(string value)
+    partial void OnMonthDateMapChanged(uint value)
     {
         if (!_isFinishedSetup)
             return;
         
         if (Task.Interval is MonthInterval monthInterval)
         {
-            Console.WriteLine($"OnMonthDateListChanged({value})");
-            
-            uint map = 0;
-
-            foreach (string date in value.Split(','))
-            {
-                if (int.TryParse(date, out var dayVal) && dayVal is > 0 and <= 31)
-                {
-                    map |= 1u << (dayVal - 1);
-                }
-            }
-
-            monthInterval.DaysOfMonthMap = map;
-            
-            Console.WriteLine($"OnMonthDateListChanged finished map: {map}");
+            monthInterval.DaysOfMonthMap = value;
         }
     }
 

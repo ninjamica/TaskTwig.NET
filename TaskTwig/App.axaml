@@ -15,4 +15,8 @@
         <semi:SemiTheme Locale="en-US" />
         <semi:UrsaSemiTheme Locale="en-US"/>
     </Application.Styles>
+             
+     <Application.Resources>
+         <FontFamily x:Key="NotoColorEmoji">avares://MyApp/Assets/Fonts#Noto Color Emoji, Regular</FontFamily>
+     </Application.Resources>
 </Application>

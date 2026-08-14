@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using CommunityToolkit.Mvvm.Input;
 
 namespace TaskTwig.Views;
 
@@ -24,6 +25,12 @@ public partial class ExpanderButton : UserControl
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
+        Toggle();
+    }
+
+    [RelayCommand]
+    public void Toggle()
+    {
         SetCurrentValue(IsExpandedProperty, !IsExpanded);
     }
 }

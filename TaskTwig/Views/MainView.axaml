@@ -22,55 +22,88 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             
             <ContentPage Header="Today" Icon="{StaticResource SemiIconCalendar}">
                 <ScrollViewer>
-                    <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="Auto, *" ColumnSpacing="5">
-                        <ItemsRepeater Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
-                                       ItemsSource="{Binding TaskCategoriesView}">
+                    <StackPanel>
+                        <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid RowDefinitions="Auto, *" ColumnDefinitions="Auto, *" ColumnSpacing="5">
-                                        <views:ExpanderButton Grid.Row="0" Grid.Column="0"
-                                                              IsExpanded="{Binding Expanded}"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
-                                                   Text="{Binding Name}"
-                                                   FontSize="16"/>
-                                        <ItemsRepeater Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TodayTasks}"
+                                    <u:UrsaGroupBox Margin="10" Padding="15, 5, 15, 5"
+                                                    Background="{DynamicResource SemiColorBackground1}"
+                                                    BorderBrush="{DynamicResource SemiColorBackground2}">
+                                        <u:UrsaGroupBox.Header>
+                                            <StackPanel Orientation="Horizontal" Spacing="5"
+                                                        PointerPressed="TodayNameClicked"
+                                                        Cursor="Hand">
+                                                <views:ExpanderButton IsExpanded="{Binding Expanded, Mode=OneWay}"/>
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="{Binding Name}"
+                                                           Classes="H5"
+                                                           Theme="{StaticResource TitleTextBlock}"/>
+                                            </StackPanel>
+                                        </u:UrsaGroupBox.Header>
+                                        <ItemsRepeater ItemsSource="{Binding TodayTasks}"
                                                        Margin="0, 5, 0, 10"
                                                        IsVisible="{Binding Expanded}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Spacing="5"/>
+                                            </ItemsRepeater.Layout>
                                             <ItemsRepeater.ItemTemplate>
                                                 <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
                                                               Command="{Binding SetDoneCommand}"
-                                                              CommandParameter="{Binding $self.IsChecked}"
-                                                              Content="{Binding Name}"/>
+                                                              CommandParameter="{Binding $self.IsChecked}">
+                                                        <TextBlock FontSize="24">
+                                                            <Run Text="{Binding Icon}" 
+                                                                 FontFamily="{StaticResource NotoColorEmoji}"/>
+                                                            <Run Text="{Binding Name}"
+                                                                 BaselineAlignment="Center"
+                                                                 FontSize="16"/>
+                                                        </TextBlock>
+                                                    </CheckBox>
                                                 </DataTemplate>
                                             </ItemsRepeater.ItemTemplate>
                                         </ItemsRepeater>
-                                    </Grid>
+                                    </u:UrsaGroupBox>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
-                        <views:ExpanderButton Grid.Row="1" Grid.Column="0"
-                                              IsExpanded="{Binding TodayDoneExpanded}"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Done" FontSize="16" VerticalAlignment="Center"/>
-                        <ItemsRepeater Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
-                                       ItemsSource="{Binding DoneTodayTasks}"
-                                       Margin="10, 5, 0, 10"
-                                       IsVisible="{Binding TodayDoneExpanded}">
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <u:UrsaGroupBox Margin="10" Padding="15, 5, 15, 5"
+                                        Background="{DynamicResource SemiColorBackground1}"
+                                        BorderBrush="{DynamicResource SemiColorBackground2}">
+                            <u:UrsaGroupBox.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="5"
+                                            PointerPressed="DoneNameClicked"
+                                            Cursor="Hand">
+                                    <views:ExpanderButton IsExpanded="{Binding TodayDoneExpanded, Mode=OneWay}"/>
+                                    <TextBlock VerticalAlignment="Center"
+                                               Text="Done"
+                                               Classes="H5"
+                                               Theme="{StaticResource TitleTextBlock}"/>
+                                </StackPanel>
+                            </u:UrsaGroupBox.Header>
+                            <ItemsRepeater ItemsSource="{Binding DoneTodayTasks}"
+                                           Margin="0, 5, 0, 10"
+                                           IsVisible="{Binding TodayDoneExpanded}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Spacing="5"/>
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate>
                                         <CheckBox IsChecked="{Binding IsDone, Mode=OneWay}"
                                                   Command="{Binding SetDoneCommand}"
                                                   CommandParameter="{Binding $self.IsChecked}">
-                                            <TextBlock Text="{Binding Name}"
-                                                       TextDecorations="Strikethrough"
-                                                       Classes="Tertiary"/>
+                                            <TextBlock FontSize="24" Classes="Tertiary" TextDecorations="Strikethrough">
+                                                <Run Text="{Binding Icon}" 
+                                                     FontFamily="{StaticResource NotoColorEmoji}"/>
+                                                <Run Text="{Binding Name}"
+                                                     BaselineAlignment="Center"
+                                                     FontSize="16"/>
+                                            </TextBlock>
                                         </CheckBox>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
-                    </Grid>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </u:UrsaGroupBox>
+                    </StackPanel>
                 </ScrollViewer>
             </ContentPage>
             
@@ -91,7 +124,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid RowSpacing="5" ColumnSpacing="5" Margin="5, 10, 5, 10"
-                                      RowDefinitions="Auto, *, Auto" ColumnDefinitions="Auto, Auto, *"
+                                      RowDefinitions="Auto, *" ColumnDefinitions="Auto, Auto, Auto, Auto, *"
                                       sortable:Sortable.IsSortable="True">
                                     <PathIcon Grid.Row="0" Grid.Column="0"
                                               Data="{StaticResource SemiIconHandle}"
@@ -105,8 +138,18 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
                                             CommandParameter="{Binding}"
                                             Theme="{DynamicResource OutlineButton}"/>
+                                    <Button Grid.Row="0" Grid.Column="3"
+                                            Foreground="White"
+                                            Background="Transparent"
+                                            Margin="0"
+                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}" 
+                                            CommandParameter="{Binding}"
+                                            IsVisible="{Binding Expanded}">
+                                        <PathIcon Data="{StaticResource SemiIconPlus}"
+                                                  Width="10" Height="10"/>
+                                    </Button>
                                     
-                                    <ItemsControl Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                    <ItemsControl Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4"
                                                   ItemsSource="{Binding Tasks}"
                                                   IsVisible="{Binding Expanded}"
                                                   sortable:Sortable.IsSortable="True"
@@ -123,21 +166,22 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                               Cursor="Hand"
                                                               PointerPressed="TaskDragStarted"
                                                               ScrollGesture="TaskScrollStarted"/>
-                                                    <Button Content="{Binding Name}"
-                                                            Classes="Tertiary"
+                                                    <Button Classes="Tertiary"
                                                             Theme="{DynamicResource BorderlessButton}"
                                                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
-                                                            CommandParameter="{Binding}"/>
+                                                            CommandParameter="{Binding}">
+                                                        <TextBlock>
+                                                            <Run Text="{Binding Icon}" 
+                                                                 FontFamily="{StaticResource NotoColorEmoji}"
+                                                                 FontSize="24"/>
+                                                            <Run Text="{Binding Name}"
+                                                                 BaselineAlignment="Center"/>
+                                                        </TextBlock>
+                                                    </Button>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" 
-                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}" 
-                                            CommandParameter="{Binding}" 
-                                            Margin="20, 0, 0, 0"
-                                            Content="Add Task+"
-                                            IsVisible="{Binding Expanded}"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

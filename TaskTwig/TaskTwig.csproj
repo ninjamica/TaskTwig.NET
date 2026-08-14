@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\Fonts\*"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -36,5 +37,13 @@
         <DependentUpon>DateTimeDialog.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="Views\MonthDateSelect.axaml.cs">
+        <DependentUpon>MonthDateSelect.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Assets\Fonts\" />
     </ItemGroup>
 </Project>
