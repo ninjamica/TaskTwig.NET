@@ -17,6 +17,6 @@
     </Application.Styles>
              
      <Application.Resources>
-         <FontFamily x:Key="NotoColorEmoji">avares://MyApp/Assets/Fonts#Noto Color Emoji, Regular</FontFamily>
+         <FontFamily x:Key="NotoColorEmoji">avares://TaskTwig/Assets/Fonts#Noto Color Emoji, Regular</FontFamily>
      </Application.Resources>
 </Application>
