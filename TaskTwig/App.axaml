@@ -17,9 +17,6 @@
     </Application.Styles>
              
      <Application.Resources>
-         <FontFamily x:Key="NotoColorEmoji">avares://TaskTwig/Assets/Fonts/#Noto Color Emoji</FontFamily>
-         <FontFamily x:Key="Twemoji">avares://TaskTwig/Assets/Fonts/#Twemoji Mozilla</FontFamily>
-         <FontFamily x:Key="OpenMoji">avares://TaskTwig/Assets/Fonts/#OpenMoji Color</FontFamily>
-         <FontFamily x:Key="FluentEmoji">avares://TaskTwig/Assets/Fonts/#Fluent Emoji Color</FontFamily>
+         <FontFamily x:Key="NotoColorEmoji">avares://TaskTwig/Assets/Fonts/NotoColorEmoji_WindowsCompatible.ttf#Noto Color Emoji</FontFamily>
      </Application.Resources>
 </Application>
