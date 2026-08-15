@@ -33,6 +33,24 @@ public enum DataFileAction
     Upload,
     Conflict
 }
+
+public enum SyncProgressStage
+{
+    Hash,
+    Save,
+    Compare,
+    Sync
+}
+
+public readonly struct SyncProgress(
+    SyncProgressStage stage,
+    IEnumerable<DataFile>? files = null,
+    Dictionary<DataFile, DataFileAction>? syncActions = null)
+{
+    public SyncProgressStage Stage { get; } = stage;
+    public IEnumerable<DataFile>? Files { get; } = files;
+    public Dictionary<DataFile, DataFileAction>? SyncActions { get; } = syncActions;
+}
     
 public readonly struct DataFilePaths(string dataFileDir, string filename, string extension)
 {
@@ -280,11 +298,14 @@ public partial class TaskTwig : ObservableObject
         await DbxHandler.UploadFileAsync(stream, file.DbxPath);
     }
 
-    public async Task WriteDataFiles()
+    public async Task WriteDataFiles(IProgress<SyncProgress>? progress = null)
     {
+        progress?.Report(new SyncProgress(SyncProgressStage.Hash));
         await _HashLiveData();
+        
         var fileHashes = await _ReadHashFile(CommitFile.LocalPath);
         var diffFiles = fileHashes is null ? _liveHashes.FileHashes.Keys : _FindHashDiffs(_liveHashes, fileHashes);
+        progress?.Report(new SyncProgress(SyncProgressStage.Save, files: diffFiles));
         
         await Parallel.ForEachAsync(diffFiles, async (file, _) =>
         {
@@ -475,20 +496,31 @@ public partial class TaskTwig : ObservableObject
             await _UploadDbxHashes(DbxCommitFile);
     }
 
-    public async Task<Dictionary<DataFile, DataFileAction>?> SyncWithDbx(Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>?>> conflictCallback)
+    public async Task<Dictionary<DataFile, DataFileAction>?> SyncWithDbx(
+        Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>?>>? conflictCallback = null,
+        IProgress<SyncProgress>? progress = null)
     {
-        await WriteDataFiles();
+        await WriteDataFiles(progress);
+        
+        progress?.Report(new SyncProgress(SyncProgressStage.Compare));
         var remoteHashes = await _DownloadDbxHashes();
-
         var actions = CompareRemoteHashes(remoteHashes);
-
+        
         if (actions.ContainsValue(DataFileAction.Conflict))
         {
-            actions = await conflictCallback(actions);
-            if (actions is null)
+            if (conflictCallback is not null)
+            {
+                actions = await conflictCallback(actions);
+                if (actions is null)
+                    return null;
+            }
+            else
+            {
                 return null;
+            }
         }
         
+        progress?.Report(new SyncProgress(SyncProgressStage.Sync, syncActions: actions));
         foreach (var dataFileAction in actions)
         {
             Console.WriteLine($"{dataFileAction.Key}: {dataFileAction.Value}");

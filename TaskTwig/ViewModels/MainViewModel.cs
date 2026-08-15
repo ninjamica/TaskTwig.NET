@@ -292,33 +292,67 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public async Task DbxSync()
     {
+        var notification = new Notification("Syncing", null);
+        NotificationManager?.Show(notification, NotificationType.Information, classes:["Light"], expiration:new TimeSpan(0));
+        
+        var progress = new Progress<SyncProgress>(syncProgress =>
+        {
+            switch (syncProgress.Stage)
+            {
+                case SyncProgressStage.Hash:
+                    notification.Title = "Hashing Files";
+                    notification.Content = null;
+                    break;
+                
+                case SyncProgressStage.Save:
+                    notification.Title = "Saving Files";
+
+                    notification.Content = syncProgress.Files is { } files && files.Any()
+                        ? string.Join(", ", files)
+                        : "Nothing to save";
+                    break;
+                
+                case SyncProgressStage.Compare:
+                    notification.Title = "Comparing Files To Cloud";
+                    notification.Content = null;
+                    break;
+                
+                case SyncProgressStage.Sync:
+                    notification.Title = "Syncing Files";
+                    
+                    if (syncProgress.SyncActions is { Count: > 0 } actions)
+                    {
+                        notification.Content = string.Join(", ",
+                            actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"));
+                    }
+                    else
+                    {
+                        notification.Content = "Nothing to do";
+                    }
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        });
+        
         IsSyncDbxLoading = true;
-        var actions = await _twig.SyncWithDbx(SyncConflictCallback);
+        var actions = await _twig.SyncWithDbx(SyncConflictCallback, progress);
         IsSyncDbxLoading = false;
+        NotificationManager?.Close(notification);
 
         if (actions is null)
         {
-            NotificationManager?.Show(
-                new Notification("Sync Canceled", null),
-                type: NotificationType.Warning,
-                classes: ["Light"]);
+            notification.Title = "Sync Canceled";
+            notification.Content = null;
+            NotificationManager?.Show(notification, NotificationType.Warning, classes: ["Light"]);
         }
         else
         {
-            NotificationManager?.Show(
-                new Notification("Sync Completed", _SyncActionsToMessage(actions)),
-                type: NotificationType.Success,
-                classes: ["Light"]);
+            notification.Title = "Sync Completed";
+            NotificationManager?.Show(notification, NotificationType.Success, classes: ["Light"]);
         }
-    }
-
-    private string _SyncActionsToMessage(Dictionary<DataFile, DataFileAction> actions)
-    {
-        return actions.Count > 0
-            ? string.Join(
-                ", ",
-                actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
-            : "Nothing to do";
+        
     }
 
     [ObservableProperty]
