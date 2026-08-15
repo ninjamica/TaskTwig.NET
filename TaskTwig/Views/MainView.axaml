@@ -319,7 +319,9 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                   IsLoading="{Binding IsPullDbxLoading}"/>
                     <u:IconButton Content="Sync" 
                                   Command="{Binding DbxSync}"
-                                  IsLoading="{Binding IsSyncDbxLoading}"/>
+                                  IsLoading="{Binding IsSyncDbxLoading}"
+                                  IsEnabled="{Binding !IsSyncDbxLoading}"
+                                  HotKey="Ctrl+S"/>
                 </StackPanel>
             </ContentPage>                                      
             
