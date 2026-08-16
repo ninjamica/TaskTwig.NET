@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dropbox.Api;
@@ -22,44 +23,19 @@ namespace TaskTwig.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     public WindowNotificationManager? NotificationManager { get; set; }
+    private readonly Core.TaskTwig _twig;
+    
 
     [ObservableProperty]
     public partial bool TodayDoneExpanded { get; set; } = true;
-    
-    [ObservableProperty]
-    public partial string DailyJournal { get; set; }
-    partial void OnDailyJournalChanged(string value) => _todaysJournal?.Text = value;
-    
-    [ObservableProperty] public partial string DailyJournalDate { get; private set; }
-    
-    public ObservableCollection<Note> Notes { get; set; }
-    [ObservableProperty] public partial Note? SelectedNote { get; set; }
-
-    [RelayCommand]
-    public void CreateNote()
-    {
-        var newNote = new Note { Title = "New Note" };
-        _twig.Notes.Add(newNote);
-        SelectedNote = newNote;
-    }
-
-    [RelayCommand]
-    public void DeleteNote(Note note)
-    {
-        _twig.Notes.Remove(note);
-    }
 
     public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
     public ReadOnlyObservableCollection<TwTask> DoneTodayTasks { get; set; }
 
     public NotifyCollectionChangedSynchronizedViewList<KeyValuePair<DateOnly, Sleep>> SleepList { get; init; }
     
-
-    private readonly Core.TaskTwig _twig;
-    private Journal? _todaysJournal;
-
     [RelayCommand]
-    public void CreateTaskCategory()
+    private void CreateTaskCategory()
     {
         var category = new TaskCategory();
         _twig.TaskCategories.Add(category);
@@ -67,7 +43,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void EditTaskCategory(TaskCategory category)
+    private void EditTaskCategory(TaskCategory category)
     {
         var dialogOptions = new OverlayDialogOptions()
         {
@@ -84,19 +60,13 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void DeleteTaskCategory(TaskCategory category)
+    private void DeleteTaskCategory(TaskCategory category)
     {
         _twig.TaskCategories.Remove(category);
     }
 
     [RelayCommand]
-    public void CategoryListUpdate(SortableUpdateEventArgs args)
-    {
-        args.ApplyUpdateMutation();
-    }
-
-    [RelayCommand]
-    public void CreateTask(TaskCategory category)
+    private void CreateTask(TaskCategory category)
     {
         var task = new TwTask()
         {
@@ -109,7 +79,7 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [RelayCommand]
-    public void EditTask(TwTask task)
+    private void EditTask(TwTask task)
     {
         var dialogOptions = new OverlayDialogOptions()
         {
@@ -124,7 +94,13 @@ public partial class MainViewModel : ViewModelBase
                     task.Category?.Tasks.Remove(task);
             });
     }
-
+    
+    [RelayCommand]
+    public void CategoryListUpdate(SortableUpdateEventArgs args)
+    {
+        args.ApplyUpdateMutation();
+    }
+    
     [RelayCommand]
     public void TaskListUpdate(SortableUpdateEventArgs args)
     {
@@ -139,10 +115,11 @@ public partial class MainViewModel : ViewModelBase
         args.ApplyDropMutation();
     }
 
-    [ObservableProperty] public partial string SleepButtonText { get; private set; }
+    [ObservableProperty] 
+    public partial bool IsSleeping { get; private set; }
 
     [RelayCommand]
-    public void OnSleepButton()
+    private void OnSleepButton()
     {
         var dialogOptions = new OverlayDialogOptions()
         {
@@ -163,7 +140,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void OnSleepAddButton()
+    private void OnSleepAddButton()
     {
         var dialogOptions = new OverlayDialogOptions()
         {
@@ -200,78 +177,96 @@ public partial class MainViewModel : ViewModelBase
             _twig.StartSleeping(dateTime);
         }
     }
-
-    [RelayCommand]
-    public async Task SaveFiles()
-    {
-        IsSaveFilesLoading = true;
-        await _twig.WriteDataFiles();
-        IsSaveFilesLoading = false;
-    }
+    
     [ObservableProperty]
-    public partial bool IsSaveFilesLoading { get; private set; } = false;
+    public partial Journal? TodaysJournal { get; private set; }
+    
+    public ObservableCollection<Note> Notes { get; set; }
+    [ObservableProperty] public partial Note? SelectedNote { get; set; }
 
     [RelayCommand]
-    public async Task BackupFiles()
+    private void CreateNote()
     {
-        IsBackupFilesLoading = true;
-        await _twig.BackupFiles();
-        IsBackupFilesLoading = false;
+        var newNote = new Note { Title = "New Note" };
+        _twig.Notes.Add(newNote);
+        SelectedNote = newNote;
     }
-    [ObservableProperty]
-    public partial bool IsBackupFilesLoading { get; private set; } = false;
 
     [RelayCommand]
-    public async Task PushDbx()
+    private void DeleteNote(Note note)
     {
-        IsPushDbxLoading = true;
-        await _twig.PushDbx();
-        IsPushDbxLoading = false;
+        _twig.Notes.Remove(note);
     }
+    
     [ObservableProperty]
-    public partial bool IsPushDbxLoading { get; private set; } = false;
+    [NotifyCanExecuteChangedFor(nameof(PushDbxCommand), nameof(PullDbxCommand), nameof(DbxSyncCommand))]
+    public partial string? DbxAccountName { get; set; }
 
+    public bool IsDbxConnected() => _twig.DbxHandler.IsAccountConnected;
+    
     [RelayCommand]
-    public async Task PullDbx()
+    private async Task DbxSignInOut()
     {
-        IsPullDbxLoading = true;
-        await _twig.PullDbx();
-        IsPullDbxLoading = false;
-    }
-    [ObservableProperty]
-    public partial bool IsPullDbxLoading { get; private set; } = false;
-
-    [RelayCommand]
-    public async Task DbxSignIn()
-    {
-        var oAuth = new PKCEOAuthFlow();
-        var url = _twig.DbxHandler.GenDbxAuthUrl(oAuth);
-        Console.WriteLine(url.OriginalString);
-        
-        var dialogOptions = new OverlayDialogOptions()
+        if (IsDbxConnected())
         {
-            Title = "Log In to Dropbox",
-            Mode = DialogMode.Question,
-            Buttons = DialogButton.OKCancel,
-            CanLightDismiss = true,
-        };
-        var dialogVm = new DbxDialogModelView(url);
-        var result = await OverlayDialog.ShowStandardAsync<DbxDialog, DbxDialogModelView>(dialogVm, options:dialogOptions);
-        
-        if (result.HasFlag(DialogResult.OK) && 
-            dialogVm is { CodeText: { } code })
+            var confirm = await OverlayMessageBox.ShowAsync(
+                "Are you sure you want to sign out?",
+                title: "Sign Out?",
+                icon: MessageBoxIcon.Question,
+                button: MessageBoxButton.YesNo
+            );
+            
+            if (confirm == MessageBoxResult.Yes)
+            {
+                await _twig.DbxHandler.Logout();
+                DbxAccountName = null;
+            }
+        }
+        else
         {
-            _twig.DbxHandler.AuthFromCode(oAuth, code);
+            var (uri, oAuth) = _twig.DbxHandler.GenDbxAuthUrl();
+            Console.WriteLine(uri.OriginalString);
+
+            var dialogOptions = new OverlayDialogOptions()
+            {
+                Title = "Log In to Dropbox",
+                Mode = DialogMode.Question,
+                Buttons = DialogButton.OKCancel,
+                CanLightDismiss = true,
+            };
+            var dialogVm = new DbxDialogModelView(uri);
+            var result =
+                await OverlayDialog.ShowStandardAsync<DbxDialog, DbxDialogModelView>(dialogVm, options: dialogOptions);
+
+            if (result.HasFlag(DialogResult.OK) &&
+                dialogVm is { CodeText: { } code })
+            {
+                _twig.DbxHandler.AuthFromCode(oAuth, code);
+            }
+
+            DbxAccountName = await _twig.DbxHandler.GetAccountName();
         }
         
-        // try
-        // {
-        //     DbxAccountName = _twig.DbxHandler.GetAccountName();
-        // }
-        // catch (InvalidOperationException e)
-        // {
-        //     DbxAccountName = "No Account";
-        // }
+    }
+
+    [RelayCommand]
+    private async Task SaveFiles()
+    {
+        var files = await _twig.WriteDataFiles();
+        NotificationManager?.Show(new Notification("Saving Completed", string.Join(',', files)),
+            NotificationType.Success);
+    }
+
+    [RelayCommand(CanExecute = nameof(IsDbxConnected))]
+    private async Task PushDbx()
+    {
+        await _twig.PushDbx();
+    }
+
+    [RelayCommand(CanExecute = nameof(IsDbxConnected))]
+    private async Task PullDbx()
+    {
+        await _twig.PullDbx();
     }
     
     private static async Task<Dictionary<DataFile, DataFileAction>?> SyncConflictCallback(Dictionary<DataFile, DataFileAction> actions)
@@ -285,12 +280,9 @@ public partial class MainViewModel : ViewModelBase
 
         return result.HasFlag(DialogResult.OK) ? dialogVm.GetActions() : null;
     }
-    
-    [ObservableProperty]
-    public partial bool IsSyncDbxLoading { get; private set; } = false;
 
-    [RelayCommand]
-    public async Task DbxSync()
+    [RelayCommand(CanExecute = nameof(IsDbxConnected))]
+    private async Task DbxSync()
     {
         var notification = new Notification("Syncing", null);
         NotificationManager?.Show(notification, NotificationType.Information, classes:["Light"], expiration:new TimeSpan(0));
@@ -319,26 +311,18 @@ public partial class MainViewModel : ViewModelBase
                 
                 case SyncProgressStage.Sync:
                     notification.Title = "Syncing Files";
-                    
-                    if (syncProgress.SyncActions is { Count: > 0 } actions)
-                    {
-                        notification.Content = string.Join(", ",
-                            actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"));
-                    }
-                    else
-                    {
-                        notification.Content = "Nothing to do";
-                    }
+
+                    notification.Content = syncProgress.SyncActions is { Count: > 0 } actions
+                        ? string.Join(", ", actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
+                        : "Nothing to do";
                     break;
                 
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         });
-        
-        IsSyncDbxLoading = true;
+
         var actions = await _twig.SyncWithDbx(SyncConflictCallback, progress);
-        IsSyncDbxLoading = false;
         NotificationManager?.Close(notification);
 
         if (actions is null)
@@ -355,9 +339,6 @@ public partial class MainViewModel : ViewModelBase
         
     }
 
-    [ObservableProperty]
-    public partial string DbxAccountName { get; set; }
-
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
@@ -372,13 +353,15 @@ public partial class MainViewModel : ViewModelBase
         TaskCategoriesView = _twig.TaskCategories;
         DoneTodayTasks = _twig.DoneTodayTaskLists;
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
+        IsSleeping = _twig.IsSleeping;
         Notes = _twig.Notes;
 
-        SleepButtonText = _twig.IsSleeping ? "Wake Up" : "Go To Sleep";
-        DbxAccountName = "No Account";
-        Task.Run(async () => DbxAccountName = await _twig.DbxHandler.GetAccountName());
-        
-
+        Task.Run(async () =>
+        {
+            await _twig.DbxHandler.AuthFromStoredKeys();
+            var accountName = await _twig.DbxHandler.GetAccountName();
+            Dispatcher.UIThread.Post(() => DbxAccountName = accountName);
+        });
     }
 
     private void OnTwigOnPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -387,16 +370,11 @@ public partial class MainViewModel : ViewModelBase
         {
             if (args.PropertyName == nameof(_twig.IsSleeping))
             {
-                SleepButtonText = _twig.IsSleeping ? "Wake Up" : "Go To Sleep";
+                IsSleeping = _twig.IsSleeping;
             }
             else if (args.PropertyName == nameof(_twig.TodaysJournal))
             {
-                _todaysJournal = _twig.TodaysJournal;
-                if (_todaysJournal is not null)
-                {
-                    DailyJournal = _todaysJournal.Text;
-                    DailyJournalDate = _todaysJournal.Date.ToString("dddd MMMM d");
-                }
+                TodaysJournal = _twig.TodaysJournal;
             }
         }
     }

@@ -298,13 +298,13 @@ public partial class TaskTwig : ObservableObject
         await DbxHandler.UploadFileAsync(stream, file.DbxPath);
     }
 
-    public async Task WriteDataFiles(IProgress<SyncProgress>? progress = null)
+    public async Task<List<DataFile>> WriteDataFiles(IProgress<SyncProgress>? progress = null)
     {
         progress?.Report(new SyncProgress(SyncProgressStage.Hash));
         await _HashLiveData();
         
         var fileHashes = await _ReadHashFile(CommitFile.LocalPath);
-        var diffFiles = fileHashes is null ? _liveHashes.FileHashes.Keys : _FindHashDiffs(_liveHashes, fileHashes);
+        var diffFiles = fileHashes is null ? _liveHashes.FileHashes.Keys.ToList() : _FindHashDiffs(_liveHashes, fileHashes).ToList();
         progress?.Report(new SyncProgress(SyncProgressStage.Save, files: diffFiles));
         
         await Parallel.ForEachAsync(diffFiles, async (file, _) =>
@@ -313,6 +313,7 @@ public partial class TaskTwig : ObservableObject
             await _WriteDataFile(file);
         });
         await _WriteLocalHashes(CommitFile);
+        return diffFiles;
     }
 
     private async Task _WriteDataFile(DataFile file)
@@ -358,11 +359,11 @@ public partial class TaskTwig : ObservableObject
     
     public async Task BackupFiles()
     {
-        await WriteDataFiles();
+        var files = await WriteDataFiles();
 
         // var tasks = Enum.GetValues<DataFile>().Select(_BackupDataFile);
         // await Task.WhenAll(tasks.Append(_BackupLocalHashes()));
-        await Parallel.ForEachAsync(Enum.GetValues<DataFile>(), async (file, _) => await _BackupDataFile(file));
+        await Parallel.ForEachAsync(files, async (file, _) => await _BackupDataFile(file));
     }
 
     private async Task _BackupDataFile(DataFile file)

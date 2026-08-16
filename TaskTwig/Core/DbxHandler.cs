@@ -10,9 +10,16 @@ namespace TaskTwig.Core;
 
 public struct DbxCredentials
 {
-    public string AccessToken { get; set; }
-    public string RefreshToken { get; set; }
-    public DateTime ExpiresAt { get; set; }
+    public string AccessToken { get; init; }
+    public string RefreshToken { get; init; }
+    public DateTime ExpiresAt { get; init; }
+
+    internal DbxCredentials(string accessToken, string refreshToken, DateTime expiresAt)
+    {
+        AccessToken = accessToken;
+        RefreshToken = refreshToken;
+        ExpiresAt = expiresAt;
+    }
 }
 
 public class DbxHandler
@@ -21,7 +28,7 @@ public class DbxHandler
 
     private readonly string _credentialPath;
     
-    private DbxCredentials _credentials;
+    private DbxCredentials? _credentials;
     private DropboxClient? _dropboxClient;
     
     public bool IsAccountConnected => _dropboxClient is not null;
@@ -30,19 +37,19 @@ public class DbxHandler
     {
         _credentialPath = Path.Combine(dataDirPath, "dbx", "credentials.json");
         Directory.CreateDirectory(Path.Combine(dataDirPath, "dbx"));
-        
-        if (File.Exists(_credentialPath))
-        {
-            AuthFromStoredKeys();
-        }
     }
 
-    public bool AuthFromStoredKeys()
+    public async Task<bool> AuthFromStoredKeys()
     {
         try
         {
-            var json = File.ReadAllText(_credentialPath);
+            var json = await File.ReadAllTextAsync(_credentialPath);
             _credentials = JsonSerializer.Deserialize<DbxCredentials>(json);
+        }
+        catch (FileNotFoundException)
+        {
+            Console.WriteLine("Credentials file not found, starting with no account");
+            return false;
         }
         catch (Exception ex) when (ex is ArgumentException or JsonException)
         {
@@ -52,13 +59,18 @@ public class DbxHandler
         }
 
         try {
-            var dbxClientConfig = new DropboxClientConfig { HttpClient = new HttpClient(new SocketsHttpHandler()) };
-            _dropboxClient = new DropboxClient(_credentials.AccessToken, 
-                                               _credentials.RefreshToken, 
-                                               _credentials.ExpiresAt, 
-                                               ApiKey, dbxClientConfig);
-            _WriteAuthKeys();
-            return true;
+            if (_credentials is { } credentials)
+            {
+                var dbxClientConfig = new DropboxClientConfig { HttpClient = new HttpClient(new SocketsHttpHandler()) };
+                _dropboxClient = new DropboxClient(credentials.AccessToken, credentials.RefreshToken, 
+                                                   credentials.ExpiresAt, ApiKey, dbxClientConfig);
+                _WriteAuthKeys();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         catch (Exception ex) when (ex is ArgumentException or DropboxException)
         {
@@ -70,15 +82,17 @@ public class DbxHandler
     
     private void _WriteAuthKeys()
     {
-        var json = JsonSerializer.Serialize(_credentials);
-        File.WriteAllText(_credentialPath, json);
+        if (_credentials is { } credentials)
+        {
+            var json = JsonSerializer.Serialize(credentials);
+            File.WriteAllText(_credentialPath, json);
+        }
     }
 
     public void AuthFromUrlConsole()
     {
-        var oAuthFlow = new PKCEOAuthFlow();
-        
-        Console.WriteLine($"Auth URL: {GenDbxAuthUrl(oAuthFlow)}");
+        var (uri, oAuthFlow) = GenDbxAuthUrl();
+        Console.WriteLine($"Auth URL: {uri}");
         Console.Write("Enter auth code: ");
         string authCode = Console.ReadLine() ?? "";
 
@@ -94,17 +108,30 @@ public class DbxHandler
                                            tokenResult.RefreshToken, 
                                            tokenResult.ExpiresAt.Value, 
                                            ApiKey, dbxClientConfig);
-        
-        _credentials.AccessToken = tokenResult.AccessToken;
-        _credentials.RefreshToken = tokenResult.RefreshToken;
-        _credentials.ExpiresAt = tokenResult.ExpiresAt.Value;
+
+        _credentials = new DbxCredentials(tokenResult.AccessToken, tokenResult.RefreshToken, tokenResult.ExpiresAt.Value);
         
         _WriteAuthKeys();
     }
 
-    public Uri GenDbxAuthUrl(PKCEOAuthFlow oAuthFlow)
+    public (Uri, PKCEOAuthFlow) GenDbxAuthUrl()
     {
-        return oAuthFlow.GetAuthorizeUri(OAuthResponseType.Code, ApiKey, tokenAccessType:TokenAccessType.Offline);
+        var oAuthFlow = new PKCEOAuthFlow();
+        return (oAuthFlow.GetAuthorizeUri(OAuthResponseType.Code, ApiKey, tokenAccessType: TokenAccessType.Offline),
+            oAuthFlow);
+    }
+
+    public async Task Logout()
+    {
+        if (_dropboxClient is not null)
+        {
+            await _dropboxClient.Auth.TokenRevokeAsync();
+            _dropboxClient.Dispose();
+            File.Delete(_credentialPath);
+            
+            _dropboxClient = null;
+            _credentials = null;
+        }
     }
 
     public async Task<Stream> DownloadContentStreamAsync(string dbxFilePath)
@@ -148,15 +175,10 @@ public class DbxHandler
         return metadata;
     }
 
-    public async Task<String> GetAccountName()
+    public async Task<string?> GetAccountName()
     {
-        if (_dropboxClient is null)
-            throw new InvalidOperationException("Dropbox client not initialized!");
-
-        // var asyncResult = _dropboxClient.Users.BeginGetCurrentAccount(_ => {});
-        // var account = _dropboxClient.Users.EndGetCurrentAccount(asyncResult);
-        // return account.Name.DisplayName;
-        return (await _dropboxClient.Users.GetCurrentAccountAsync()).Name.DisplayName;
+        var account = _dropboxClient != null ? await _dropboxClient.Users.GetCurrentAccountAsync() : null;
+        return account?.Name.DisplayName;
     }
     
 }

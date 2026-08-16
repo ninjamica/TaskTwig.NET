@@ -9,5 +9,5 @@ public partial class DbxDialogModelView(Uri url) : ViewModelBase
     public partial string UrlLinkText { get; set; } = url.OriginalString;
     
     [ObservableProperty]
-    public partial string CodeText { get; set; }
+    public partial string? CodeText { get; set; }
 }

@@ -2,8 +2,8 @@ using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using TaskTwig.Core;
 using TaskTwig.ViewModels;
 using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
@@ -35,8 +35,6 @@ public partial class MainView : UserControl
         if (sender is Control { DataContext: TaskCategory category })
         {
             category.Expanded = !category.Expanded;
-            Console.WriteLine(category.Expanded);
-            Console.WriteLine(e.Source?.GetType());
         }
     }
 
@@ -78,4 +76,13 @@ public partial class MainView : UserControl
         Console.WriteLine("Ending scroll");
         TasksScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
     }
+
+    public static readonly FuncValueConverter<bool, string> SleepButtonTextConverter =
+        new(isSleeping => isSleeping ? "Wake Up" : "Go To Sleep");
+
+    public static readonly FuncValueConverter<DateOnly, string> JournalDateConverter =
+        new(date => date.ToString("dddd MMMM d"));
+    
+    public static readonly FuncValueConverter<string?, string> AccountButtonTextConverter =
+        new(accountName => accountName is null ? "Sign In" : "Sign Out");
 }

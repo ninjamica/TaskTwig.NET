@@ -9,7 +9,8 @@
                 xmlns:views="clr-namespace:TaskTwig.Views"
                 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
                 x:Class="TaskTwig.Views.MainView"
-                x:DataType="vm:MainViewModel">
+                x:DataType="vm:MainViewModel"
+                x:Name="RootControl">
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
@@ -120,7 +121,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                   sortable:Sortable.Sortable="True" 
                                   sortable:Sortable.Droppable="False"
                                   sortable:Sortable.Group="categories"
-                                  sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).CategoryListUpdateCommand}">
+                                  sortable:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid RowSpacing="5" ColumnSpacing="5" Margin="5, 10, 5, 10"
@@ -186,7 +187,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <Button Command="{Binding CreateTaskCategory}"
+                    <Button Command="{Binding CreateTaskCategoryCommand}"
                             Content="Add Task Category+"/>
                 </StackPanel>
                 </ScrollViewer>
@@ -196,10 +197,12 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 <ScrollViewer>
                 <StackPanel>
                     <u:ButtonGroup>
-                        <Button x:Name="SleepButton" 
-                                Content="{Binding SleepButtonText}"
-                                Command="{Binding OnSleepButton}"/>
-                        <Button Content="+" Command="{Binding OnSleepAddButton}"/>
+                        <Button Content="{Binding IsSleeping, Converter={x:Static views:MainView.SleepButtonTextConverter}}"
+                                Command="{Binding SleepButtonCommand}"/>
+                        <Button Command="{Binding SleepAddButtonCommand}">
+                            <PathIcon Data="{StaticResource SemiIconPlus}"
+                                      Width="12" Height="12"/>
+                        </Button>
                     </u:ButtonGroup>
                     <ListBox ItemsSource="{Binding SleepList}">
                         <ListBox.ItemTemplate>
@@ -231,13 +234,13 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             <TextBlock Text="Journal:"
                                        Classes="H4"
                                        Theme="{StaticResource TitleTextBlock}"/>
-                            <TextBlock Text="{Binding DailyJournalDate}"
+                            <TextBlock Text="{Binding TodaysJournal?.Date, Converter={x:Static views:MainView.JournalDateConverter}}"
                                        Classes="H6 Secondary"
                                        Theme="{StaticResource TitleTextBlock}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </u:UrsaGroupBox.Header>
-                    <TextBox Text="{Binding DailyJournal}"
+                    <TextBox Text="{Binding TodaysJournal?.Text}"
                              PlaceholderText="Daily Journal" 
                              AcceptsReturn="True" 
                              AcceptsTab="True" 
@@ -257,10 +260,10 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBackground2}">
                         <u:UrsaGroupBox.Header>
-                            <TextBox Text="{Binding SelectedNote.Title}"/>
+                            <TextBox Text="{Binding SelectedNote?.Title}"/>
                         </u:UrsaGroupBox.Header>
                         <StackPanel>
-                            <TextBox Text="{Binding SelectedNote.Text}" 
+                            <TextBox Text="{Binding SelectedNote?.Text}" 
                                      PlaceholderText="Type Note Here"
                                      AcceptsReturn="True"
                                      AcceptsTab="True" 
@@ -297,30 +300,28 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                     
                     <Button Grid.Row="1" Grid.Column="1" VerticalAlignment="Top"
                             Content="+" 
-                            Command="{Binding CreateNote}"/>
+                            Command="{Binding CreateNoteCommand}"/>
                 </Grid>
             </ContentPage>
             
             <ContentPage Header="Settings" Icon="{StaticResource SemiIconSetting}">
                 <StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding DbxAccountName}"/>
-                    <Button Content="DbxSignIn" Command="{Binding DbxSignIn}"/>
+                    <TextBlock Text="{Binding DbxAccountName, TargetNullValue=No Account}"/>
+                    <u:IconButton Content="{Binding DbxAccountName, Converter={x:Static views:MainView.AccountButtonTextConverter}}" 
+                                  Command="{Binding DbxSignInOutCommand}"
+                                  IsLoading="{Binding DbxSignInOutCommand.IsRunning}"/>
                     <u:IconButton Content="Save" 
-                                  Command="{Binding SaveFiles}"
-                                  IsLoading="{Binding IsSaveFilesLoading}"/>
-                    <u:IconButton Content="Backup" 
-                                  Command="{Binding BackupFiles}"
-                                  IsLoading="{Binding IsBackupFilesLoading}"/>
+                                  Command="{Binding SaveFilesCommand}"
+                                  IsLoading="{Binding SaveFilesCommand.IsRunning}"/>
                     <u:IconButton Content="Push" 
-                                  Command="{Binding PushDbx}" 
-                                  IsLoading="{Binding IsPushDbxLoading}"/>
+                                  Command="{Binding PushDbxCommand}"
+                                  IsLoading="{Binding PushDbxCommand.IsRunning}"/>
                     <u:IconButton Content="Pull" 
-                                  Command="{Binding PullDbx}"
-                                  IsLoading="{Binding IsPullDbxLoading}"/>
+                                  Command="{Binding PullDbxCommand}"
+                                  IsLoading="{Binding PullDbxCommand.IsRunning}"/>
                     <u:IconButton Content="Sync" 
-                                  Command="{Binding DbxSync}"
-                                  IsLoading="{Binding IsSyncDbxLoading}"
-                                  IsEnabled="{Binding !IsSyncDbxLoading}"
+                                  Command="{Binding DbxSyncCommand}"
+                                  IsLoading="{Binding DbxSyncCommand.IsRunning}"
                                   HotKey="Ctrl+S"/>
                 </StackPanel>
             </ContentPage>                                      
