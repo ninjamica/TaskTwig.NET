@@ -6,7 +6,6 @@ using Avalonia.Data.Converters;
 using Avalonia.Input;
 using TaskTwig.Core;
 using TaskTwig.ViewModels;
-using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
 namespace TaskTwig.Views;
 
@@ -24,10 +23,7 @@ public partial class MainView : UserControl
         if (DataContext is not MainViewModel mainViewModel)
             return;
 
-        var topLevel = TopLevel.GetTopLevel(this);
-        mainViewModel.NotificationManager = WindowNotificationManager.TryGetNotificationManager(topLevel, out var manager)
-            ? manager
-            : new WindowNotificationManager(topLevel);
+        mainViewModel.NotificationManager = NotificationManager;
     }
 
     private void TodayNameClicked(object? sender, PointerPressedEventArgs e)

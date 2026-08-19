@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,22 +12,30 @@ using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.ViewModels;
 
+public readonly struct IntervalType(Type type, string name)
+{
+    public Type Type { get; } = type;
+    public string Name { get; } = name;
+}
+
 public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
 {
     public TwTask Task { get; }
 
-    [ObservableProperty] public partial Type SelectedInterval { get; set; }
+    [ObservableProperty] public partial IntervalType SelectedInterval { get; set; }
     [ObservableProperty] public partial DateOnly? ReferenceDate { get; set; }
+    
+    private static readonly Dictionary<Type, IntervalType> _intervalTypes = new()
+    {
+        {typeof(NoInterval), new IntervalType(typeof(NoInterval),"No Date")},
+        {typeof(SingleDateInterval), new IntervalType(typeof(SingleDateInterval),"Single Date")},
+        {typeof(DailyInterval), new IntervalType(typeof(DailyInterval),"Every Day")},
+        {typeof(UnitInterval), new IntervalType(typeof(UnitInterval),"Unit Interval")},
+        {typeof(WeekInterval), new IntervalType(typeof(WeekInterval),"Week Interval")},
+        {typeof(MonthInterval), new IntervalType(typeof(MonthInterval),"Month Interval")},
+    };
 
-    public ObservableCollection<Type> IntervalTypes { get; init; } =
-    [
-        typeof(NoInterval),
-        typeof(SingleDateInterval),
-        typeof(DailyInterval),
-        typeof(UnitInterval),
-        typeof(WeekInterval),
-        typeof(MonthInterval)
-    ];
+    public ObservableCollection<IntervalType> IntervalTypes { get; init; } = new(_intervalTypes.Values);
 
     [ObservableProperty] public partial DateUnit Unit { get; set; }
 
@@ -53,7 +64,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
     public TaskDialogViewModel(TwTask task)
     {
         Task = task;
-        SelectedInterval = task.Interval.GetType();
+        SelectedInterval = _intervalTypes[task.Interval.GetType()];
 
         switch (task.Interval)
         {
@@ -114,19 +125,19 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
         IsOnSu = days.HasFlag(DayOfWeekFlag.Sunday);
     }
 
-    partial void OnSelectedIntervalChanged(Type value)
+    partial void OnSelectedIntervalChanged(IntervalType value)
     {
         if (!_isFinishedSetup)
             return;
         
-        if (value.BaseType == typeof(RepeatingInterval))
+        if (value.Type.BaseType == typeof(RepeatingInterval))
         {
             ShowOPattern = true;
             ShowEPattern = true;
             ShowDate = false;
             ShowReferenceDate = true;
 
-            if (value == typeof(UnitInterval))
+            if (value.Type == typeof(UnitInterval))
             {
                 var unitInterval = new UnitInterval { Unit = DateUnit.Day, UnitAmount = 1 };
                 Task.Interval = unitInterval;
@@ -138,7 +149,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
                 ShowWeekInterval = false;
                 ShowMonthInterval = false;
             }
-            else if (value == typeof(WeekInterval))
+            else if (value.Type == typeof(WeekInterval))
             {
                 var weekInterval = new WeekInterval { DayOfWeekMap = DayOfWeekFlag.None, WeekSpacing = 1 };
                 Task.Interval = weekInterval;
@@ -150,7 +161,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
                 ShowWeekInterval = true;
                 ShowMonthInterval = false;
             }
-            else if (value == typeof(MonthInterval))
+            else if (value.Type == typeof(MonthInterval))
             {
                 var monthInterval = new MonthInterval();
                 Task.Interval = monthInterval;
@@ -175,14 +186,14 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
             ShowWeekInterval = false;
             ShowMonthInterval = false;
             
-            if (value == typeof(NoInterval))
+            if (value.Type == typeof(NoInterval))
             {
                 Task.Interval = new NoInterval();
 
                 ShowOPattern = false;
                 ShowDate = false;
             }
-            else if (value == typeof(SingleDateInterval))
+            else if (value.Type == typeof(SingleDateInterval))
             {
                 var singleInterval = new SingleDateInterval { Date = Core.TaskTwig.Today };
                 Task.Interval = singleInterval;
@@ -191,7 +202,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
                 ShowOPattern = true;
                 ShowDate = true;
             }
-            else if (value == typeof(DailyInterval))
+            else if (value.Type == typeof(DailyInterval))
             {
                 Task.Interval = new DailyInterval();
 

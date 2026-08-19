@@ -147,7 +147,7 @@ public partial class TwTask : HashableObject
         return OPattern switch
         {
             OccurrencePattern.OccurOn => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) == 0,
-            OccurrencePattern.DueBy => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) < 0,
+            OccurrencePattern.DueBy => true,
             OccurrencePattern.StartOn => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) >= 0,
             _ => throw new ArgumentOutOfRangeException()
         };

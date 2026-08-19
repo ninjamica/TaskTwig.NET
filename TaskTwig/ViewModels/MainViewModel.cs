@@ -4,11 +4,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Controls.Primitives;
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Dropbox.Api;
 using ObservableCollections;
 using Sortable.Avalonia;
 using TaskTwig.Core;
@@ -49,6 +51,9 @@ public partial class MainViewModel : ViewModelBase
         {
             Mode = DialogMode.Info,
             CanLightDismiss = true,
+            VerticalAnchor = VerticalPosition.Top,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
         var dialogViewModel = new TaskCategoryDialogViewModel(category);
         OverlayDialog.ShowCustomAsync<TaskCategoryDialog, TaskCategoryDialogViewModel, bool>(dialogViewModel, options: dialogOptions)
@@ -85,6 +90,9 @@ public partial class MainViewModel : ViewModelBase
         {
             Mode = DialogMode.Info,
             CanLightDismiss = true,
+            VerticalAnchor = VerticalPosition.Top,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
         var dialogViewModel = new TaskDialogViewModel(task);
         OverlayDialog.ShowCustomAsync<TaskDialog, TaskDialogViewModel, bool>(dialogViewModel, options:dialogOptions)
@@ -96,19 +104,19 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [RelayCommand]
-    public void CategoryListUpdate(SortableUpdateEventArgs args)
+    private void CategoryListUpdate(SortableUpdateEventArgs args)
     {
         args.ApplyUpdateMutation();
     }
     
     [RelayCommand]
-    public void TaskListUpdate(SortableUpdateEventArgs args)
+    private void TaskListUpdate(SortableUpdateEventArgs args)
     {
         args.ApplyUpdateMutation();
     }
 
     [RelayCommand]
-    public void TaskListDrop(SortableDropEventArgs args)
+    private void TaskListDrop(SortableDropEventArgs args)
     {
         args.IsAccepted = true;
         args.TransferMode = SortableTransferMode.Move;
@@ -268,8 +276,9 @@ public partial class MainViewModel : ViewModelBase
     {
         await _twig.PullDbx();
     }
-    
-    private static async Task<Dictionary<DataFile, DataFileAction>?> SyncConflictCallback(Dictionary<DataFile, DataFileAction> actions)
+
+    private static async Task<Dictionary<DataFile, DataFileAction>?> SyncConflictCallback(
+        Dictionary<DataFile, DataFileAction> actions)
     {
         var dialogOptions = new OverlayDialogOptions()
         {
@@ -284,35 +293,60 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(IsDbxConnected))]
     private async Task DbxSync()
     {
-        var notification = new Notification("Syncing", null);
-        NotificationManager?.Show(notification, NotificationType.Information, classes:["Light"], expiration:new TimeSpan(0));
+        // var notification = new Notification("Syncing", null);
+        var notifTitle = new TextBlock
+        {
+            Text = "Syncing",
+            FontSize = 16,
+            FontWeight = FontWeight.SemiBold,
+        };
+        var notifContent = new TextBlock
+        {
+            Classes = { "Secondary" }
+        };
+        var loadingCircle = new LoadingIcon();
+        var notifGrid = new Grid
+        {
+            Children = { notifTitle, notifContent, loadingCircle },
+            RowDefinitions = new RowDefinitions("Auto, Auto"),
+            ColumnDefinitions = new ColumnDefinitions("Auto, Auto"),
+            ColumnSpacing = 10
+        };
+        Grid.SetRow(notifTitle, 0);
+        Grid.SetColumn(notifTitle, 1);
+        Grid.SetRow(notifContent, 1);
+        Grid.SetColumn(notifContent, 1);
+        Grid.SetRow(loadingCircle, 0);
+        Grid.SetColumn(loadingCircle, 0);
+        
+        NotificationManager?.Show(notifGrid, NotificationType.Information, expiration:TimeSpan.Zero, showIcon:false);
         
         var progress = new Progress<SyncProgress>(syncProgress =>
         {
             switch (syncProgress.Stage)
             {
                 case SyncProgressStage.Hash:
-                    notification.Title = "Hashing Files";
-                    notification.Content = null;
+                    notifTitle.Text = "Hashing Files";
+                    notifContent.Text = null;
                     break;
                 
                 case SyncProgressStage.Save:
-                    notification.Title = "Saving Files";
+                    notifTitle.Text = "Saving Files";
 
-                    notification.Content = syncProgress.Files is { } files && files.Any()
+                    notifContent.Text = syncProgress.Files is { } files && files.Any()
                         ? string.Join(", ", files)
                         : "Nothing to save";
                     break;
                 
                 case SyncProgressStage.Compare:
-                    notification.Title = "Comparing Files To Cloud";
-                    notification.Content = null;
+                    notifTitle.Text = "Comparing Files To Cloud";
+                    notifContent.Text = null;
                     break;
                 
                 case SyncProgressStage.Sync:
-                    notification.Title = "Syncing Files";
+                    notifTitle.Text = "Syncing Files";
 
-                    notification.Content = syncProgress.SyncActions is { Count: > 0 } actions
+                    notifContent.Text = syncProgress.SyncActions is { Count: > 0 } actions
                         ? string.Join(", ", actions.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
                         : "Nothing to do";
                     break;
@@ -323,18 +357,16 @@ public partial class MainViewModel : ViewModelBase
         });
 
         var actions = await _twig.SyncWithDbx(SyncConflictCallback, progress);
-        NotificationManager?.Close(notification);
+        // NotificationManager?.Close(notification);
+        NotificationManager?.CloseAll();
 
         if (actions is null)
         {
-            notification.Title = "Sync Canceled";
-            notification.Content = null;
-            NotificationManager?.Show(notification, NotificationType.Warning, classes: ["Light"]);
+            NotificationManager?.Show(new Notification("Sync Canceled", null), NotificationType.Warning, classes: ["Light"]);
         }
         else
         {
-            notification.Title = "Sync Completed";
-            NotificationManager?.Show(notification, NotificationType.Success, classes: ["Light"]);
+            NotificationManager?.Show(new Notification("Sync Completed", notifContent.Text), NotificationType.Success, classes: ["Light"]);
         }
         
     }

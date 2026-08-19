@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             mc:Ignorable="d" d:DesignWidth="478" d:DesignHeight="900"
+             mc:Ignorable="d" d:DesignWidth="493" d:DesignHeight="916"
              xmlns:vm="using:TaskTwig.ViewModels"
              xmlns:core="clr-namespace:TaskTwig.Core"
              xmlns:twigInterval="clr-namespace:TaskTwig.Core.TwigInterval"
@@ -11,7 +11,7 @@
              x:Class="TaskTwig.Views.TaskDialog"
              x:DataType="vm:TaskDialogViewModel">
     
-    <Grid RowDefinitions="Auto, Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
+    <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
         
         <TextBlock Grid.Row="0"
                    Margin="8"
@@ -19,93 +19,117 @@
                    FontWeight="600"
                    Text="Edit Task"/>
         
-        <u:Form Grid.Row="1" LabelPosition="Left" LabelWidth="*">
-            <u:FormItem Label="Name">
-                <TextBox Text="{Binding Task.Name}"/>
-            </u:FormItem>
-            
-            <u:FormItem>
-                <u:FormItem.Label>
-                    <TextBlock VerticalAlignment="Center">Icon</TextBlock>
-                </u:FormItem.Label>
-                <TextBox Text="{Binding Task.Icon}"
-                         FontFamily="{StaticResource NotoColorEmoji}"
-                         MaxLines="1"
-                         FontSize="24"
-                         MaxWidth="56"
-                         HorizontalAlignment="Left"/>
-            </u:FormItem>
-            
-            <u:FormItem Label="Points">
-                <NumericUpDown Value="{Binding Task.Points}"
-                               Minimum="0" FormatString="N0"/>
-            </u:FormItem>
-            
-            <u:FormItem Label="Interval">
-                <ComboBox ItemsSource="{Binding IntervalTypes}"
-                          DisplayMemberBinding="{Binding Name}"
-                          SelectedItem="{Binding SelectedInterval}"/>
-            </u:FormItem>
-            
-            <u:FormItem Label="Occurrence" IsVisible="{Binding ShowOPattern}">
-                <u:EnumSelector EnumType="core:OccurrencePattern"
-                                Value="{Binding Task.OPattern}"/>
-            </u:FormItem>
-            
-            <u:FormItem Label="Repeat" IsVisible="{Binding ShowEPattern}">
-                <u:EnumSelector EnumType="core:AutoExtendPattern"
-                                Value="{Binding Task.EPattern}"/>
-            </u:FormItem>
-            
-            <u:FormItem Label="Date" IsVisible="{Binding ShowDate}">
-                <u:DateOnlyPicker SelectedDate="{Binding ReferenceDate}"/>
-            </u:FormItem>
-            
-            <u:FormItem Label="Unit Interval" IsVisible="{Binding ShowUnitInterval}">
-                <StackPanel Orientation="Horizontal">
-                    <u:EnumSelector EnumType="twigInterval:DateUnit"
-                                    Value="{Binding Unit}"/>
-                    <NumericUpDown Minimum="1" Value="{Binding IntervalSpacing}"/>
-                </StackPanel>
-            </u:FormItem>
-            
-            <u:FormItem Label="Week Interval" IsVisible="{Binding ShowWeekInterval}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <ToggleButton IsChecked="{Binding IsOnM}">M</ToggleButton>
-                        <ToggleButton IsChecked="{Binding IsOnTu}">Tu</ToggleButton>
-                        <ToggleButton IsChecked="{Binding IsOnW}">W</ToggleButton>
-                        <ToggleButton IsChecked="{Binding IsOnTh}">Th</ToggleButton>
-                        <ToggleButton IsChecked="{Binding IsOnF}">F</ToggleButton>
-                        <ToggleButton IsChecked="{Binding IsOnSa}">Sa</ToggleButton>
-                        <ToggleButton IsChecked="{Binding IsOnSu}">Su</ToggleButton>
-                    </StackPanel>
-                    <NumericUpDown Minimum="1" Value="{Binding IntervalSpacing}"/>
-                </StackPanel>
-            </u:FormItem>
-            
-            <u:FormItem Label="Month Interval" IsVisible="{Binding ShowMonthInterval}">
-                <StackPanel>
-                    <views:MonthDateSelect DateMap="{Binding MonthDateMap}"/>
-                    <NumericUpDown Minimum="1" Value="{Binding IntervalSpacing}"/>
-                </StackPanel>
-            </u:FormItem>
-            
-            <u:FormItem Label="Reference Date" IsVisible="{Binding ShowReferenceDate}">
-                <u:DateOnlyPicker SelectedDate="{Binding ReferenceDate}"/>
-            </u:FormItem>
-        </u:Form>
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="0,0,15,0">
+                <u:Form LabelPosition="Left" LabelWidth="*">
+                    <u:FormItem Label="Name">
+                        <TextBox Text="{Binding Task.Name}"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem>
+                        <u:FormItem.Label>
+                            <TextBlock VerticalAlignment="Center">Icon</TextBlock>
+                        </u:FormItem.Label>
+                        <TextBox Text="{Binding Task.Icon}"
+                                 FontFamily="{StaticResource NotoColorEmoji}"
+                                 MaxLines="1"
+                                 FontSize="24"
+                                 MaxWidth="56"
+                                 HorizontalAlignment="Left"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Points">
+                        <u:NumericIntUpDown Minimum="0" Value="{Binding Task.Points}"
+                                            HorizontalAlignment="Left" Width="80"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Interval">
+                        <ComboBox ItemsSource="{Binding IntervalTypes}"
+                                  DisplayMemberBinding="{Binding Name}"
+                                  SelectedItem="{Binding SelectedInterval}"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Occurrence" IsVisible="{Binding ShowOPattern}">
+                        <u:EnumSelector EnumType="core:OccurrencePattern"
+                                        Value="{Binding Task.OPattern}"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Repeat" IsVisible="{Binding ShowEPattern}">
+                        <u:EnumSelector EnumType="core:AutoExtendPattern"
+                                        Value="{Binding Task.EPattern}"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Date" IsVisible="{Binding ShowDate}">
+                        <u:DateOnlyPicker SelectedDate="{Binding ReferenceDate}"
+                                          Width="150"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Unit Interval" IsVisible="{Binding ShowUnitInterval}">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
+                                                InnerLeftContent="Every"
+                                                Width="150"
+                                                HorizontalContentAlignment="Center"/>
+                            <u:EnumSelector EnumType="twigInterval:DateUnit"
+                                            Value="{Binding Unit}"/>
+                        </StackPanel>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Week Interval" IsVisible="{Binding ShowWeekInterval}">
+                        <StackPanel Spacing="10">
+                            <StackPanel x:Name="WeekButtonsPanel" Orientation="Horizontal">
+                                <ToggleButton IsChecked="{Binding IsOnM}" Classes="">M</ToggleButton>
+                                <ToggleButton IsChecked="{Binding IsOnTu}">Tu</ToggleButton>
+                                <ToggleButton IsChecked="{Binding IsOnW}">W</ToggleButton>
+                                <ToggleButton IsChecked="{Binding IsOnTh}">Th</ToggleButton>
+                                <ToggleButton IsChecked="{Binding IsOnF}">F</ToggleButton>
+                                <ToggleButton IsChecked="{Binding IsOnSa}">Sa</ToggleButton>
+                                <ToggleButton IsChecked="{Binding IsOnSu}">Su</ToggleButton>
+                            </StackPanel>
+                            <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
+                                                HorizontalContentAlignment="Center"
+                                                InnerLeftContent="Every" 
+                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static views:TaskDialog.WeekSpinnerTextConverter}}"
+                                                HorizontalAlignment="Left" MinWidth="175"/>
+                        </StackPanel>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Month Interval" IsVisible="{Binding ShowMonthInterval}">
+                        <StackPanel Spacing="10">
+                            <views:MonthDateSelect DateMap="{Binding MonthDateMap}"/>
+                            <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
+                                                HorizontalContentAlignment="Center"
+                                                InnerLeftContent="Every" 
+                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static views:TaskDialog.MonthSpinnerTextConverter}}"
+                                                HorizontalAlignment="Left" MinWidth="180"/>
+                        </StackPanel>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Reference Date" IsVisible="{Binding ShowReferenceDate}">
+                        <u:DateOnlyPicker SelectedDate="{Binding ReferenceDate}"
+                                          Width="150"/>
+                    </u:FormItem>
+                </u:Form>
+                
+                <Expander Header="Info">
+                    <u:Descriptions>
+                        <u:DescriptionsItem Label="LastDone">
+                            <u:DateOnlyPicker SelectedDate="{Binding Task.LastDone}"
+                                              Width="150"/>
+                        </u:DescriptionsItem>
+                        <u:DescriptionsItem Label="IsDone" Content="{Binding Task.IsDone}"/>
+                        <u:DescriptionsItem Label="IsToday" Content="{Binding Task.IsToday}"/>
+                        <u:DescriptionsItem Label="IsOverdue" Content="{Binding Task.IsOverdue}"/>
+                        <u:DescriptionsItem Label="Next Occurrence" 
+                                            Content="{Binding Task.Interval.NextOccurrence}"/>
+                        <u:DescriptionsItem Label="Previous Occurrence" 
+                                            Content="{Binding Task.Interval.PreviousOccurrence}"/>
+                    </u:Descriptions>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
         
-        <Expander Grid.Row="2" Header="Info">
-            <u:Descriptions>
-                <u:DescriptionsItem Label="LastDone" Content="{Binding Task.LastDone}"/>
-                <u:DescriptionsItem Label="IsDone" Content="{Binding Task.IsDone}"/>
-                <u:DescriptionsItem Label="IsToday" Content="{Binding Task.IsToday}"/>
-                <u:DescriptionsItem Label="IsOverdue" Content="{Binding Task.IsOverdue}"/>
-            </u:Descriptions>
-        </Expander>
-        
-        <DockPanel Grid.Row="3">
+        <DockPanel Grid.Row="2">
             
             <Button Command="{Binding Delete}"
                     Classes="Danger"

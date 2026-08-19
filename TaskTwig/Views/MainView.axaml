@@ -327,6 +327,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             </ContentPage>                                      
             
         </TabbedPage>
-        <u:OverlayDialogHost Name="DialogHost"/>
+        <u:OverlayDialogHost x:Name="DialogHost"/>
+        <u:WindowNotificationManager x:Name="NotificationManager"/>
     </Panel>
 </UserControl>

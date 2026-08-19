@@ -71,7 +71,8 @@ public abstract partial class RepeatingInterval : HashableObject, ITwigInterval
     protected void UpdateOccurrences()
     {
         NextOccurrence = AutoRepeat ? NextFromToday() : NextFromReference();
-        PreviousOccurrence = AutoRepeat ? PreviousFromToday() : PreviousFromReference();
+        // PreviousOccurrence = AutoRepeat ? PreviousFromToday() : PreviousFromReference();
+        PreviousOccurrence = NextOccurrence is { } next ? PreviousFromDate(next) : null;
     }
     partial void OnReferenceDateChanged(DateOnly value) => UpdateOccurrences();
     partial void OnAutoRepeatChanged(bool value) => UpdateOccurrences();
