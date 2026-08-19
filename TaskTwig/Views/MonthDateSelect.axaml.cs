@@ -1,14 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Numerics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Metadata;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Data.Converters;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.MarkupExtensions;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ObservableCollections;
 using TaskTwig.ViewModels;
 
@@ -16,57 +24,67 @@ namespace TaskTwig.Views;
 
 public partial class MonthDateSelect : UserControl
 {
-    private readonly ObservableCollection<int> _dates =
-    [
-        1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14,
-        15, 16, 17, 18, 19, 20, 21,
-        22, 23, 24, 25, 26, 27, 28,
-        29, 30, 31
-    ];
-    
     public static readonly StyledProperty<uint> DateMapProperty =
-        AvaloniaProperty.Register<MonthDateSelect, uint>(nameof(DateMap), defaultBindingMode: BindingMode.TwoWay, defaultValue: 0u);
+        AvaloniaProperty.Register<MonthDateSelect, uint>(nameof(DateMap), defaultBindingMode: BindingMode.TwoWay, inherits:true, defaultValue: 0u);
     
     public uint DateMap
     {
         get => GetValue(DateMapProperty);
-        set
-        {
-            SetValue(DateMapProperty, value);
-            SetDateMap(value);
-        }
+        set => SetValue(DateMapProperty, value);
     }
     
-    public MonthDateSelect()
-    {
-        InitializeComponent();
-        DatesControl.ItemsSource = _dates;
-    }
+    public MonthDateSelect() => InitializeComponent();
+}
 
-    private void SetDateMap(uint map)
+
+public class MonthDateCell : Button
+{
+    public static readonly DirectProperty<MonthDateCell, int> DateProperty =
+        AvaloniaProperty.RegisterDirect<MonthDateCell, int>(
+            nameof(Date),
+            cell => cell.Date,
+            (cell, date) => cell.Date = date);
+
+    private int _date;
+    public int Date
     {
-        Console.WriteLine($"DateMap: {map}");
-        foreach (var control in DatesControl.ItemsPanelRoot.Children)
+        get => _date;
+        set
         {
-            var toggleButton = (ToggleButton)control;
-            int date = (int)toggleButton.Content;
-            toggleButton.IsChecked = (map & ~(1u << (date - 1))) != 0;
-            
-            Console.WriteLine($"{date}={toggleButton.IsChecked}");
+            SetAndRaise(DateProperty, ref _date, value);
+            Content = value;
         }
     }
 
-    private void DateCheckChanged(object? sender, RoutedEventArgs e)
+    public static readonly StyledProperty<uint> DateMapProperty = MonthDateSelect.DateMapProperty.AddOwner<MonthDateCell>();
+    
+    public uint DateMap
     {
-        if (sender is ToggleButton { Content: int date } dateButton)
+        get => GetValue(DateMapProperty);
+        set => SetValue(DateMapProperty, value);
+    }
+    
+    protected override Type StyleKeyOverride => typeof(ToggleButton);
+
+    protected override void OnClick()
+    {
+        base.OnClick();
+        
+        if (IsSelected)
+            DateMap &= ~(1u << (_date - 1));
+        else
+            DateMap |= 1u << (_date - 1);
+    }
+    
+    private bool IsSelected => (DateMap & (1u << (_date - 1))) != 0;
+    
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == DateMapProperty)
         {
-            if (dateButton.IsChecked == true)
-                SetValue(DateMapProperty, DateMap | (1u << (date - 1)));
-            else
-                SetValue(DateMapProperty, DateMap & ~(1u << (date - 1)));
-            
-            Console.WriteLine($"MonthDateSelect: {date}={dateButton.IsChecked}: {DateMap}");
+            PseudoClasses.Set(":checked", IsSelected);
         }
-    }   
+    }
 }
