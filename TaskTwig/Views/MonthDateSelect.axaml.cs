@@ -19,6 +19,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ObservableCollections;
 using TaskTwig.ViewModels;
+using Ursa.Controls;
 
 namespace TaskTwig.Views;
 
@@ -37,6 +38,7 @@ public partial class MonthDateSelect : UserControl
 }
 
 
+[PseudoClasses(":selected", ":start-date", ":end-date", "mid-date")]
 public class MonthDateCell : Button
 {
     public static readonly DirectProperty<MonthDateCell, int> DateProperty =
@@ -64,19 +66,24 @@ public class MonthDateCell : Button
         set => SetValue(DateMapProperty, value);
     }
     
-    protected override Type StyleKeyOverride => typeof(ToggleButton);
+    protected override Type StyleKeyOverride => typeof(DatePickerCalendarDayButton);
+
+    public MonthDateCell()
+    {
+        // PseudoClasses.Add(":in-range");
+    }
 
     protected override void OnClick()
     {
         base.OnClick();
         
-        if (IsSelected)
+        if (IsSelected(_date))
             DateMap &= ~(1u << (_date - 1));
         else
             DateMap |= 1u << (_date - 1);
     }
     
-    private bool IsSelected => (DateMap & (1u << (_date - 1))) != 0;
+    private bool IsSelected(int date) => (DateMap & (1u << (date - 1))) != 0;
     
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -84,7 +91,24 @@ public class MonthDateCell : Button
 
         if (change.Property == DateMapProperty)
         {
-            PseudoClasses.Set(":checked", IsSelected);
+            var selected = IsSelected(_date);
+            PseudoClasses.Set(":selected", selected);
+            
+            if (selected)
+            {
+                var prevSelected = _date > 1 && IsSelected(_date - 1);
+                var nextSelected = _date < 31 && IsSelected(_date + 1);
+
+                PseudoClasses.Set(":start-date", !prevSelected && nextSelected);
+                PseudoClasses.Set(":end-date", prevSelected && !nextSelected);
+                PseudoClasses.Set(":in-range", nextSelected && prevSelected);
+            }
+            else
+            {
+                PseudoClasses.Remove(":start-date");
+                PseudoClasses.Remove(":end-date");
+                PseudoClasses.Remove(":in-range");
+            }
         }
     }
 }

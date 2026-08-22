@@ -3,50 +3,50 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:views="clr-namespace:TaskTwig.Views"
-             Width="305"
-             Height="160"
+             xmlns:u="https://irihi.tech/ursa"
              x:Class="TaskTwig.Views.MonthDateSelect"
              x:Name="DateControl">
     
     <UserControl.Styles>
-        <Style Selector="ToggleButton">
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Style Selector="u|DatePickerCalendarDayButton:in-range">
             <Setter Property="CornerRadius" Value="0"/>
         </Style>
     </UserControl.Styles>
     
-    <UniformGrid x:Name="DateGrid" Columns="7">
-        <views:MonthDateCell Date="1" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="2" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="3" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="4" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="5" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="6" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="7" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="8" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="9" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="10" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="11" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="12" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="13" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="14" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="15" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="16" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="17" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="18" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="19" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="20" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="21" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="22" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="23" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="24" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="25" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="26" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="27" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="28" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="29" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="30" DateMap="{Binding #DateControl.DateMap}"/>
-        <views:MonthDateCell Date="31" DateMap="{Binding #DateControl.DateMap}"/>
-    </UniformGrid>
+    <Border Background="{DynamicResource SemiColorBackground3}" CornerRadius="3">
+        <UniformGrid x:Name="DateGrid" Columns="7">
+            <views:MonthDateCell Date="1" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="2" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="3" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="4" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="5" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="6" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="7" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="8" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="9" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="10" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="11" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="12" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="13" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="14" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="15" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="16" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="17" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="18" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="19" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="20" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="21" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="22" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="23" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="24" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="25" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="26" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="27" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="28" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="29" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="30" DateMap="{Binding #DateControl.DateMap}"/>
+            <views:MonthDateCell Date="31" DateMap="{Binding #DateControl.DateMap}"/>
+        </UniformGrid>
+    </Border>
     
 </UserControl>
