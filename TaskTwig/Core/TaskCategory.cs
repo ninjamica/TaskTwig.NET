@@ -2,10 +2,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO.Hashing;
-using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DynamicData;
 using TaskTwig.Core.Util;
 
 namespace TaskTwig.Core;
@@ -18,47 +18,43 @@ public partial class TaskCategory : HashableObject
 
     [ObservableProperty] public partial bool Expanded { get; set; } = true;
     
-    public int CompletedPoints => DoneTodayTasks.Sum(task  => task.Points);
-    public int TotalPoints => TodayTasks.Sum(task => task.Points) + DoneTodayTasks.Sum(task => task.Points);
-
-    public ObservableCollection<TwTask> Tasks
+    // public int CompletedPoints => DoneTodayTasks.Sum(task  => task.Points);
+    // public int TotalPoints => TodayTasks.Sum(task => task.Points) + DoneTodayTasks.Sum(task => task.Points);
+    
+    
+    [JsonConverter(typeof(SourceListJsonConverter<TwTask>))]
+    public SourceList<TwTask> Tasks { get; init; } = new();
+    
+    [JsonIgnore]
+    public ReadOnlyObservableCollection<TwTask> TasksView 
     {
-        get;
-        init
+        get
         {
-            field = value;
-            
-            if (_todayTasks is not null)
-                _todayTasks = new FilteredObservableList<TwTask>(value, task => task.IsToday, "IsToday");
+            if (field is null)
+            {
+                Tasks.Connect().Bind(out field).Subscribe();
+            }
+            return field;
+        }
+    }
+    
+    [JsonIgnore]
+    public ReadOnlyObservableCollection<TwTask> TodayTasks 
+    {
+        get
+        {
+            if (field is null)
+            {
+                Tasks.Connect()
+                    .AutoRefresh()
+                    .Filter(task => task.IsToday)
+                    .Bind(out field)
+                    .Subscribe();
+            }
 
-            if (_doneTodayTasks is not null)
-                _doneTodayTasks =
-                    new FilteredObservableList<TwTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
-        }
-    } = [];
-    
-    [JsonIgnore]
-    public FilteredObservableList<TwTask> TodayTasks {
-        get
-        {
-            _todayTasks ??= new FilteredObservableList<TwTask>(Tasks, task => task.IsToday, "IsToday");
-            return _todayTasks;
+            return field;
         }
     }
-    [JsonIgnore]
-    private FilteredObservableList<TwTask>? _todayTasks;
-    
-    [JsonIgnore]
-    public FilteredObservableList<TwTask> DoneTodayTasks {
-        get
-        {
-            _doneTodayTasks ??=
-                new FilteredObservableList<TwTask>(Tasks, task => task.LastDone.Equals(TaskTwig.Today), "LastDone");
-            return _doneTodayTasks;
-        }
-    }
-    [JsonIgnore]
-    private FilteredObservableList<TwTask>? _doneTodayTasks;
 
     public void AddTask(TwTask task)
     {
@@ -79,7 +75,7 @@ public partial class TaskCategory : HashableObject
 
     protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        foreach (var task in Tasks) 
+        foreach (var task in Tasks.Items) 
             task.AppendHashAndChildren(mainHasher, childHasher);
     }
 }

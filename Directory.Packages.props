@@ -18,6 +18,7 @@
     <PackageVersion Include="Avalonia.Android" Version="12.1.1" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="Dropbox.Api" Version="7.2.0" />
+    <PackageVersion Include="DynamicData" Version="9.4.33" />
     <PackageVersion Include="Irihi.Avalonia.Shared" Version="0.5.0" />
     <PackageVersion Include="Irihi.Ursa" Version="2.1.0" />
     <PackageVersion Include="Irihi.Ursa.Themes.Semi" Version="2.1.0" />
@@ -25,6 +26,7 @@
     <PackageVersion Include="Semi.Avalonia" Version="12.1.0.1" />
     <PackageVersion Include="Sortable.Avalonia" Version="2.3.1" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.9" />
+    <PackageVersion Include="ThomasLevesque.WeakEvent" Version="4.1.0" />
     <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO.Hashing;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -89,6 +90,10 @@ public partial class TwTask : HashableObject
     [ObservableProperty]
     public partial bool IsOverdue { get; private set; }
 
+    public TwTask()
+    {
+        TaskTwig.OnTodayChanged += OnTodayChanged;
+    }
     
     internal bool _IsDone(DateOnly? lastDone)
     {
@@ -198,6 +203,8 @@ public partial class TwTask : HashableObject
         IsToday = _IsToday();
         IsOverdue = _IsOverdue();
     }
+
+    private void OnTodayChanged(object? sender, PropertyChangedEventArgs e) => _UpdateStatusVars();
 
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {

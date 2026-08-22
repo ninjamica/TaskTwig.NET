@@ -151,7 +151,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     </Button>
                                     
                                     <ItemsControl Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4"
-                                                  ItemsSource="{Binding Tasks}"
+                                                  ItemsSource="{Binding TasksView}"
                                                   IsVisible="{Binding Expanded}"
                                                   sortable:Sortable.IsSortable="True"
                                                   sortable:Sortable.Droppable="True"
@@ -323,6 +323,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                   Command="{Binding DbxSyncCommand}"
                                   IsLoading="{Binding DbxSyncCommand.IsRunning}"
                                   HotKey="Ctrl+S"/>
+                    <TimePicker SelectedTime="{Binding DayStart}"/>
                 </StackPanel>
             </ContentPage>                                      
             

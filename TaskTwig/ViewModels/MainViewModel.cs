@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -11,6 +12,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DynamicData;
 using ObservableCollections;
 using Sortable.Avalonia;
 using TaskTwig.Core;
@@ -31,8 +33,11 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool TodayDoneExpanded { get; set; } = true;
 
-    public ObservableCollection<TaskCategory> TaskCategoriesView { get; set; }
-    public ReadOnlyObservableCollection<TwTask> DoneTodayTasks { get; set; }
+    private readonly ReadOnlyObservableCollection<TaskCategory> _taskCategoriesView;
+    public ReadOnlyObservableCollection<TaskCategory> TaskCategoriesView => _taskCategoriesView;
+    
+    private readonly ReadOnlyObservableCollection<TwTask> _doneTodaytasks;
+    public ReadOnlyObservableCollection<TwTask> DoneTodayTasks => _doneTodaytasks;
 
     public NotifyCollectionChangedSynchronizedViewList<KeyValuePair<DateOnly, Sleep>> SleepList { get; init; }
     
@@ -187,7 +192,7 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [ObservableProperty]
-    public partial Journal? TodaysJournal { get; private set; }
+    public partial Journal TodaysJournal { get; private set; }
     
     public ObservableCollection<Note> Notes { get; set; }
     [ObservableProperty] public partial Note? SelectedNote { get; set; }
@@ -375,6 +380,7 @@ public partial class MainViewModel : ViewModelBase
     {
         _twig = new Core.TaskTwig();
         _twig.PropertyChanged += OnTwigOnPropertyChanged;
+        Core.TaskTwig.OnTodayChanged += OnTodayChanged;
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
         {
@@ -382,10 +388,18 @@ public partial class MainViewModel : ViewModelBase
                 SelectedNote = _twig.Notes.First();
         });
         
-        TaskCategoriesView = _twig.TaskCategories;
-        DoneTodayTasks = _twig.DoneTodayTaskLists;
+        _twig.TaskCategories.Connect().Bind(out _taskCategoriesView).Subscribe();
+        _twig.TaskCategories.Connect()
+            .MergeManyChangeSets(category => category.Tasks.Connect())
+            .DisposeMany()
+            .AutoRefresh()
+            .AutoRefreshOnObservable(_ => Observable.FromEventPattern<PropertyChangedEventArgs>(handler => Core.TaskTwig.OnTodayChanged += handler, handler => Core.TaskTwig.OnTodayChanged -= handler))
+            .Filter(task => task.LastDone.Equals(Core.TaskTwig.Today))
+            .Bind(out _doneTodaytasks)
+            .Subscribe();
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
         IsSleeping = _twig.IsSleeping;
+        TodaysJournal = _twig.TodaysJournal();
         Notes = _twig.Notes;
 
         Task.Run(async () =>
@@ -404,15 +418,20 @@ public partial class MainViewModel : ViewModelBase
             {
                 IsSleeping = _twig.IsSleeping;
             }
-            else if (args.PropertyName == nameof(_twig.TodaysJournal))
-            {
-                TodaysJournal = _twig.TodaysJournal;
-            }
         }
+    }
+
+    private void OnTodayChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        TodaysJournal = _twig.TodaysJournal();
     }
 
     public void Cleanup()
     {
-        // _twig.WriteDataFiles();
+        Task.Run(() => _twig.WriteDataFiles()).Wait();
     }
+
+    [ObservableProperty]
+    public partial TimeSpan DayStart { get; set; } = Core.TaskTwig.DayStart;
+    partial void OnDayStartChanged(TimeSpan value) => Core.TaskTwig.DayStart = value;
 }

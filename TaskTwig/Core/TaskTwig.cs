@@ -2,17 +2,20 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.IO.Hashing;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Avalonia.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dropbox.Api;
 using Dropbox.Api.Files;
+using DynamicData;
 using ObservableCollections;
-using TaskTwig.Core.Util;
+using WeakEvent;
 
 namespace TaskTwig.Core;
 
@@ -101,7 +104,15 @@ public partial class TaskTwig : ObservableObject
     /// The current effective date. If the current time is after midnight but before <c>DayStart</c>,
     /// the value will be of the day before.
     /// </summary>
-    public static DateOnly Today { get; private set; } = EffectiveDate(DateTime.Now);
+    public static DateOnly Today
+    {
+        get;
+        private set
+        {
+            field = value;
+            TodayChangedEventSource.Raise(null, new PropertyChangedEventArgs(nameof(Today)));
+        }
+    } = EffectiveDate(DateTime.Now);
 
     /// <summary>
     /// Calculates the effective date of a timestamp (where the day only starts after <c>DayStart</c>).
@@ -117,6 +128,18 @@ public partial class TaskTwig : ObservableObject
         
         return date;
     }
+
+    private static readonly WeakEventSource<PropertyChangedEventArgs> TodayChangedEventSource = new();
+    public static event EventHandler<PropertyChangedEventArgs> OnTodayChanged
+    {
+        add => TodayChangedEventSource.Subscribe(value);
+        remove => TodayChangedEventSource.Unsubscribe(value);
+    }
+
+    public static void RefreshToday()
+    {
+        Today = EffectiveDate(DateTime.Now);
+    }
     
     
     // Containers for storing data in a way that's directly serializable
@@ -128,8 +151,7 @@ public partial class TaskTwig : ObservableObject
     
     private SleepValues _sleepValues = new();
 
-    public ObservableCollection<TaskCategory> TaskCategories { get; } = [];
-    public ObservableCollectionList<TwTask, ReadOnlyObservableCollection<TwTask>> DoneTodayTaskLists { get; }
+    public SourceList<TaskCategory> TaskCategories { get; } = new();
 
     public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
     public ObservableCollection<Exercise> Exercises { get; } = [];
@@ -146,12 +168,12 @@ public partial class TaskTwig : ObservableObject
     
     public Dictionary<DataFile, DataFilePaths> DataFiles { get; } = new()
     {
-        { DataFile.Task, new(DataDirPath, "task", "json") },
-        { DataFile.Sleep, new(DataDirPath, "sleep", "json") },
-        { DataFile.Exercise, new(DataDirPath, "exercise", "json") },
-        { DataFile.Workout, new(DataDirPath, "workout", "json") },
-        { DataFile.Journal, new(DataDirPath, "journal", "json") },
-        { DataFile.Note, new(DataDirPath, "note", "json") }
+        { DataFile.Task,     new DataFilePaths(DataDirPath, "task",     "json") },
+        { DataFile.Sleep,    new DataFilePaths(DataDirPath, "sleep",    "json") },
+        { DataFile.Exercise, new DataFilePaths(DataDirPath, "exercise", "json") },
+        { DataFile.Workout,  new DataFilePaths(DataDirPath, "workout",  "json") },
+        { DataFile.Journal,  new DataFilePaths(DataDirPath, "journal",  "json") },
+        { DataFile.Note,     new DataFilePaths(DataDirPath, "note",     "json") }
     };
     
     public readonly DataFilePaths CommitFile = new(DataDirPath, "commit", "json");
@@ -164,10 +186,6 @@ public partial class TaskTwig : ObservableObject
     
     public TaskTwig()
     {
-        DoneTodayTaskLists = new ObservableCollectionList<TwTask, ReadOnlyObservableCollection<TwTask>>(
-            new MappedObservableList<TaskCategory, ReadOnlyObservableCollection<TwTask>>(
-                TaskCategories, category => category.DoneTodayTasks));
-        
         if (!Directory.Exists(DataDirPath))
             Directory.CreateDirectory(DataDirPath);
         
@@ -195,9 +213,14 @@ public partial class TaskTwig : ObservableObject
         return true;
 
     }
-    
-    [ObservableProperty]
-    public partial Journal? TodaysJournal { get; private set; }
+
+    public Journal TodaysJournal()
+    {
+        if (!Journals.ContainsKey(Today))
+            Journals[Today] = new Journal { Date = Today };
+        
+        return Journals[Today];
+    }
 
     public async Task InitDataFromFiles()
     {
@@ -322,7 +345,7 @@ public partial class TaskTwig : ObservableObject
         switch (file)
         {
             case DataFile.Task:
-                jsonText = JsonSerializer.Serialize(TaskCategories);
+                jsonText = JsonSerializer.Serialize(TaskCategories.Items.ToList());
                 break;
             case DataFile.Sleep:
                 jsonText = JsonSerializer.Serialize(_sleepValues);
@@ -606,7 +629,7 @@ public partial class TaskTwig : ObservableObject
         foreach (var category in taskCategories)
         {
             TaskCategories.Add(category);
-            foreach (var task in category.Tasks)
+            foreach (var task in category.Tasks.Items)
             {
                 task.Category = category;
             }
@@ -652,12 +675,6 @@ public partial class TaskTwig : ObservableObject
             
         foreach (var (date, journal) in journalRecords)
             Journals[date] = journal;
-
-        // Create journal for today if it doesn't already exist
-        if (!Journals.ContainsKey(Today))
-            Journals[Today] = new Journal { Date = Today };
-        
-        TodaysJournal = Journals[Today];
     }
 
     private void _ReadNote(string jsonText)
@@ -672,7 +689,7 @@ public partial class TaskTwig : ObservableObject
     
     private byte[] _HashTasks(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        foreach (var taskCategory in TaskCategories) 
+        foreach (var taskCategory in TaskCategories.Items) 
             taskCategory.AppendHashAndChildren(mainHasher, childHasher);
 
         return mainHasher.GetCurrentHash();

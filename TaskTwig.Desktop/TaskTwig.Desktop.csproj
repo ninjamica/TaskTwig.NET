@@ -21,6 +21,7 @@
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" />
         <PackageReference Include="Dropbox.Api" />
+        <PackageReference Include="DynamicData" />
         <PackageReference Include="System.IO.Hashing" />
     </ItemGroup>
 

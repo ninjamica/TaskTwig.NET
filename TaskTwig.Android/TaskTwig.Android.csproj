@@ -24,6 +24,7 @@
         <PackageReference Include="Avalonia.Android"/>
         <PackageReference Include="Avalonia.Wayland" />
         <PackageReference Include="Dropbox.Api" />
+        <PackageReference Include="DynamicData" />
         <PackageReference Include="System.IO.Hashing" />
         <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen"/>
     </ItemGroup>

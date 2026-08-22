@@ -23,6 +23,7 @@
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Dropbox.Api" />
+        <PackageReference Include="DynamicData" />
         <PackageReference Include="Irihi.Avalonia.Shared" />
         <PackageReference Include="Irihi.Ursa" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" />
@@ -30,6 +31,7 @@
         <PackageReference Include="Semi.Avalonia" />
         <PackageReference Include="Sortable.Avalonia" />
         <PackageReference Include="System.IO.Hashing" />
+        <PackageReference Include="ThomasLevesque.WeakEvent" />
     </ItemGroup>
 
     <ItemGroup>
