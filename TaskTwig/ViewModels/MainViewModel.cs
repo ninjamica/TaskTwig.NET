@@ -18,7 +18,9 @@ using Sortable.Avalonia;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
 using TaskTwig.Views;
+using Ursa.Common;
 using Ursa.Controls;
+using Ursa.Controls.Options;
 using Notification = Ursa.Controls.Notification;
 using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
@@ -52,16 +54,15 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void EditTaskCategory(TaskCategory category)
     {
-        var dialogOptions = new OverlayDialogOptions()
+        var drawerOptions = new DrawerOptions()
         {
-            Mode = DialogMode.Info,
+            Position = Position.Top,
             CanLightDismiss = true,
-            VerticalAnchor = VerticalPosition.Top,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
         var dialogViewModel = new TaskCategoryDialogViewModel(category);
-        OverlayDialog.ShowCustomAsync<TaskCategoryDialog, TaskCategoryDialogViewModel, bool>(dialogViewModel, options: dialogOptions)
+        OverlayDrawer.ShowCustomAsync<TaskCategoryDialog, TaskCategoryDialogViewModel, bool>(dialogViewModel, options: drawerOptions)
             .ContinueWith(result =>
             {
                 if (result.Result)
@@ -91,16 +92,15 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void EditTask(TwTask task)
     {
-        var dialogOptions = new OverlayDialogOptions()
+        var drawerOptions = new DrawerOptions()
         {
-            Mode = DialogMode.Info,
+            Position = Position.Top,
             CanLightDismiss = true,
-            VerticalAnchor = VerticalPosition.Top,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
         var dialogViewModel = new TaskDialogViewModel(task);
-        OverlayDialog.ShowCustomAsync<TaskDialog, TaskDialogViewModel, bool>(dialogViewModel, options:dialogOptions)
+        OverlayDrawer.ShowCustomAsync<TaskDialog, TaskDialogViewModel, bool>(dialogViewModel, options:drawerOptions)
             .ContinueWith(result =>
             {
                 if (result.Result)

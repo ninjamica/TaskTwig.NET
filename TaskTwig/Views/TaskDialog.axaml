@@ -19,11 +19,13 @@
                    FontWeight="600"
                    Text="Edit Task"/>
         
-        <ScrollViewer Grid.Row="1">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,15,0">
                 <u:Form LabelPosition="Left" LabelWidth="*">
                     <u:FormItem Label="Name">
-                        <TextBox Text="{Binding Task.Name}"/>
+                        <TextBox Text="{Binding Task.Name}"
+                                 AcceptsReturn="False" AcceptsTab="False"
+                                 TextWrapping="Wrap"/>
                     </u:FormItem>
                     
                     <u:FormItem>
