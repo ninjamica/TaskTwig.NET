@@ -24,6 +24,7 @@ public partial class MainView : UserControl
             return;
 
         mainViewModel.NotificationManager = NotificationManager;
+        mainViewModel.JournalBlackoutDates = JournalCalendar.BlackoutDates;
     }
 
     private void TodayNameClicked(object? sender, PointerPressedEventArgs e)
@@ -76,8 +77,8 @@ public partial class MainView : UserControl
     public static readonly FuncValueConverter<bool, string> SleepButtonTextConverter =
         new(isSleeping => isSleeping ? "Wake Up" : "Go To Sleep");
 
-    public static readonly FuncValueConverter<DateOnly, string> JournalDateConverter =
-        new(date => date.ToString("dddd MMMM d"));
+    public static readonly FuncValueConverter<DateOnly?, string> JournalDateConverter =
+        new(date => date?.ToString("dddd MMMM d") ?? "Select Journal");
     
     public static readonly FuncValueConverter<bool, string> AccountButtonTextConverter =
         new(connected => connected ? "Sign Out" : "Sign In");

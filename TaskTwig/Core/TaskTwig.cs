@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Avalonia.Utilities;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dropbox.Api;
 using Dropbox.Api.Files;
@@ -157,7 +157,7 @@ public partial class TaskTwig : ObservableObject
     public ObservableCollection<Exercise> Exercises { get; } = [];
     
     public ObservableCollection<Workout> WorkoutList { get; } = [];
-    public ObservableDictionary<DateOnly, Journal> Journals { get; init; } = [];
+    public SourceCache<Journal, DateOnly> Journals { get; init; } = new(journal => journal.Date);
     public ObservableCollection<Note> Notes { get; init; } = [];
 
     [ObservableProperty] public partial bool IsSleeping { get; private set; }
@@ -216,10 +216,16 @@ public partial class TaskTwig : ObservableObject
 
     public Journal TodaysJournal()
     {
-        if (!Journals.ContainsKey(Today))
-            Journals[Today] = new Journal { Date = Today };
+        var journal = Journals.Lookup(Today);
+        if (!journal.HasValue)
+        {
+            Console.WriteLine("Creating new journal for Today");
+            var newJournal = new Journal { Date = Today };
+            Journals.AddOrUpdate(newJournal);
+            return newJournal;
+        }
         
-        return Journals[Today];
+        return journal.Value;
     }
 
     public async Task InitDataFromFiles()
@@ -357,12 +363,8 @@ public partial class TaskTwig : ObservableObject
                 jsonText = JsonSerializer.Serialize(WorkoutList);
                 break;
             case DataFile.Journal:
-                foreach (var (date, journal) in Journals)
-                {
-                    if (!date.Equals(Today) && journal.IsEmpty())
-                        Journals.Remove(date);
-                }
-                jsonText = JsonSerializer.Serialize(Journals);
+                var journals = Journals.KeyValues.Where(pair => !pair.Value.IsEmpty()).ToDictionary();
+                jsonText = JsonSerializer.Serialize(journals);
                 break;
             case DataFile.Note:
                 jsonText = JsonSerializer.Serialize(Notes);
@@ -671,10 +673,18 @@ public partial class TaskTwig : ObservableObject
     {
         var journalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(jsonText) ?? [];
 
-        Journals.Clear();
-            
-        foreach (var (date, journal) in journalRecords)
-            Journals[date] = journal;
+        Dispatcher.UIThread.Post(() =>
+        {
+            Journals.Edit(updater =>
+            {
+                updater.Clear();
+                
+                foreach (var (_, journal) in journalRecords)
+                    Journals.AddOrUpdate(journal);
+            });
+
+            TodaysJournal();
+        });
     }
 
     private void _ReadNote(string jsonText)
@@ -730,9 +740,8 @@ public partial class TaskTwig : ObservableObject
 
     private byte[] _HashJournal(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        foreach (var (_, journal) in Journals.OrderBy(pair => pair.Key))
+        foreach (var journal in Journals.Items.OrderBy(journal => journal.Date))
         {
-            // mainHasher.Append(BitConverter.GetBytes(journalPair.Key.DayNumber));
             if (!journal.IsEmpty())
                 journal.AppendHashAndChildren(mainHasher, childHasher);
         }

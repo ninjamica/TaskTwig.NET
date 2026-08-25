@@ -15,6 +15,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
+using DynamicData.Kernel;
 using ObservableCollections;
 using Sortable.Avalonia;
 using TaskTwig.Core;
@@ -194,7 +195,55 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [ObservableProperty]
-    public partial Journal TodaysJournal { get; private set; }
+    public partial Journal? SelectedJournal { get; private set; }
+    
+    [ObservableProperty]
+    public partial DateTime? JournalSelectedDate { get; set; }
+
+    partial void OnJournalSelectedDateChanged(DateTime? value)
+    {
+        if (value is { } date)
+        {
+            SelectedJournal = _twig.Journals.Lookup(DateOnly.FromDateTime(date)).ValueOrDefault();
+        }
+    }
+
+    public CalendarBlackoutDatesCollection? JournalBlackoutDates
+    {
+        get;
+        set
+        {
+            field = value;
+            UpdateJournalBlackoutDates();
+        }
+    }
+
+    private void UpdateJournalBlackoutDates()
+    {
+        if (JournalBlackoutDates is null) 
+            return;
+        
+        var dates = _twig.Journals.Keys.Order().ToList();
+        
+        JournalBlackoutDates.Clear();
+        
+        if (dates.Count == 0)
+            return;
+        
+        JournalBlackoutDates.Add(new CalendarDateRange(DateTime.MinValue, dates.First().AddDays(-1).ToDateTime(TimeOnly.MinValue)));
+
+        for (int i = 0; i < dates.Count - 1; i++)
+        {
+            var current = dates[i];
+            var next = dates[i + 1];
+            
+            if (next.DayNumber - current.DayNumber > 1)
+                JournalBlackoutDates.Add(new CalendarDateRange(current.AddDays(1).ToDateTime(TimeOnly.MinValue), 
+                                                               next.AddDays(-1).ToDateTime(TimeOnly.MinValue)));
+        }
+        
+        JournalBlackoutDates.Add(new CalendarDateRange(dates.Last().AddDays(1).ToDateTime(TimeOnly.MinValue), DateTime.MaxValue));
+    }
     
     public ObservableCollection<Note> Notes { get; set; }
     [ObservableProperty] public partial Note? SelectedNote { get; set; }
@@ -412,8 +461,12 @@ public partial class MainViewModel : ViewModelBase
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
         {
-            if (_twig.Notes.Count > 0)
+            if (SelectedNote != null && _twig.Notes.Count > 0 && !_twig.Notes.Contains(SelectedNote))
                 SelectedNote = _twig.Notes.First();
+            
+            _twig.Journals.Connect().Subscribe(JournalsOnCollectionChanged);
+            JournalSelectedDate = _twig.TodaysJournal().Date.ToDateTime(TimeOnly.MinValue);
+            Dispatcher.UIThread.Post(UpdateJournalBlackoutDates);
         });
         
         _twig.TaskCategories.Connect().Bind(out _taskCategoriesView).Subscribe();
@@ -427,7 +480,6 @@ public partial class MainViewModel : ViewModelBase
             .Subscribe();
         SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
         IsSleeping = _twig.IsSleeping;
-        TodaysJournal = _twig.TodaysJournal();
         Notes = _twig.Notes;
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
@@ -446,7 +498,16 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnTodayChanged(object? sender, PropertyChangedEventArgs args)
     {
-        TodaysJournal = _twig.TodaysJournal();
+        _twig.TodaysJournal();
+    }
+    
+    private void JournalsOnCollectionChanged(IChangeSet<Journal, DateOnly> obj)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            UpdateJournalBlackoutDates();
+            OnJournalSelectedDateChanged(JournalSelectedDate);
+        });
     }
     
     private void DbxHandlerOnAccountChanged(object? sender, DbxAccountChangedEventArgs e)

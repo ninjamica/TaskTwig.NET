@@ -212,10 +212,10 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                 <TextBlock>
                                     <TextBlock.Text>
                                         <MultiBinding StringFormat="{}{0}: slept from {1:t} to {2:t} for {3:F1} hours">
-                                            <Binding Path="Key"></Binding>
-                                            <Binding Path="Value.StartTime"></Binding>
-                                            <Binding Path="Value.EndTime"></Binding>
-                                            <Binding Path="Value.Length.TotalHours"></Binding>
+                                            <Binding Path="Key" />
+                                            <Binding Path="Value.StartTime" />
+                                            <Binding Path="Value.EndTime" />
+                                            <Binding Path="Value.Length.TotalHours" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
@@ -236,23 +236,36 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         <StackPanel Orientation="Horizontal" Spacing="5">
                             <TextBlock Text="Journal:"
                                        Classes="H4"
-                                       Theme="{StaticResource TitleTextBlock}"/>
-                            <TextBlock Text="{Binding TodaysJournal?.Date, Converter={x:Static views:MainView.JournalDateConverter}}"
-                                       Classes="H6 Secondary"
                                        Theme="{StaticResource TitleTextBlock}"
                                        VerticalAlignment="Center"/>
+                            <Button>
+                                <TextBlock
+                                    Text="{Binding SelectedJournal?.Date, Converter={x:Static views:MainView.JournalDateConverter}}"
+                                    Classes="H6 Secondary"
+                                    Theme="{StaticResource TitleTextBlock}"
+                                    VerticalAlignment="Center"/>
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <Calendar x:Name="JournalCalendar" SelectionMode="SingleDate"
+                                                  SelectedDate="{Binding JournalSelectedDate}"
+                                                  HorizontalAlignment="Center"/>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
                         </StackPanel>
                     </u:UrsaGroupBox.Header>
-                    <TextBox Text="{Binding TodaysJournal?.Text}"
-                             PlaceholderText="Daily Journal" 
-                             AcceptsReturn="True" 
-                             AcceptsTab="True" 
-                             TextWrapping="Wrap"
-                             VerticalAlignment="Stretch"
-                             VerticalContentAlignment="Top"
-                             TextInputOptions.ReturnKeyType="Return"
-                             Theme="{StaticResource LooklessTextBox}"
-                             Foreground="{DynamicResource SemiColorText1}"/>
+                    <ScrollViewer>
+                        <TextBox Text="{Binding SelectedJournal?.Text}"
+                                 PlaceholderText="Daily Journal"
+                                 AcceptsReturn="True"
+                                 AcceptsTab="True"
+                                 TextWrapping="Wrap"
+                                 VerticalAlignment="Stretch"
+                                 VerticalContentAlignment="Top"
+                                 TextInputOptions.ReturnKeyType="Return"
+                                 Theme="{StaticResource LooklessTextBox}"
+                                 Foreground="{DynamicResource SemiColorText1}" />
+                    </ScrollViewer>
                 </u:UrsaGroupBox>
             </ContentPage>
             

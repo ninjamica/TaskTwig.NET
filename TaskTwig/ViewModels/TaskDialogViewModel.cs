@@ -400,7 +400,6 @@ public class EmojiTextBox : TextBox
         if (e is { Key: Key.V, KeyModifiers: KeyModifiers.Control })
         {
             var clipboard = await TopLevel.GetTopLevel(visual: this)?.Clipboard?.TryGetTextAsync();
-            Console.WriteLine($"IconBoxPastingFromClipboard new text: {clipboard ?? "null"}");
 
             if (clipboard != null && Regex.IsMatch(clipboard, EmojiPattern))
             {
@@ -418,9 +417,6 @@ public class EmojiTextBox : TextBox
 
     protected override void OnTextInput(TextInputEventArgs e)
     {
-        Console.WriteLine($"IconBoxTextInput new text: {e.Text}");
-
-        
         e.Handled = true;
         if (e.Text is { } text && Regex.IsMatch(text, EmojiPattern))
         {
