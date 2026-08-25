@@ -79,6 +79,6 @@ public partial class MainView : UserControl
     public static readonly FuncValueConverter<DateOnly, string> JournalDateConverter =
         new(date => date.ToString("dddd MMMM d"));
     
-    public static readonly FuncValueConverter<string?, string> AccountButtonTextConverter =
-        new(accountName => accountName is null ? "Sign In" : "Sign Out");
+    public static readonly FuncValueConverter<bool, string> AccountButtonTextConverter =
+        new(connected => connected ? "Sign Out" : "Sign In");
 }

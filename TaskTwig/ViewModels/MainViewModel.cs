@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -210,17 +212,42 @@ public partial class MainViewModel : ViewModelBase
     {
         _twig.Notes.Remove(note);
     }
-    
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PushDbxCommand), nameof(PullDbxCommand), nameof(DbxSyncCommand))]
-    public partial string? DbxAccountName { get; set; }
+    public partial bool IsDbxConnected { get; set; } = false;
 
-    public bool IsDbxConnected() => _twig.DbxHandler.IsAccountConnected;
-    
+    [ObservableProperty]
+    public partial string? DbxAccountName { get; private set; }
+
+    public Task<IImage?>? DbxPhoto
+    {
+        get;
+        private set
+        {
+            field = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private async Task<IImage?> _getDbxPhoto(string? url)
+    {
+        if (!IsDbxConnected || url is null)
+            return null;
+        
+        var client = _twig.DbxHandler.DbxClientConfig.HttpClient;
+        var response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        var data = await response.Content.ReadAsByteArrayAsync();
+        
+        return new Bitmap(new MemoryStream(data));
+    }
+
+
     [RelayCommand]
     private async Task DbxSignInOut()
     {
-        if (IsDbxConnected())
+        if (IsDbxConnected)
         {
             var confirm = await OverlayMessageBox.ShowAsync(
                 "Are you sure you want to sign out?",
@@ -232,7 +259,6 @@ public partial class MainViewModel : ViewModelBase
             if (confirm == MessageBoxResult.Yes)
             {
                 await _twig.DbxHandler.Logout();
-                DbxAccountName = null;
             }
         }
         else
@@ -254,10 +280,8 @@ public partial class MainViewModel : ViewModelBase
             if (result.HasFlag(DialogResult.OK) &&
                 dialogVm is { CodeText: { } code })
             {
-                _twig.DbxHandler.AuthFromCode(oAuth, code);
+                await _twig.DbxHandler.AuthFromCode(oAuth, code);
             }
-
-            DbxAccountName = await _twig.DbxHandler.GetAccountName();
         }
         
     }
@@ -362,7 +386,7 @@ public partial class MainViewModel : ViewModelBase
         });
 
         var actions = await _twig.SyncWithDbx(SyncConflictCallback, progress);
-        // NotificationManager?.Close(notification);
+        // NotificationManager?.Close(notifGrid);
         NotificationManager?.CloseAll();
 
         if (actions is null)
@@ -373,14 +397,18 @@ public partial class MainViewModel : ViewModelBase
         {
             NotificationManager?.Show(new Notification("Sync Completed", notifContent.Text), NotificationType.Success, classes: ["Light"]);
         }
-        
     }
+    
+    [ObservableProperty]
+    public partial TimeSpan DayStart { get; set; } = Core.TaskTwig.DayStart;
+    partial void OnDayStartChanged(TimeSpan value) => Core.TaskTwig.DayStart = value;
 
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
         _twig.PropertyChanged += OnTwigOnPropertyChanged;
         Core.TaskTwig.OnTodayChanged += OnTodayChanged;
+        _twig.DbxHandler.AccountChanged += DbxHandlerOnAccountChanged;
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
         {
@@ -402,12 +430,7 @@ public partial class MainViewModel : ViewModelBase
         TodaysJournal = _twig.TodaysJournal();
         Notes = _twig.Notes;
 
-        Task.Run(async () =>
-        {
-            await _twig.DbxHandler.AuthFromStoredKeys();
-            var accountName = await _twig.DbxHandler.GetAccountName();
-            Dispatcher.UIThread.Post(() => DbxAccountName = accountName);
-        });
+        Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
     }
 
     private void OnTwigOnPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -425,13 +448,19 @@ public partial class MainViewModel : ViewModelBase
     {
         TodaysJournal = _twig.TodaysJournal();
     }
+    
+    private void DbxHandlerOnAccountChanged(object? sender, DbxAccountChangedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            IsDbxConnected = e.IsAccountConnected;
+            DbxAccountName = _twig.DbxHandler.GetAccountName();
+            DbxPhoto = _getDbxPhoto(_twig.DbxHandler.GetAccountPhotoUri());
+        });
+    }
 
     public void Cleanup()
     {
         Task.Run(() => _twig.WriteDataFiles()).Wait();
     }
-
-    [ObservableProperty]
-    public partial TimeSpan DayStart { get; set; } = Core.TaskTwig.DayStart;
-    partial void OnDayStartChanged(TimeSpan value) => Core.TaskTwig.DayStart = value;
 }
