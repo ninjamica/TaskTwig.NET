@@ -9,7 +9,7 @@ public partial class TaskDialog : UserControl
     {
         InitializeComponent();
     }
-    
+
     public static readonly FuncValueConverter<int, string> WeekSpinnerTextConverter =
         new(counter => counter > 1 ? "Weeks" : "Week");
     

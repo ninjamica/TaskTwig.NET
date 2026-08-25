@@ -28,11 +28,9 @@
                                  TextWrapping="Wrap"/>
                     </u:FormItem>
                     
-                    <u:FormItem>
-                        <u:FormItem.Label>
-                            <TextBlock VerticalAlignment="Center">Icon</TextBlock>
-                        </u:FormItem.Label>
-                        <TextBox Text="{Binding Task.Icon}"
+                    <u:FormItem Label="Icon">
+                        <vm:EmojiTextBox x:Name="IconBox" 
+                                 Text="{Binding Task.Icon}"
                                  FontFamily="{StaticResource NotoColorEmoji}"
                                  MaxLines="1"
                                  FontSize="24"
