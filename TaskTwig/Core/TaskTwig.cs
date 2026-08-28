@@ -160,10 +160,25 @@ public partial class TaskTwig : ObservableObject
     }
     
     // Containers for storing data in a way that's directly serializable
-    struct SleepValues()
+    public partial class SleepValues() : HashableObject
     {
         public ObservableDictionary<DateOnly, Sleep> SleepRecords { get; init; } = [];
-        public DateTime? SleepStart { get; set; }
+        
+        [ObservableProperty]
+        public partial DateTime? SleepStart { get; set; }
+        
+        protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+        {
+            hashAlgorithm.Append(BitConverter.GetBytes(SleepStart?.ToBinary() ?? 0));
+        }
+
+        protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
+        {
+            foreach (var sleepRecord in SleepRecords.OrderBy(pair => pair.Key))
+            {
+                sleepRecord.Value.AppendHashAndChildren(mainHasher, childHasher);
+            }
+        }
     }
     
     private SleepValues _sleepValues = new();
@@ -229,6 +244,11 @@ public partial class TaskTwig : ObservableObject
         _SetSleepStart(null);
         return true;
 
+    }
+
+    public void CancelSleep()
+    {
+        _SetSleepStart(null);
     }
 
     public Journal TodaysJournal()
@@ -735,17 +755,7 @@ public partial class TaskTwig : ObservableObject
 
     private byte[] _HashSleep(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        mainHasher.Append( _sleepValues.SleepStart switch
-        {
-            { } sleepStart => BitConverter.GetBytes(sleepStart.ToBinary()),
-            _ => "null"u8
-        });
-
-        foreach (var (_, sleep) in SleepRecords.OrderBy(pair => pair.Key))
-        {
-            // mainHasher.Append(BitConverter.GetBytes(sleepPair.Key.DayNumber));
-            sleep.AppendHashAndChildren(mainHasher, childHasher);
-        }
+        _sleepValues.AppendHashAndChildren(mainHasher, childHasher);
         
         return mainHasher.GetCurrentHash();
     }

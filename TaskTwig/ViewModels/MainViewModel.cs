@@ -156,6 +156,12 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CancelSleep()
+    {
+        _twig.CancelSleep();
+    }
+
+    [RelayCommand]
     private void OnSleepAddButton()
     {
         var dialogOptions = new OverlayDialogOptions()

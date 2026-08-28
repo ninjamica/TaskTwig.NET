@@ -137,7 +137,7 @@
                     HorizontalAlignment="Left"
                     DockPanel.Dock="Left">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <PathIcon Data="{DynamicResource SemiIconDelete}"/>
+                    <PathIcon Data="{StaticResource SemiIconDelete}"/>
                     <TextBlock Text="Delete"/>
                 </StackPanel>
             </Button>

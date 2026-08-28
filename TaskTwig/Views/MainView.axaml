@@ -201,7 +201,12 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                     <u:ButtonGroup>
                         <Button Content="{Binding IsSleeping, Converter={x:Static views:MainView.SleepButtonTextConverter}}"
                                 Command="{Binding SleepButtonCommand}"/>
-                        <Button Command="{Binding SleepAddButtonCommand}">
+                        <Button Command="{Binding CancelSleepCommand}"
+                                IsVisible="{Binding IsSleeping}">
+                            <PathIcon Data="{StaticResource SemiIconDelete}"/>
+                        </Button>
+                        <Button Command="{Binding SleepAddButtonCommand}"
+                                IsVisible="{Binding !IsSleeping}">
                             <PathIcon Data="{StaticResource SemiIconPlus}"
                                       Width="12" Height="12"/>
                         </Button>
