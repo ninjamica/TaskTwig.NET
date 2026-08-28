@@ -60,6 +60,7 @@ public class DbxHandler
         remove =>  _accountChangedEventSource.Unsubscribe(value);
     }
 
+    
     public DbxHandler(string dataDirPath)
     {
         _credentialPath = Path.Combine(dataDirPath, "dbx", "credentials.json");
@@ -116,16 +117,6 @@ public class DbxHandler
             var json = JsonSerializer.Serialize(credentials);
             File.WriteAllText(_credentialPath, json);
         }
-    }
-
-    public void AuthFromUrlConsole()
-    {
-        var (uri, oAuthFlow) = GenDbxAuthUrl();
-        Console.WriteLine($"Auth URL: {uri}");
-        Console.Write("Enter auth code: ");
-        string authCode = Console.ReadLine() ?? "";
-
-        AuthFromCode(oAuthFlow, authCode).Wait();
     }
 
     public async Task AuthFromCode(PKCEOAuthFlow oAuthFlow, string code)

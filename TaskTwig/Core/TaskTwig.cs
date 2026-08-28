@@ -8,6 +8,7 @@ using System.IO.Hashing;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -84,6 +85,9 @@ public class HashCommit
     }
 }
 
+public class TwigInvalidOperationException()
+    : InvalidOperationException("Attempt to run multiple data operations simultaneously, which is not allowed");
+
 public partial class TaskTwig : ObservableObject
 {
     
@@ -141,6 +145,19 @@ public partial class TaskTwig : ObservableObject
         Today = EffectiveDate(DateTime.Now);
     }
     
+    
+    private int _isDataOperation = 0;
+    private void _BeginDataOperation()
+    {
+        // Mark data operation in progress, throw exception if there's already an operation in progress
+        if (Interlocked.CompareExchange(ref _isDataOperation, 1, 0) == 1)
+            throw new TwigInvalidOperationException();
+    }
+
+    private void _EndDataOperation()
+    {
+        Interlocked.CompareExchange(ref _isDataOperation, 0, 1);
+    }
     
     // Containers for storing data in a way that's directly serializable
     struct SleepValues()
@@ -230,57 +247,75 @@ public partial class TaskTwig : ObservableObject
 
     public async Task InitDataFromFiles()
     {
-        await Task.WhenAll(ReadDataFiles(), _ReadLocalHashes(), _ReadLastSyncedHashes());
-    }
-    
-    public async Task ReadDataFiles()
-    {
-        // await Parallel.ForEachAsync(Enum.GetValues<DataFile>(), async (file, _) => await ReadDataFile(file));
-        var tasks = Enum.GetValues<DataFile>().Select(ReadDataFile);
-        await Task.WhenAll(tasks);
-    }
-
-    public async Task ReadDataFile(DataFile file)
-    {
-        string jsonText = await File.ReadAllTextAsync(DataFiles[file].LocalPath);
-
+        Dispatcher.UIThread.VerifyAccess();
         try
         {
-            switch (file)
-            {
-                case DataFile.Task:
-                    _ReadTasks(jsonText);
-                    break;
-                case DataFile.Sleep:
-                    _ReadSleep(jsonText);
-                    break;
-                case DataFile.Exercise:
-                    _ReadExercise(jsonText);
-                    break;
-                case DataFile.Workout:
-                    _ReadWorkoutList(jsonText);
-                    break;
-                case DataFile.Journal:
-                    _ReadJournal(jsonText);
-                    break;
-                case DataFile.Note:
-                    _ReadNote(jsonText);
-                    break;
+            _BeginDataOperation();
 
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(file), file, null);
+            await _ReadDataFiles();
+            await Task.WhenAll(_ReadLocalHashes(), _ReadLastSyncedHashes());
+        }
+        finally
+        {
+            _EndDataOperation();
+        }
+    }
+
+    private async Task _ReadDataFiles(IEnumerable<DataFile>? files = null)
+    {
+        // await Task.WhenAll((files ?? Enum.GetValues<DataFile>()).Select(_ReadDataFile));
+        
+        Dispatcher.UIThread.VerifyAccess();
+        
+        HashableObject.IsReadingData = true;
+        
+        foreach (var file in files ?? Enum.GetValues<DataFile>())
+        {
+            var jsonText = await File.ReadAllTextAsync(DataFiles[file].LocalPath);
+
+            try
+            {
+                switch (file)
+                {
+                    case DataFile.Task:
+                        _ReadTasks(jsonText);
+                        break;
+                    case DataFile.Sleep:
+                        _ReadSleep(jsonText);
+                        break;
+                    case DataFile.Exercise:
+                        _ReadExercise(jsonText);
+                        break;
+                    case DataFile.Workout:
+                        _ReadWorkoutList(jsonText);
+                        break;
+                    case DataFile.Journal:
+                        _ReadJournal(jsonText);
+                        break;
+                    case DataFile.Note:
+                        _ReadNote(jsonText);
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(file), file, null);
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"{file.ToString()} not found at location {DataFiles[file].LocalPath}");
+            }
+            catch (JsonException e)
+            {
+                Console.WriteLine($"Failed to parse {file.ToString()} with the following error:");
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                await Dispatcher.Yield(DispatcherPriority.Background);
             }
         }
-        catch (FileNotFoundException)
-        {
-            Console.WriteLine($"{file.ToString()} not found at location {DataFiles[file].LocalPath}");
-        }
-        catch (JsonException e)
-        {
-            await _BackupDataFile(file);
-            Console.WriteLine($"Failed to parse {file.ToString()} with the following error:");
-            Console.WriteLine(e);
-        }
+        
+        HashableObject.IsReadingData = false;
     }
 
     private static async Task<HashCommit?> _ReadHashFile(string path)
@@ -312,7 +347,7 @@ public partial class TaskTwig : ObservableObject
         try
         {
             await using var downloadStream = await DbxHandler.DownloadContentStreamAsync(CommitFile.DbxPath);
-            return JsonSerializer.Deserialize<HashCommit>(downloadStream);
+            return await JsonSerializer.DeserializeAsync<HashCommit>(downloadStream);
         }
         catch (ApiException<DownloadError>)
         {
@@ -323,11 +358,26 @@ public partial class TaskTwig : ObservableObject
 
     private async Task _UploadDbxHashes(DataFilePaths file)
     {
-        var stream = File.OpenRead(file.LocalPath);
+        await using var stream = File.OpenRead(file.LocalPath);
         await DbxHandler.UploadFileAsync(stream, file.DbxPath);
     }
 
-    public async Task<List<DataFile>> WriteDataFiles(IProgress<SyncProgress>? progress = null)
+    public async Task<List<DataFile>> SaveDataFiles()
+    {
+        Dispatcher.UIThread.VerifyAccess();
+        
+        try
+        {
+            _BeginDataOperation();
+            return await WriteDataFiles();
+        }
+        finally
+        {
+            _EndDataOperation();
+        }
+    }
+
+    private async Task<List<DataFile>> WriteDataFiles(IProgress<SyncProgress>? progress = null)
     {
         progress?.Report(new SyncProgress(SyncProgressStage.Hash));
         await _HashLiveData();
@@ -336,88 +386,68 @@ public partial class TaskTwig : ObservableObject
         var diffFiles = fileHashes is null ? _liveHashes.FileHashes.Keys.ToList() : _FindHashDiffs(_liveHashes, fileHashes).ToList();
         progress?.Report(new SyncProgress(SyncProgressStage.Save, files: diffFiles));
         
-        await Parallel.ForEachAsync(diffFiles, async (file, _) =>
+        foreach (var file in diffFiles)
         {
-            Console.WriteLine($"Saving {file}");
-            await _WriteDataFile(file);
-        });
+            string jsonText;
+            switch (file)
+            {
+                case DataFile.Task:
+                    jsonText = JsonSerializer.Serialize(TaskCategories.Items.ToList());
+                    break;
+                case DataFile.Sleep:
+                    jsonText = JsonSerializer.Serialize(_sleepValues);
+                    break;
+                case DataFile.Exercise:
+                    jsonText = JsonSerializer.Serialize(Exercises);
+                    break;
+                case DataFile.Workout:
+                    jsonText = JsonSerializer.Serialize(WorkoutList);
+                    break;
+                case DataFile.Journal:
+                    var journals = Journals.KeyValues.Where(pair => !pair.Value.IsEmpty()).ToDictionary();
+                    jsonText = JsonSerializer.Serialize(journals);
+                    break;
+                case DataFile.Note:
+                    jsonText = JsonSerializer.Serialize(Notes);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(file), file, null);
+            }
+
+            await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonText);
+            await Dispatcher.Yield(DispatcherPriority.Background);
+        }
+        
         await _WriteLocalHashes(CommitFile);
         return diffFiles;
     }
 
-    private async Task _WriteDataFile(DataFile file)
-    {
-        string jsonText;
-        switch (file)
-        {
-            case DataFile.Task:
-                jsonText = JsonSerializer.Serialize(TaskCategories.Items.ToList());
-                break;
-            case DataFile.Sleep:
-                jsonText = JsonSerializer.Serialize(_sleepValues);
-                break;
-            case DataFile.Exercise:
-                jsonText = JsonSerializer.Serialize(Exercises);
-                break;
-            case DataFile.Workout:
-                jsonText = JsonSerializer.Serialize(WorkoutList);
-                break;
-            case DataFile.Journal:
-                var journals = Journals.KeyValues.Where(pair => !pair.Value.IsEmpty()).ToDictionary();
-                jsonText = JsonSerializer.Serialize(journals);
-                break;
-            case DataFile.Note:
-                jsonText = JsonSerializer.Serialize(Notes);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(file), file, null);
-        }
-
-        await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonText);
-    }
-
     private async Task _WriteLocalHashes(DataFilePaths file)
     {
-        string jsonText = JsonSerializer.Serialize(_liveHashes);
+        var jsonText = JsonSerializer.Serialize(_liveHashes);
         await File.WriteAllTextAsync(file.LocalPath, jsonText);
     }
-    
-    public async Task BackupFiles()
-    {
-        var files = await WriteDataFiles();
 
-        // var tasks = Enum.GetValues<DataFile>().Select(_BackupDataFile);
-        // await Task.WhenAll(tasks.Append(_BackupLocalHashes()));
-        await Parallel.ForEachAsync(files, async (file, _) => await _BackupDataFile(file));
-    }
-
-    private async Task _BackupDataFile(DataFile file)
+    private async Task<bool> _HashLiveData()
     {
-        var filePaths = DataFiles[file];
+        Dispatcher.UIThread.VerifyAccess();
         
-        if (!File.Exists(filePaths.BackupPath))
-            await File.Create(filePaths.BackupPath).DisposeAsync();
+        HashableObject.AllCacheValid = true;
         
-        File.Copy(filePaths.LocalPath, filePaths.BackupPath, true);
-    }
+        // await Task.Run(() => Parallel.ForEach(DataFiles.Keys, file => _liveHashes.FileHashes[file] = _HashDataFile(file)));
 
-    private async Task _BackupLocalHashes()
-    {
-        if (!File.Exists(CommitFile.BackupPath))
-            await File.Create(CommitFile.BackupPath).DisposeAsync();
-        
-        File.Copy(CommitFile.LocalPath, CommitFile.BackupPath, true);
-    }
-
-    private async Task _HashLiveData()
-    {
-        await Task.Run(() => Parallel.ForEach(DataFiles.Keys, file => _liveHashes.FileHashes[file] = _HashDataFile(file)));
+        foreach (var file in DataFiles.Keys)
+        {
+            _liveHashes.FileHashes[file] = _HashDataFile(file);
+            await Dispatcher.Yield(DispatcherPriority.Background);
+        }
         
         var hashAlgorithm = new XxHash3();
         foreach (var hash in _liveHashes.FileHashes.Values)
             hashAlgorithm.Append(hash);
         
         _liveHashes.OverallHash = hashAlgorithm.GetCurrentHash();
+        return HashableObject.AllCacheValid;
     }
 
     private byte[] _HashDataFile(DataFile dataFile)
@@ -445,7 +475,7 @@ public partial class TaskTwig : ObservableObject
                 !hash1.FileHashes[file].SequenceEqual(hash2.FileHashes[file]));
     }
 
-    public Dictionary<DataFile, DataFileAction> CompareRemoteHashes(HashCommit? remoteHashes)
+    private Dictionary<DataFile, DataFileAction> _CompareRemoteHashes(HashCommit? remoteHashes)
     {
         if (remoteHashes is null)
             return DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Conflict);
@@ -483,8 +513,9 @@ public partial class TaskTwig : ObservableObject
         return diffs;
     }
 
-    public async Task PerformSyncTransactions(Dictionary<DataFile, DataFileAction> actions)
+    private async Task _PerformSyncTransactions(Dictionary<DataFile, DataFileAction> actions)
     {
+        // Handle file upload/downloads in parallel thread pool
         var syncTask = Parallel.ForEachAsync(actions, async (filePair, _) =>
         {
             var file = DataFiles[filePair.Key];
@@ -506,15 +537,22 @@ public partial class TaskTwig : ObservableObject
             }
         });
         await syncTask;
+        
+        // Report any exceptions
         if (syncTask.Exception is { } exceptions)
         {
             Console.Error.WriteLine(exceptions);
         }
 
-        await ReadDataFiles();
-        await _HashLiveData();
-        await _WriteLocalHashes(CommitFile);
+        // Handle newly downloaded data, update hashes, etc
+        if (actions.ContainsValue(DataFileAction.Download))
+        {
+            await _ReadDataFiles(actions.Where(filePair => filePair.Value == DataFileAction.Download)
+                .Select(filePair => filePair.Key));
+            await _HashLiveData();
+        }
         
+        await _WriteLocalHashes(CommitFile);
         _lastSyncedHashes.SetFrom(_liveHashes);
         await _WriteLocalHashes(DbxCommitFile);
         
@@ -526,77 +564,81 @@ public partial class TaskTwig : ObservableObject
         Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>?>>? conflictCallback = null,
         IProgress<SyncProgress>? progress = null)
     {
-        await WriteDataFiles(progress);
-        
-        progress?.Report(new SyncProgress(SyncProgressStage.Compare));
-        var remoteHashes = await _DownloadDbxHashes();
-        var actions = CompareRemoteHashes(remoteHashes);
-        
-        if (actions.ContainsValue(DataFileAction.Conflict))
+        Dispatcher.UIThread.VerifyAccess();
+
+        try
         {
-            if (conflictCallback is not null)
+            _BeginDataOperation();
+
+            await WriteDataFiles(progress);
+
+            progress?.Report(new SyncProgress(SyncProgressStage.Compare));
+            var remoteHashes = await _DownloadDbxHashes();
+            var actions = _CompareRemoteHashes(remoteHashes);
+
+            if (actions.ContainsValue(DataFileAction.Conflict))
             {
-                actions = await conflictCallback(actions);
-                if (actions is null)
+                if (conflictCallback is not null)
+                {
+                    actions = await conflictCallback(actions);
+                    if (actions is null)
+                        return null;
+                }
+                else
+                {
                     return null;
+                }
             }
-            else
+
+            progress?.Report(new SyncProgress(SyncProgressStage.Sync, syncActions: actions));
+            foreach (var dataFileAction in actions)
             {
-                return null;
+                Console.WriteLine($"{dataFileAction.Key}: {dataFileAction.Value}");
             }
+
+            await _PerformSyncTransactions(actions);
+            return actions;
         }
-        
-        progress?.Report(new SyncProgress(SyncProgressStage.Sync, syncActions: actions));
-        foreach (var dataFileAction in actions)
+        finally
         {
-            Console.WriteLine($"{dataFileAction.Key}: {dataFileAction.Value}");
+            _EndDataOperation();
         }
-        
-        await PerformSyncTransactions(actions);
-        return actions;
     }
 
     public async Task PushDbx()
     {
-        await WriteDataFiles();
+        Dispatcher.UIThread.VerifyAccess();
 
-        // var tasks = DataFiles.Values.Select(file =>
-        // {
-        //     var stream = File.OpenRead(file.LocalPath);
-        //     return DbxHandler.UploadFileAsync(stream, file.DbxPath);
-        // });
-        //
-        // await Task.WhenAll(tasks);
-
-        await Parallel.ForEachAsync(DataFiles.Values, async (file, _) =>
+        try
         {
-            var stream = File.OpenRead(file.LocalPath);
-            await DbxHandler.UploadFileAsync(stream, file.DbxPath);
-        });
-        Console.WriteLine("Done Push");
+            _BeginDataOperation();
+            
+            await WriteDataFiles();
+            await _PerformSyncTransactions(DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Upload));
+
+            Console.WriteLine("Done Push");
+        }
+        finally
+        {
+            _EndDataOperation();
+        }
     }
 
     public async Task PullDbx()
     {
-        await BackupFiles();
-        
-        // var tasks = DataFiles.Values.Select(file =>
-        // {
-        //     var stream = File.OpenWrite(file.LocalPath);
-        //     return DbxHandler.DownloadFileAsync(stream, file.DbxPath);
-        // });
-        //
-        // await Task.WhenAll(tasks);
+        Dispatcher.UIThread.VerifyAccess();
 
-        await Parallel.ForEachAsync(DataFiles.Values, async (file, _) =>
+        try
         {
-            var stream = File.OpenWrite(file.LocalPath); 
-            await DbxHandler.DownloadFileAsync(stream, file.DbxPath);
-        });
-        Console.WriteLine("Done Pull");
-        
-        await ReadDataFiles();
-        Console.WriteLine("Done ReadDataFiles");
+            _BeginDataOperation();
+
+            await _PerformSyncTransactions(DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Download));
+            Console.WriteLine("Done Pull");
+        }
+        finally
+        {
+            _EndDataOperation();
+        }
     }
 
     private void _SetSleepStart(DateTime? dateTime)
@@ -605,37 +647,23 @@ public partial class TaskTwig : ObservableObject
         IsSleeping = dateTime is not null;
     }
     
-    public static void Main()
-    {
-        TaskTwig twig = new();
-        
-        if (!twig.DbxHandler.IsAccountConnected)
-            twig.DbxHandler.AuthFromUrlConsole();
-
-        // using (var stream = File.OpenRead(Path.Combine(_dataFilePath, "task.json")))
-        //     twig._dbx.UploadFileAsync(stream, "/task.json").Wait();
-
-        using var fileStream = File.OpenWrite(Path.Combine(DataDirPath, "task.json"));
-        twig.DbxHandler.DownloadFileAsync(fileStream, "/task.json").Wait();
-        
-        // twig.WriteDataFiles();
-    }
-    
-    
     
     private void _ReadTasks(string jsonText)
     {
         var taskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(jsonText) ?? [];
             
-        TaskCategories.Clear();
-        foreach (var category in taskCategories)
+        TaskCategories.Edit(list =>
         {
-            TaskCategories.Add(category);
-            foreach (var task in category.Tasks.Items)
+            list.Clear();
+            foreach (var category in taskCategories)
             {
-                task.Category = category;
+                list.Add(category);
+                foreach (var task in category.Tasks.Items)
+                {
+                    task.Category = category;
+                }
             }
-        }
+        });
     }
 
     private void _ReadSleep(string jsonText)
