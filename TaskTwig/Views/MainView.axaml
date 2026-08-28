@@ -217,10 +217,10 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                 <TextBlock>
                                     <TextBlock.Text>
                                         <MultiBinding StringFormat="{}{0}: slept from {1:t} to {2:t} for {3:F1} hours">
-                                            <Binding Path="Key" />
-                                            <Binding Path="Value.StartTime" />
-                                            <Binding Path="Value.EndTime" />
-                                            <Binding Path="Value.Length.TotalHours" />
+                                            <Binding Path="Date" />
+                                            <Binding Path="StartTime" />
+                                            <Binding Path="EndTime" />
+                                            <Binding Path="Length.TotalHours" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -85,10 +86,107 @@ public class HashCommit
     }
 }
 
+// Container for storing sleep data in a way that's directly serializable
+public partial class SleepValuesBacking : HashableObject
+{
+    [JsonConverter(typeof(SleepSourceCacheConverter))]
+    public SourceCache<Sleep, DateOnly> SleepRecords { get; init; } = new(sleep => sleep.Date);
+        
+    [ObservableProperty]
+    public partial DateTime? SleepStart { get; private set; }
+        
+    [JsonIgnore]
+    public bool IsSleeping => SleepStart is not null;
+    
+    
+    public void StartSleeping(DateTime sleepStart)
+    {
+        SleepStart = sleepStart;
+    }
+
+    public bool FinishSleeping(DateTime sleepEnd, bool overwrite)
+    {
+
+        if (SleepStart is null)
+            return false;
+
+        var sleep = new Sleep(SleepStart.Value, sleepEnd);
+        
+        if (!overwrite && SleepRecords.Lookup(sleep.Date).HasValue)
+            return false;
+        
+        SleepRecords.AddOrUpdate(sleep);
+        SleepStart = null;
+        return true;
+
+    }
+
+    public void CancelSleep()
+    {
+        SleepStart = null;
+    }
+
+    public void SetFrom(SleepValuesBacking? other)
+    {
+        SleepRecords.Clear();
+        SleepStart = other?.SleepStart;
+
+        if (other is not null)
+            SleepRecords.AddOrUpdate(other.SleepRecords.Items);
+    }
+
+    public class SleepSourceCacheConverter : JsonConverter<SourceCache<Sleep, DateOnly>>
+    {
+        public override SourceCache<Sleep, DateOnly>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var cache = new SourceCache<Sleep, DateOnly>(sleep => sleep.Date);
+
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.StartObject:
+                    var dict = JsonSerializer.Deserialize<Dictionary<DateOnly, Sleep>>(ref reader, options);
+                    if (dict is not null)
+                        cache.AddOrUpdate(dict.Values);
+                    break;
+                
+                case JsonTokenType.StartArray:
+                    var list = JsonSerializer.Deserialize<List<Sleep>>(ref reader, options);
+                    if (list is not null)
+                        cache.AddOrUpdate(list);
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        
+            return cache;
+        }
+
+        public override void Write(Utf8JsonWriter writer, SourceCache<Sleep, DateOnly> value, JsonSerializerOptions options)
+        {
+            var items = value.Items.ToList();
+            JsonSerializer.Serialize(writer, items, options);
+        }
+    }
+        
+    protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    {
+        hashAlgorithm.Append(BitConverter.GetBytes(SleepStart?.ToBinary() ?? 0));
+    }
+
+    protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
+    {
+        foreach (var sleepRecord in SleepRecords.Items.OrderBy(sleep => sleep.Date))
+        {
+            sleepRecord.AppendHashAndChildren(mainHasher, childHasher);
+        }
+    }
+}
+
 public class TwigInvalidOperationException()
     : InvalidOperationException("Attempt to run multiple data operations simultaneously, which is not allowed");
 
-public partial class TaskTwig : ObservableObject
+public class TaskTwig : ObservableObject
 {
     
     /// <summary>
@@ -159,40 +257,13 @@ public partial class TaskTwig : ObservableObject
         Interlocked.CompareExchange(ref _isDataOperation, 0, 1);
     }
     
-    // Containers for storing data in a way that's directly serializable
-    public partial class SleepValues() : HashableObject
-    {
-        public ObservableDictionary<DateOnly, Sleep> SleepRecords { get; init; } = [];
-        
-        [ObservableProperty]
-        public partial DateTime? SleepStart { get; set; }
-        
-        protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
-        {
-            hashAlgorithm.Append(BitConverter.GetBytes(SleepStart?.ToBinary() ?? 0));
-        }
-
-        protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
-        {
-            foreach (var sleepRecord in SleepRecords.OrderBy(pair => pair.Key))
-            {
-                sleepRecord.Value.AppendHashAndChildren(mainHasher, childHasher);
-            }
-        }
-    }
-    
-    private SleepValues _sleepValues = new();
 
     public SourceList<TaskCategory> TaskCategories { get; } = new();
-
-    public ObservableDictionary<DateOnly, Sleep> SleepRecords => _sleepValues.SleepRecords;
+    public SleepValuesBacking SleepValues { get; } = new();
     public ObservableCollection<Exercise> Exercises { get; } = [];
-    
-    public ObservableCollection<Workout> WorkoutList { get; } = [];
-    public SourceCache<Journal, DateOnly> Journals { get; init; } = new(journal => journal.Date);
-    public ObservableCollection<Note> Notes { get; init; } = [];
-
-    [ObservableProperty] public partial bool IsSleeping { get; private set; }
+    public ObservableCollection<Workout> Workouts { get; } = [];
+    public SourceCache<Journal, DateOnly> Journals { get; } = new(journal => journal.Date);
+    public ObservableCollection<Note> Notes { get; } = [];
 
     private static readonly string DataDirPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
@@ -222,33 +293,6 @@ public partial class TaskTwig : ObservableObject
             Directory.CreateDirectory(DataDirPath);
         
         DbxHandler = new DbxHandler(DataDirPath);
-    }
-    
-    public void StartSleeping(DateTime sleepStart)
-    {
-        _SetSleepStart(sleepStart);
-    }
-
-    public bool FinishSleeping(DateTime sleepEnd, bool overwrite)
-    {
-
-        if (_sleepValues.SleepStart is null)
-            return false;
-
-        var sleep = new Sleep(_sleepValues.SleepStart.Value, sleepEnd);
-        
-        if (!overwrite && SleepRecords.ContainsKey(sleep.Date))
-            return false;
-        
-        SleepRecords[sleep.Date] = sleep;
-        _SetSleepStart(null);
-        return true;
-
-    }
-
-    public void CancelSleep()
-    {
-        _SetSleepStart(null);
     }
 
     public Journal TodaysJournal()
@@ -415,13 +459,13 @@ public partial class TaskTwig : ObservableObject
                     jsonText = JsonSerializer.Serialize(TaskCategories.Items.ToList());
                     break;
                 case DataFile.Sleep:
-                    jsonText = JsonSerializer.Serialize(_sleepValues);
+                    jsonText = JsonSerializer.Serialize(SleepValues);
                     break;
                 case DataFile.Exercise:
                     jsonText = JsonSerializer.Serialize(Exercises);
                     break;
                 case DataFile.Workout:
-                    jsonText = JsonSerializer.Serialize(WorkoutList);
+                    jsonText = JsonSerializer.Serialize(Workouts);
                     break;
                 case DataFile.Journal:
                     var journals = Journals.KeyValues.Where(pair => !pair.Value.IsEmpty()).ToDictionary();
@@ -660,12 +704,6 @@ public partial class TaskTwig : ObservableObject
             _EndDataOperation();
         }
     }
-
-    private void _SetSleepStart(DateTime? dateTime)
-    {
-        _sleepValues.SleepStart = dateTime;
-        IsSleeping = dateTime is not null;
-    }
     
     
     private void _ReadTasks(string jsonText)
@@ -688,15 +726,8 @@ public partial class TaskTwig : ObservableObject
 
     private void _ReadSleep(string jsonText)
     {
-        var sleepValues = JsonSerializer.Deserialize<SleepValues>(jsonText);
-            
-        _sleepValues.SleepRecords.Clear();
-        foreach (var (date, sleep) in sleepValues.SleepRecords)
-        {
-            _sleepValues.SleepRecords[date] = sleep;
-        }
-            
-        _SetSleepStart(sleepValues.SleepStart);
+        var sleepValues = JsonSerializer.Deserialize<SleepValuesBacking>(jsonText);
+        SleepValues.SetFrom(sleepValues);
     }
 
     private void _ReadExercise(string jsonText)
@@ -712,9 +743,9 @@ public partial class TaskTwig : ObservableObject
     {
         var workoutList = JsonSerializer.Deserialize<List<Workout>>(jsonText) ?? [];
             
-        WorkoutList.Clear();
+        Workouts.Clear();
         foreach (var workout in workoutList)
-            WorkoutList.Add(workout);
+            Workouts.Add(workout);
     }
 
     private void _ReadJournal(string jsonText)
@@ -755,7 +786,7 @@ public partial class TaskTwig : ObservableObject
 
     private byte[] _HashSleep(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        _sleepValues.AppendHashAndChildren(mainHasher, childHasher);
+        SleepValues.AppendHashAndChildren(mainHasher, childHasher);
         
         return mainHasher.GetCurrentHash();
     }
@@ -770,7 +801,7 @@ public partial class TaskTwig : ObservableObject
 
     private byte[] _HashWorkout(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        foreach (var workout in WorkoutList)
+        foreach (var workout in Workouts)
             workout.AppendHashAndChildren(mainHasher, childHasher);
         
         return mainHasher.GetCurrentHash();

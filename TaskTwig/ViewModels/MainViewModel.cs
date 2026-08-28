@@ -44,7 +44,8 @@ public partial class MainViewModel : ViewModelBase
     private readonly ReadOnlyObservableCollection<TwTask> _doneTodaytasks;
     public ReadOnlyObservableCollection<TwTask> DoneTodayTasks => _doneTodaytasks;
 
-    public NotifyCollectionChangedSynchronizedViewList<KeyValuePair<DateOnly, Sleep>> SleepList { get; init; }
+    private readonly ReadOnlyObservableCollection<Sleep> _sleepList;
+    public ReadOnlyObservableCollection<Sleep> SleepList => _sleepList;
     
     [RelayCommand]
     private void CreateTaskCategory()
@@ -139,7 +140,7 @@ public partial class MainViewModel : ViewModelBase
     {
         var dialogOptions = new OverlayDialogOptions()
         {
-            Title = _twig.IsSleeping ? "Enter Wake Up Date/Time" : "Enter Bedtime Date/Time",
+            Title = IsSleeping ? "Enter Wake Up Date/Time" : "Enter Bedtime Date/Time",
             Mode = DialogMode.Question,
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
@@ -158,7 +159,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void CancelSleep()
     {
-        _twig.CancelSleep();
+        _twig.SleepValues.CancelSleep();
     }
 
     [RelayCommand]
@@ -178,8 +179,8 @@ public partial class MainViewModel : ViewModelBase
                 if (task.Result.HasFlag(DialogResult.OK) && 
                     dialogVm is { StartDateTimeValue: { } startDateTime, EndDateTimeValue: { } endDateTime })
                 {
-                    _twig.StartSleeping(startDateTime);
-                    _twig.FinishSleeping(endDateTime, true);
+                    _twig.SleepValues.StartSleeping(startDateTime);
+                    _twig.SleepValues.FinishSleeping(endDateTime, true);
                 }
             });
     }
@@ -187,16 +188,16 @@ public partial class MainViewModel : ViewModelBase
     private void OnSleepDateTimeSubmit(DateTime? dateTimeValue)
     {
         var dateTime = dateTimeValue ?? DateTime.Now;
-        if (_twig.IsSleeping)
+        if (_twig.SleepValues.IsSleeping)
         {
-            if (!_twig.FinishSleeping(dateTime, false))
+            if (!_twig.SleepValues.FinishSleeping(dateTime, false))
             {
-                _twig.FinishSleeping(dateTime, true);
+                _twig.SleepValues.FinishSleeping(dateTime, true);
             }
         }
         else
         {
-            _twig.StartSleeping(dateTime);
+            _twig.SleepValues.StartSleeping(dateTime);
         }
     }
     
@@ -503,7 +504,7 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
-        _twig.PropertyChanged += OnTwigOnPropertyChanged;
+        _twig.SleepValues.PropertyChanged += OnSleepPropertyChanged;
         Core.TaskTwig.OnTodayChanged += OnTodayChanged;
         _twig.DbxHandler.AccountChanged += DbxHandlerOnAccountChanged;
         
@@ -531,20 +532,22 @@ public partial class MainViewModel : ViewModelBase
             .Filter(task => task.LastDone.Equals(Core.TaskTwig.Today))
             .Bind(out _doneTodaytasks)
             .Subscribe();
-        SleepList = _twig.SleepRecords.ToNotifyCollectionChanged();
-        IsSleeping = _twig.IsSleeping;
+        _twig.SleepValues.SleepRecords.Connect()
+            .Bind(out _sleepList)
+            .Subscribe();
+        IsSleeping = _twig.SleepValues.IsSleeping;
         Notes = _twig.Notes;
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
     }
 
-    private void OnTwigOnPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    private void OnSleepPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (sender == _twig)
+        if (sender == _twig.SleepValues)
         {
-            if (args.PropertyName == nameof(_twig.IsSleeping))
+            if (args.PropertyName == nameof(SleepValuesBacking.SleepStart))
             {
-                IsSleeping = _twig.IsSleeping;
+                IsSleeping = _twig.SleepValues.IsSleeping;
             }
         }
     }
