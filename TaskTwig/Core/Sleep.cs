@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core;
 
-public class Sleep : HashableObject
+public class Sleep : HashableObject, IComparable<Sleep>
 {
     public required DateTime StartTime { get; init; }
     public required DateTime EndTime { get; init; }
@@ -27,5 +27,10 @@ public class Sleep : HashableObject
     {
         hashAlgorithm.Append(BitConverter.GetBytes(StartTime.ToBinary()));
         hashAlgorithm.Append(BitConverter.GetBytes(EndTime.ToBinary()));
+    }
+
+    public int CompareTo(Sleep? other)
+    {
+        return Date.CompareTo(other?.Date);
     }
 }

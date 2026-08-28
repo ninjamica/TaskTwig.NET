@@ -93,6 +93,7 @@ public partial class SleepValuesBacking : HashableObject
     public SourceCache<Sleep, DateOnly> SleepRecords { get; init; } = new(sleep => sleep.Date);
         
     [ObservableProperty]
+    [JsonInclude]
     public partial DateTime? SleepStart { get; private set; }
         
     [JsonIgnore]

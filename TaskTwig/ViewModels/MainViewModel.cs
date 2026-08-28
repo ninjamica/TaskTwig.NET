@@ -15,8 +15,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
+using DynamicData.Binding;
 using DynamicData.Kernel;
-using ObservableCollections;
 using Sortable.Avalonia;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
@@ -533,7 +533,7 @@ public partial class MainViewModel : ViewModelBase
             .Bind(out _doneTodaytasks)
             .Subscribe();
         _twig.SleepValues.SleepRecords.Connect()
-            .Bind(out _sleepList)
+            .SortAndBind(out _sleepList, SortExpressionComparer<Sleep>.Descending(sleep => sleep.Date))
             .Subscribe();
         IsSleeping = _twig.SleepValues.IsSleeping;
         Notes = _twig.Notes;
