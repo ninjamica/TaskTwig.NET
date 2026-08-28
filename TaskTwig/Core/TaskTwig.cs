@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -16,7 +15,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Dropbox.Api;
 using Dropbox.Api.Files;
 using DynamicData;
-using ObservableCollections;
 using WeakEvent;
 
 namespace TaskTwig.Core;
@@ -60,7 +58,7 @@ public readonly struct SyncProgress(
 public readonly struct DataFilePaths(string dataFileDir, string filename, string extension)
 {
     public string LocalPath { get; } = Path.Combine(dataFileDir, $"{filename}.{extension}");
-    public string BackupPath { get; } = Path.Combine(dataFileDir, $"{filename}_backup.{extension}");
+    public string TempPath { get; } = Path.Combine(dataFileDir, $"{filename}_temp.{extension}");
     public string DbxPath { get; } = $"/{filename}.{extension}";
 }
 
@@ -479,10 +477,14 @@ public class TaskTwig : ObservableObject
                     throw new ArgumentOutOfRangeException(nameof(file), file, null);
             }
 
-            await File.WriteAllTextAsync(DataFiles[file].LocalPath, jsonText);
+            await File.WriteAllTextAsync(DataFiles[file].TempPath, jsonText);
             await Dispatcher.Yield(DispatcherPriority.Background);
         }
-        
+
+        foreach (var file in diffFiles)
+        {
+            File.Move(DataFiles[file].TempPath, DataFiles[file].LocalPath, true);
+        }
         await _WriteLocalHashes(CommitFile);
         return diffFiles;
     }
@@ -490,7 +492,8 @@ public class TaskTwig : ObservableObject
     private async Task _WriteLocalHashes(DataFilePaths file)
     {
         var jsonText = JsonSerializer.Serialize(_liveHashes);
-        await File.WriteAllTextAsync(file.LocalPath, jsonText);
+        await File.WriteAllTextAsync(file.TempPath, jsonText);
+        File.Move(file.TempPath, file.LocalPath, true);
     }
 
     private async Task<bool> _HashLiveData()
@@ -587,8 +590,9 @@ public class TaskTwig : ObservableObject
             switch (filePair.Value)
             {
                 case DataFileAction.Download:
-                    var fileWriteStream = File.OpenWrite(file.LocalPath); 
+                    var fileWriteStream = File.OpenWrite(file.TempPath); 
                     await DbxHandler.DownloadFileAsync(fileWriteStream, file.DbxPath);
+                    File.Move(file.TempPath, file.LocalPath, true);
                     break;
                 
                 case DataFileAction.Upload:
