@@ -349,6 +349,8 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                   Command="{Binding DbxSyncCommand}"
                                   IsLoading="{Binding DbxSyncCommand.IsRunning}"
                                   HotKey="Ctrl+S"/>
+                    <ToggleSwitch IsChecked="{Binding AutoSync}"
+                                  OffContent="Auto Save" OnContent="Auto Sync"/>
                     <u:TimePicker SelectedTime="{Binding DayStart}"
                                   DisplayFormat="h:mm tt" PanelFormat="hh mm tt"/>
                 </StackPanel>

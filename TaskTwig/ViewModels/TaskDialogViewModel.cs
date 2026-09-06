@@ -192,7 +192,7 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
             }
             else if (value.Type == typeof(SingleDateInterval))
             {
-                var singleInterval = new SingleDateInterval { Date = Core.TaskTwig.Today };
+                var singleInterval = new SingleDateInterval { Date = TwigTime.Today };
                 Task.Interval = singleInterval;
                 ReferenceDate = singleInterval.Date;
 

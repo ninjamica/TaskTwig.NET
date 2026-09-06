@@ -449,7 +449,7 @@ public partial class MainViewModel : ViewModelBase
                     case SyncProgressStage.Save:
                         notifTitle.Text = "Saving Files";
 
-                        notifContent.Text = syncProgress.Files is { } files && files.Any()
+                        notifContent.Text = syncProgress.SyncFiles is { } files && files.Any()
                             ? string.Join(", ", files)
                             : "Nothing to save";
                         break;
@@ -498,14 +498,19 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [ObservableProperty]
-    public partial TimeSpan DayStart { get; set; } = Core.TaskTwig.DayStart;
-    partial void OnDayStartChanged(TimeSpan value) => Core.TaskTwig.DayStart = value;
+    public partial TimeSpan DayStart { get; set; } = TwigTime.DayStart;
+    partial void OnDayStartChanged(TimeSpan value) => TwigTime.DayStart = value;
+
+    [ObservableProperty]
+    public partial bool AutoSync { get; set; }
+    partial void OnAutoSyncChanged(bool value) => _twig.AutoSync = value;
 
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
+        _twig.PropertyChanged += OnTwigPropertyChanged;
         _twig.SleepValues.PropertyChanged += OnSleepPropertyChanged;
-        Core.TaskTwig.OnTodayChanged += OnTodayChanged;
+        TwigTime.OnTodayChanged += OnTodayChanged;
         _twig.DbxHandler.AccountChanged += DbxHandlerOnAccountChanged;
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
@@ -516,11 +521,7 @@ public partial class MainViewModel : ViewModelBase
             _twig.Journals.Connect().Subscribe(JournalsOnCollectionChanged);
             JournalSelectedDate = _twig.TodaysJournal().Date.ToDateTime(TimeOnly.MinValue);
             Dispatcher.UIThread.Post(UpdateJournalBlackoutDates);
-            HashableObject.SaveCallback = async () =>
-            {
-                // DbxSyncCommand.Execute(null);
-                await SaveFilesCommand.ExecuteAsync(null);
-            };
+            HashableObject.SaveCallback = OnSaveTimerTick;
         });
         
         _twig.TaskCategories.Connect().Bind(out _taskCategoriesView).Subscribe();
@@ -528,8 +529,8 @@ public partial class MainViewModel : ViewModelBase
             .MergeManyChangeSets(category => category.Tasks.Connect())
             .DisposeMany()
             .AutoRefresh()
-            .AutoRefreshOnObservable(_ => Observable.FromEventPattern<PropertyChangedEventArgs>(handler => Core.TaskTwig.OnTodayChanged += handler, handler => Core.TaskTwig.OnTodayChanged -= handler))
-            .Filter(task => task.LastDone.Equals(Core.TaskTwig.Today))
+            .AutoRefreshOnObservable(_ => Observable.FromEventPattern<PropertyChangedEventArgs>(handler => TwigTime.OnTodayChanged += handler, handler => TwigTime.OnTodayChanged -= handler))
+            .Filter(task => task.LastDone.Equals(TwigTime.Today))
             .Bind(out _doneTodaytasks)
             .Subscribe();
         _twig.SleepValues.SleepRecords.Connect()
@@ -539,6 +540,28 @@ public partial class MainViewModel : ViewModelBase
         Notes = _twig.Notes;
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
+    }
+
+    private void OnSaveTimerTick()
+    {
+        Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            if (AutoSync)
+                await DbxSyncCommand.ExecuteAsync(null);
+            else
+                await SaveFilesCommand.ExecuteAsync(null);
+        });
+    }
+
+    private void OnTwigPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (sender == _twig)
+        {
+            if (args.PropertyName == nameof(Core.TaskTwig.AutoSync))
+            {
+                AutoSync = _twig.AutoSync;
+            }
+        }
     }
 
     private void OnSleepPropertyChanged(object? sender, PropertyChangedEventArgs args)

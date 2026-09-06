@@ -92,7 +92,7 @@ public partial class TwTask : HashableObject
 
     public TwTask()
     {
-        TaskTwig.OnTodayChanged += OnTodayChanged;
+        TwigTime.OnTodayChanged += OnTodayChanged;
     }
     
     internal bool _IsDone(DateOnly? lastDone)
@@ -100,7 +100,7 @@ public partial class TwTask : HashableObject
         if (lastDone is null)
             return false;
 
-        if (lastDone == TaskTwig.Today || Interval.PreviousOccurrence is null)
+        if (lastDone == TwigTime.Today || Interval.PreviousOccurrence is null)
             return true;
         
         return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
@@ -109,7 +109,7 @@ public partial class TwTask : HashableObject
     [RelayCommand]
     public void SetDone(bool done)
     {
-        LastDone = done ? TaskTwig.Today : null;
+        LastDone = done ? TwigTime.Today : null;
 
         if (Interval is RepeatingInterval repeatingInterval)
         {
@@ -123,7 +123,7 @@ public partial class TwTask : HashableObject
                 }
                 case AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend when done:
                 {
-                    repeatingInterval.ReferenceDate = TaskTwig.Today;
+                    repeatingInterval.ReferenceDate = TwigTime.Today;
                     break;
                 }
                 case AutoExtendPattern.OnCompletion or AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend:
@@ -151,9 +151,9 @@ public partial class TwTask : HashableObject
 
         return OPattern switch
         {
-            OccurrencePattern.OccurOn => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) == 0,
+            OccurrencePattern.OccurOn => TwigTime.Today.CompareTo(Interval.NextOccurrence.Value) == 0,
             OccurrencePattern.DueBy => true,
-            OccurrencePattern.StartOn => TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) >= 0,
+            OccurrencePattern.StartOn => TwigTime.Today.CompareTo(Interval.NextOccurrence.Value) >= 0,
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -169,7 +169,7 @@ public partial class TwTask : HashableObject
                 if (IsDone || Interval.NextOccurrence is null)
                     return false;
 
-                return TaskTwig.Today.CompareTo(Interval.NextOccurrence.Value) > 0;
+                return TwigTime.Today.CompareTo(Interval.NextOccurrence.Value) > 0;
                 
             default:
                 throw new ArgumentOutOfRangeException();

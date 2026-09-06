@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.IO.Hashing;
 using System.Linq;
@@ -15,7 +14,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Dropbox.Api;
 using Dropbox.Api.Files;
 using DynamicData;
-using WeakEvent;
 
 namespace TaskTwig.Core;
 
@@ -45,22 +43,10 @@ public enum SyncProgressStage
     Sync
 }
 
-public readonly struct SyncProgress(
-    SyncProgressStage stage,
-    IEnumerable<DataFile>? files = null,
-    Dictionary<DataFile, DataFileAction>? syncActions = null)
-{
-    public SyncProgressStage Stage { get; } = stage;
-    public IEnumerable<DataFile>? Files { get; } = files;
-    public Dictionary<DataFile, DataFileAction>? SyncActions { get; } = syncActions;
-}
-    
-public readonly struct DataFilePaths(string dataFileDir, string filename, string extension)
-{
-    public string LocalPath { get; } = Path.Combine(dataFileDir, $"{filename}.{extension}");
-    public string TempPath { get; } = Path.Combine(dataFileDir, $"{filename}_temp.{extension}");
-    public string DbxPath { get; } = $"/{filename}.{extension}";
-}
+public record SyncProgress(
+    SyncProgressStage Stage,
+    IEnumerable<DataFile>? SyncFiles = null,
+    Dictionary<DataFile, DataFileAction>? SyncActions = null);
 
 public class HashCommit
 {
@@ -185,64 +171,54 @@ public partial class SleepValuesBacking : HashableObject
 public class TwigInvalidOperationException()
     : InvalidOperationException("Attempt to run multiple data operations simultaneously, which is not allowed");
 
-public class TaskTwig : ObservableObject
+public partial class TaskTwig : ObservableObject
 {
-    
-    /// <summary>
-    /// The time at which the next day starts, it must be on or after midnight and should be in the morning.
-    /// </summary>
-    public static TimeSpan DayStart
+    private readonly struct DataFilePaths(string filename, string extension)
     {
-        get;
-        set
-        {
-            field = value;
-            Today = EffectiveDate(DateTime.Now);
-        }
-    } = new(5, 0, 0);
-
-    /// <summary>
-    /// The current effective date. If the current time is after midnight but before <c>DayStart</c>,
-    /// the value will be of the day before.
-    /// </summary>
-    public static DateOnly Today
-    {
-        get;
-        private set
-        {
-            field = value;
-            TodayChangedEventSource.Raise(null, new PropertyChangedEventArgs(nameof(Today)));
-        }
-    } = EffectiveDate(DateTime.Now);
-
-    /// <summary>
-    /// Calculates the effective date of a timestamp (where the day only starts after <c>DayStart</c>).
-    /// </summary>
-    /// <param name="dateTime">Timestamp to calculate date from</param>
-    /// <returns></returns>
-    public static DateOnly EffectiveDate(DateTime dateTime)
-    {
-        DateOnly date = DateOnly.FromDateTime(dateTime);
-        
-        if (dateTime.TimeOfDay.CompareTo(DayStart) < 0)
-            date = date.AddDays(-1);
-        
-        return date;
+        public string LocalPath { get; } = Path.Combine(DataDirPath, $"{filename}.{extension}");
+        public string TempPath { get; } = Path.Combine(DataDirPath, $"{filename}_temp.{extension}");
+        public string DbxPath { get; } = $"/{filename}.{extension}";
     }
 
-    private static readonly WeakEventSource<PropertyChangedEventArgs> TodayChangedEventSource = new();
-    public static event EventHandler<PropertyChangedEventArgs> OnTodayChanged
+    public struct UserSettings
     {
-        add => TodayChangedEventSource.Subscribe(value);
-        remove => TodayChangedEventSource.Unsubscribe(value);
+        public bool AutoSync { get; init; }
+        public TimeSpan DayStart { get; init; }
     }
+    
 
-    public static void RefreshToday()
+    private static readonly string DataDirPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
+        "TaskTwig-NET");
+
+    private readonly Dictionary<DataFile, DataFilePaths> _dataFiles = new()
     {
-        Today = EffectiveDate(DateTime.Now);
-    }
+        { DataFile.Task,     new DataFilePaths("task",     "json") },
+        { DataFile.Sleep,    new DataFilePaths("sleep",    "json") },
+        { DataFile.Exercise, new DataFilePaths("exercise", "json") },
+        { DataFile.Workout,  new DataFilePaths("workout",  "json") },
+        { DataFile.Journal,  new DataFilePaths("journal",  "json") },
+        { DataFile.Note,     new DataFilePaths("note",     "json") }
+    };
+
+    private readonly DataFilePaths _settingsFile = new("settings",  "json");
+    private readonly DataFilePaths _commitFile = new("commit", "json");
+    private readonly DataFilePaths _dbxCommitFile = new("commit", "json");
+    private readonly HashCommit _liveHashes = new();
+    private readonly HashCommit _lastSyncedHashes = new();
     
+    public SourceList<TaskCategory> TaskCategories { get; } = new();
+    public SleepValuesBacking SleepValues { get; } = new();
+    public ObservableCollection<Exercise> Exercises { get; } = [];
+    public ObservableCollection<Workout> Workouts { get; } = [];
+    public SourceCache<Journal, DateOnly> Journals { get; } = new(journal => journal.Date);
+    public ObservableCollection<Note> Notes { get; } = [];
     
+    [ObservableProperty]
+    public partial bool AutoSync { get; set; }
+
+    public readonly DbxHandler DbxHandler;
+
     private int _isDataOperation = 0;
     private void _BeginDataOperation()
     {
@@ -256,36 +232,6 @@ public class TaskTwig : ObservableObject
         Interlocked.CompareExchange(ref _isDataOperation, 0, 1);
     }
     
-
-    public SourceList<TaskCategory> TaskCategories { get; } = new();
-    public SleepValuesBacking SleepValues { get; } = new();
-    public ObservableCollection<Exercise> Exercises { get; } = [];
-    public ObservableCollection<Workout> Workouts { get; } = [];
-    public SourceCache<Journal, DateOnly> Journals { get; } = new(journal => journal.Date);
-    public ObservableCollection<Note> Notes { get; } = [];
-
-    private static readonly string DataDirPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
-        "TaskTwig-NET");
-    
-    public Dictionary<DataFile, DataFilePaths> DataFiles { get; } = new()
-    {
-        { DataFile.Task,     new DataFilePaths(DataDirPath, "task",     "json") },
-        { DataFile.Sleep,    new DataFilePaths(DataDirPath, "sleep",    "json") },
-        { DataFile.Exercise, new DataFilePaths(DataDirPath, "exercise", "json") },
-        { DataFile.Workout,  new DataFilePaths(DataDirPath, "workout",  "json") },
-        { DataFile.Journal,  new DataFilePaths(DataDirPath, "journal",  "json") },
-        { DataFile.Note,     new DataFilePaths(DataDirPath, "note",     "json") }
-    };
-    
-    public readonly DataFilePaths CommitFile = new(DataDirPath, "commit", "json");
-    public readonly DataFilePaths DbxCommitFile = new(Path.Combine(DataDirPath, "dbx"), "commit", "json");
-    private readonly HashCommit _liveHashes = new();
-    private readonly HashCommit _lastSyncedHashes = new();
-
-    public readonly DbxHandler DbxHandler;
-
-    
     public TaskTwig()
     {
         if (!Directory.Exists(DataDirPath))
@@ -296,16 +242,15 @@ public class TaskTwig : ObservableObject
 
     public Journal TodaysJournal()
     {
-        var journal = Journals.Lookup(Today);
-        if (!journal.HasValue)
-        {
-            Console.WriteLine("Creating new journal for Today");
-            var newJournal = new Journal { Date = Today };
-            Journals.AddOrUpdate(newJournal);
-            return newJournal;
-        }
+        var journal = Journals.Lookup(TwigTime.Today);
+        if (journal.HasValue) 
+            return journal.Value;
         
-        return journal.Value;
+        Console.WriteLine("Creating new journal for Today");
+        var newJournal = new Journal { Date = TwigTime.Today };
+        Journals.AddOrUpdate(newJournal);
+        return newJournal;
+
     }
 
     public async Task InitDataFromFiles()
@@ -315,6 +260,7 @@ public class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
 
+            await _ReadSettingsFile();
             await _ReadDataFiles();
             await Task.WhenAll(_ReadLocalHashes(), _ReadLastSyncedHashes());
         }
@@ -326,15 +272,11 @@ public class TaskTwig : ObservableObject
 
     private async Task _ReadDataFiles(IEnumerable<DataFile>? files = null)
     {
-        // await Task.WhenAll((files ?? Enum.GetValues<DataFile>()).Select(_ReadDataFile));
-        
-        Dispatcher.UIThread.VerifyAccess();
-        
         HashableObject.IsReadingData = true;
         
         foreach (var file in files ?? Enum.GetValues<DataFile>())
         {
-            var jsonText = await File.ReadAllTextAsync(DataFiles[file].LocalPath);
+            var jsonText = await File.ReadAllTextAsync(_dataFiles[file].LocalPath);
 
             try
             {
@@ -365,7 +307,7 @@ public class TaskTwig : ObservableObject
             }
             catch (FileNotFoundException)
             {
-                Console.WriteLine($"{file.ToString()} not found at location {DataFiles[file].LocalPath}");
+                Console.WriteLine($"{file.ToString()} not found at location {_dataFiles[file].LocalPath}");
             }
             catch (JsonException e)
             {
@@ -381,6 +323,27 @@ public class TaskTwig : ObservableObject
         HashableObject.IsReadingData = false;
     }
 
+    private async Task _ReadSettingsFile()
+    {
+        try
+        {
+            await using var file = File.OpenRead(_settingsFile.LocalPath);
+            var settings = await JsonSerializer.DeserializeAsync<UserSettings>(file);
+
+            TwigTime.DayStart = settings.DayStart;
+            AutoSync = settings.AutoSync;
+        }
+        catch (FileNotFoundException)
+        {
+            Console.WriteLine($"User settings file not found at location {_settingsFile.LocalPath}");
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine($"Failed to parse user settings file with the following error:");
+            Console.WriteLine(e);
+        }
+    }
+
     private static async Task<HashCommit?> _ReadHashFile(string path)
     {
         await using var file = File.OpenRead(path);
@@ -389,19 +352,37 @@ public class TaskTwig : ObservableObject
 
     private async Task _ReadLocalHashes()
     {
-        _liveHashes.SetFrom(await _ReadHashFile(CommitFile.LocalPath));
+        try
+        {
+            _liveHashes.SetFrom(await _ReadHashFile(_commitFile.LocalPath));
+        }
+        catch (FileNotFoundException)
+        {
+            Console.WriteLine($"{_commitFile.ToString()} not found at location {_commitFile.LocalPath}");
+            _lastSyncedHashes.SetFrom(null);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine($"Failed to parse {_commitFile.ToString()} with the following error:");
+            Console.WriteLine(e);
+        }
     }
 
     private async Task _ReadLastSyncedHashes()
     {
         try
         {
-            _lastSyncedHashes.SetFrom(await _ReadHashFile(DbxCommitFile.LocalPath));
+            _lastSyncedHashes.SetFrom(await _ReadHashFile(_dbxCommitFile.LocalPath));
         }
         catch (FileNotFoundException)
         {
-            Console.WriteLine($"{CommitFile.ToString()} not found at location {CommitFile.LocalPath}");
+            Console.WriteLine($"{_dbxCommitFile.ToString()} not found at location {_dbxCommitFile.LocalPath}");
             _lastSyncedHashes.SetFrom(null);
+        }
+        catch (JsonException e)
+        {
+            Console.WriteLine($"Failed to parse {_dbxCommitFile.ToString()} with the following error:");
+            Console.WriteLine(e);
         }
     } 
 
@@ -409,7 +390,7 @@ public class TaskTwig : ObservableObject
     {
         try
         {
-            await using var downloadStream = await DbxHandler.DownloadContentStreamAsync(CommitFile.DbxPath);
+            await using var downloadStream = await DbxHandler.DownloadContentStreamAsync(_commitFile.DbxPath);
             return await JsonSerializer.DeserializeAsync<HashCommit>(downloadStream);
         }
         catch (ApiException<DownloadError>)
@@ -432,7 +413,8 @@ public class TaskTwig : ObservableObject
         try
         {
             _BeginDataOperation();
-            return await WriteDataFiles();
+            await _WriteSettingsFile();
+            return await _WriteDataFiles();
         }
         finally
         {
@@ -440,14 +422,14 @@ public class TaskTwig : ObservableObject
         }
     }
 
-    private async Task<List<DataFile>> WriteDataFiles(IProgress<SyncProgress>? progress = null)
+    private async Task<List<DataFile>> _WriteDataFiles(IProgress<SyncProgress>? progress = null)
     {
         progress?.Report(new SyncProgress(SyncProgressStage.Hash));
         await _HashLiveData();
         
-        var fileHashes = await _ReadHashFile(CommitFile.LocalPath);
+        var fileHashes = await _ReadHashFile(_commitFile.LocalPath);
         var diffFiles = fileHashes is null ? _liveHashes.FileHashes.Keys.ToList() : _FindHashDiffs(_liveHashes, fileHashes).ToList();
-        progress?.Report(new SyncProgress(SyncProgressStage.Save, files: diffFiles));
+        progress?.Report(new SyncProgress(SyncProgressStage.Save, SyncFiles: diffFiles));
         
         foreach (var file in diffFiles)
         {
@@ -477,16 +459,23 @@ public class TaskTwig : ObservableObject
                     throw new ArgumentOutOfRangeException(nameof(file), file, null);
             }
 
-            await File.WriteAllTextAsync(DataFiles[file].TempPath, jsonText);
+            await File.WriteAllTextAsync(_dataFiles[file].TempPath, jsonText);
             await Dispatcher.Yield(DispatcherPriority.Background);
         }
 
         foreach (var file in diffFiles)
         {
-            File.Move(DataFiles[file].TempPath, DataFiles[file].LocalPath, true);
+            File.Move(_dataFiles[file].TempPath, _dataFiles[file].LocalPath, true);
         }
-        await _WriteLocalHashes(CommitFile);
+        await _WriteLocalHashes(_commitFile);
         return diffFiles;
+    }
+
+    private async Task _WriteSettingsFile()
+    {
+        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, DayStart = TwigTime.DayStart});
+        await File.WriteAllTextAsync(_settingsFile.TempPath, jsonText);
+        File.Move(_settingsFile.TempPath, _settingsFile.LocalPath, true);
     }
 
     private async Task _WriteLocalHashes(DataFilePaths file)
@@ -504,7 +493,7 @@ public class TaskTwig : ObservableObject
         
         // await Task.Run(() => Parallel.ForEach(DataFiles.Keys, file => _liveHashes.FileHashes[file] = _HashDataFile(file)));
 
-        foreach (var file in DataFiles.Keys)
+        foreach (var file in _dataFiles.Keys)
         {
             _liveHashes.FileHashes[file] = _HashDataFile(file);
             await Dispatcher.Yield(DispatcherPriority.Background);
@@ -546,7 +535,7 @@ public class TaskTwig : ObservableObject
     private Dictionary<DataFile, DataFileAction> _CompareRemoteHashes(HashCommit? remoteHashes)
     {
         if (remoteHashes is null)
-            return DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Conflict);
+            return _dataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Conflict);
         
         if (_liveHashes.Schema != remoteHashes.Schema || _liveHashes.Schema != _lastSyncedHashes.Schema)
             throw new InvalidOperationException("Hash schema versions do not match (TODO: implement handling of this)");
@@ -586,7 +575,7 @@ public class TaskTwig : ObservableObject
         // Handle file upload/downloads in parallel thread pool
         var syncTask = Parallel.ForEachAsync(actions, async (filePair, _) =>
         {
-            var file = DataFiles[filePair.Key];
+            var file = _dataFiles[filePair.Key];
             switch (filePair.Value)
             {
                 case DataFileAction.Download:
@@ -621,12 +610,12 @@ public class TaskTwig : ObservableObject
             await _HashLiveData();
         }
         
-        await _WriteLocalHashes(CommitFile);
+        await _WriteLocalHashes(_commitFile);
         _lastSyncedHashes.SetFrom(_liveHashes);
-        await _WriteLocalHashes(DbxCommitFile);
+        await _WriteLocalHashes(_dbxCommitFile);
         
         if (actions.ContainsValue(DataFileAction.Upload))
-            await _UploadDbxHashes(DbxCommitFile);
+            await _UploadDbxHashes(_dbxCommitFile);
     }
 
     public async Task<Dictionary<DataFile, DataFileAction>?> SyncWithDbx(
@@ -639,7 +628,8 @@ public class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
 
-            await WriteDataFiles(progress);
+            await _WriteSettingsFile();
+            await _WriteDataFiles(progress);
 
             progress?.Report(new SyncProgress(SyncProgressStage.Compare));
             var remoteHashes = await _DownloadDbxHashes();
@@ -659,7 +649,7 @@ public class TaskTwig : ObservableObject
                 }
             }
 
-            progress?.Report(new SyncProgress(SyncProgressStage.Sync, syncActions: actions));
+            progress?.Report(new SyncProgress(SyncProgressStage.Sync, SyncActions: actions));
             foreach (var dataFileAction in actions)
             {
                 Console.WriteLine($"{dataFileAction.Key}: {dataFileAction.Value}");
@@ -682,8 +672,9 @@ public class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
             
-            await WriteDataFiles();
-            await _PerformSyncTransactions(DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Upload));
+            await _WriteSettingsFile();
+            await _WriteDataFiles();
+            await _PerformSyncTransactions(_dataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Upload));
 
             Console.WriteLine("Done Push");
         }
@@ -701,7 +692,7 @@ public class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
 
-            await _PerformSyncTransactions(DataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Download));
+            await _PerformSyncTransactions(_dataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Download));
             Console.WriteLine("Done Pull");
         }
         finally

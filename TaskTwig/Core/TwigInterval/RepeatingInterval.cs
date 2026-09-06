@@ -14,7 +14,7 @@ public enum RepeatPattern
 
 public abstract partial class RepeatingInterval : HashableObject, ITwigInterval
 {
-    [ObservableProperty] public partial DateOnly ReferenceDate { get; set; } = TaskTwig.Today;
+    [ObservableProperty] public partial DateOnly ReferenceDate { get; set; } = TwigTime.Today;
     [ObservableProperty] public partial bool AutoRepeat { get; set; } = false;
     [ObservableProperty] public partial RepeatPattern RepeatTo { get; set; } = RepeatPattern.OnAfter;
     
@@ -34,7 +34,7 @@ public abstract partial class RepeatingInterval : HashableObject, ITwigInterval
     public DateOnly? NextFromToday()
     {
         DateOnly? date = NextFromDate(ReferenceDate);
-        DateOnly today = TaskTwig.Today;
+        DateOnly today = TwigTime.Today;
         switch (RepeatTo)
         {
             case RepeatPattern.OnAfter:

@@ -19,7 +19,7 @@ public partial class SubTask : HashableObject
     public bool IsDone
     {
         get => ParentTask?._IsDone(LastDone) ?? false;
-        set => LastDone = value ? TaskTwig.Today : null;
+        set => LastDone = value ? TwigTime.Today : null;
     }
     
     [ObservableProperty]
