@@ -89,7 +89,7 @@ public partial class MainViewModel : ViewModelBase
             Interval = new NoInterval(),
             Category = category
         };
-        category.Tasks.Add(task);
+        category.AddTask(task);
         EditTask(task);
     }
     
@@ -108,28 +108,49 @@ public partial class MainViewModel : ViewModelBase
             .ContinueWith(result =>
             {
                 if (result.Result)
-                    task.Category?.Tasks.Remove(task);
+                    task.Category?.RemoveTask(task);
             });
     }
     
     [RelayCommand]
     private void CategoryListUpdate(SortableUpdateEventArgs args)
     {
-        args.ApplyUpdateMutation();
+        if (args.Item is TaskCategory category)
+        {
+            _twig.TaskCategories.Edit(list =>
+            {
+                list.Remove(category);
+                list.Insert(args.NewIndex, category);
+            });
+        }
     }
     
     [RelayCommand]
     private void TaskListUpdate(SortableUpdateEventArgs args)
     {
-        args.ApplyUpdateMutation();
+        if (args.Item is TwTask { Category: { } category })
+        {
+            category.MoveTask(args.OldIndex, args.NewIndex);
+        }
     }
 
     [RelayCommand]
     private void TaskListDrop(SortableDropEventArgs args)
     {
-        args.IsAccepted = true;
-        args.TransferMode = SortableTransferMode.Move;
-        args.ApplyDropMutation();
+        var targetCategory = _twig.TaskCategories.Items.FirstOrDefault(
+            cat => ReferenceEquals(cat.TasksView, args.TargetCollection));
+
+        if (targetCategory is not null && args.Item is TwTask task)
+        {
+            args.IsAccepted = true;
+            args.TransferMode = SortableTransferMode.Move;
+                
+            targetCategory.AddTask(task, args.NewIndex);
+        }
+        else
+        {
+            args.IsAccepted = false;
+        }
     }
 
     [ObservableProperty] 
@@ -526,7 +547,7 @@ public partial class MainViewModel : ViewModelBase
         
         _twig.TaskCategories.Connect().Bind(out _taskCategoriesView).Subscribe();
         _twig.TaskCategories.Connect()
-            .MergeManyChangeSets(category => category.Tasks.Connect())
+            .MergeManyChangeSets(category => category.ConnectTasks())
             .DisposeMany()
             .AutoRefresh()
             .AutoRefreshOnObservable(_ => Observable.FromEventPattern<PropertyChangedEventArgs>(handler => TwigTime.OnTodayChanged += handler, handler => TwigTime.OnTodayChanged -= handler))

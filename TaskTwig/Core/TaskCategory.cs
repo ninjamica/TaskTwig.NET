@@ -22,8 +22,11 @@ public partial class TaskCategory : HashableObject
     // public int TotalPoints => TodayTasks.Sum(task => task.Points) + DoneTodayTasks.Sum(task => task.Points);
     
     
+    [JsonInclude]
     [JsonConverter(typeof(SourceListJsonConverter<TwTask>))]
-    public SourceList<TwTask> Tasks { get; init; } = new();
+    private SourceList<TwTask> Tasks { get; init; } = new();
+    
+    public IObservable<IChangeSet<TwTask>> ConnectTasks() => Tasks.Connect();
     
     [JsonIgnore]
     public ReadOnlyObservableCollection<TwTask> TasksView 
@@ -56,11 +59,21 @@ public partial class TaskCategory : HashableObject
         }
     }
 
-    public void AddTask(TwTask task)
+    public void AddTask(TwTask task, int? index = null)
     {
-        task.Category?.Tasks.Remove(task);
-        Tasks.Add(task);
+        task.Category?.RemoveTask(task);
+        Tasks.Insert(index ?? Tasks.Count, task);
         task.Category = this;
+    }
+
+    public void MoveTask(int originalIndex, int destinationIndex)
+    {
+        Tasks.Move(originalIndex, destinationIndex);
+    }
+
+    public void RemoveTask(TwTask task)
+    {
+        Tasks.Remove(task);
     }
 
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)

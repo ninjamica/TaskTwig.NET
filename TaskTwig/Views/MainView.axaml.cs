@@ -47,31 +47,9 @@ public partial class MainView : UserControl
     {
         if (e.Pointer.Type != PointerType.Mouse)
         {
-            Console.WriteLine("Starting drag");
-            TasksScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+            Console.WriteLine("Starting Task drag");
+            e.PreventGestureRecognition();
         }
-    }
-
-    private void TaskDragEnded(object? sender, PointerReleasedEventArgs e)
-    {
-        if (e.Pointer.Type != PointerType.Mouse)
-        {
-            Console.WriteLine("Ending drag");
-            TasksScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-        }
-    }
-    
-    
-    private void TaskScrollStarted(object? sender, ScrollGestureEventArgs e)
-    {
-        Console.WriteLine("Starting scroll");
-        TasksScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
-    }
-
-    private void TaskScrollEnded(object? sender, ScrollGestureEndedEventArgs e)
-    {
-        Console.WriteLine("Ending scroll");
-        TasksScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
     }
 
     public static readonly FuncValueConverter<bool, string> SleepButtonTextConverter =

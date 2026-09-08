@@ -18,7 +18,10 @@
         
         <u:Form Grid.Row="1" LabelPosition="Left" LabelWidth="*">
             <u:FormItem Label="Name">
-                <TextBox Text="{Binding Category.Name}"/>
+                <TextBox Text="{Binding Category.Name}"
+                         AcceptsReturn="False" AcceptsTab="False"
+                         TextWrapping="Wrap"
+                         TextInputOptions.AutoCapitalization="True"/>
             </u:FormItem>
             <u:FormItem Label="Color">
                 <!-- TODO: Implement when color support is updated in TaskCategory -->

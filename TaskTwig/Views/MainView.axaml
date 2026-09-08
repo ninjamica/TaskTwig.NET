@@ -111,18 +111,13 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             </ContentPage>
             
             <ContentPage Header="Tasks" Icon="{StaticResource SemiIconCheckList}">
-                <ScrollViewer x:Name="TasksScrollViewer" 
-                              PointerReleased="TaskDragEnded"
-                              ScrollGestureEnded="TaskScrollEnded">
-                    <ScrollViewer.GestureRecognizers>
-                        <ScrollGestureRecognizer CanVerticallyScroll="True"
-                                                 CanHorizontallyScroll="True"/>
-                    </ScrollViewer.GestureRecognizers>
+                <ScrollViewer>
                     <StackPanel Spacing="10" Margin="10">
                     <ItemsControl ItemsSource="{Binding TaskCategoriesView}"
                                   sortable:Sortable.Sortable="True" 
                                   sortable:Sortable.Droppable="False"
                                   sortable:Sortable.Group="categories"
+                                  sortable:Sortable.AutoScroll="True"
                                   sortable:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -132,8 +127,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     <PathIcon Grid.Row="0" Grid.Column="0"
                                               Data="{StaticResource SemiIconHandle}"
                                               Cursor="Hand"
-                                              PointerPressed="TaskDragStarted"
-                                              ScrollGesture="TaskScrollStarted"/>
+                                              PointerPressed="TaskDragStarted"/>
                                     <views:ExpanderButton Grid.Row="0" Grid.Column="1"
                                                           IsExpanded="{Binding Expanded}"/>
                                     <Button Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left"
@@ -158,6 +152,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                   sortable:Sortable.IsSortable="True"
                                                   sortable:Sortable.Droppable="True"
                                                   sortable:Sortable.Group="tasks"
+                                                  sortable:Sortable.AutoScroll="True"
                                                   sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdateCommand}"
                                                   sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDropCommand}">
                                         <ItemsControl.ItemTemplate>
@@ -167,8 +162,8 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                             sortable:Sortable.IsDroppable="True">
                                                     <PathIcon Data="{StaticResource SemiIconHandle}"
                                                               Cursor="Hand"
-                                                              PointerPressed="TaskDragStarted"
-                                                              ScrollGesture="TaskScrollStarted"/>
+                                                              PointerPressed="TaskDragStarted"/>
+                                                    
                                                     <Button Classes="Tertiary"
                                                             Theme="{DynamicResource BorderlessButton}"
                                                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
@@ -268,6 +263,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                  VerticalAlignment="Stretch"
                                  VerticalContentAlignment="Top"
                                  TextInputOptions.ReturnKeyType="Return"
+                                 TextInputOptions.AutoCapitalization="True"
                                  Theme="{StaticResource LooklessTextBox}"
                                  Foreground="{DynamicResource SemiColorText1}" />
                     </ScrollViewer>
@@ -282,9 +278,11 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     BorderBrush="{DynamicResource SemiColorBorder}"
                                     BorderThickness="2">
                         <u:UrsaGroupBox.Header>
-                            <TextBox Text="{Binding SelectedNote?.Title}"/>
+                            <TextBox Text="{Binding SelectedNote?.Title}"
+                                     AcceptsReturn="False" AcceptsTab="False"
+                                     TextInputOptions.AutoCapitalization="True"/>
                         </u:UrsaGroupBox.Header>
-                        <StackPanel>
+                        <ScrollViewer>
                             <TextBox Text="{Binding SelectedNote?.Text}" 
                                      PlaceholderText="Type Note Here"
                                      AcceptsReturn="True"
@@ -293,9 +291,10 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                      VerticalAlignment="Stretch"
                                      VerticalContentAlignment="Top"
                                      TextInputOptions.ReturnKeyType="Return"
+                                     TextInputOptions.AutoCapitalization="True"
                                      Theme="{StaticResource LooklessTextBox}"
                                      Foreground="{DynamicResource SemiColorText1}"/>
-                        </StackPanel>
+                        </ScrollViewer>
                     </u:UrsaGroupBox>
                     
                     <ScrollViewer Grid.Row="0" Grid.Column="1">

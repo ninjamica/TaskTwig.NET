@@ -712,7 +712,7 @@ public partial class TaskTwig : ObservableObject
             foreach (var category in taskCategories)
             {
                 list.Add(category);
-                foreach (var task in category.Tasks.Items)
+                foreach (var task in category.TasksView)
                 {
                     task.Category = category;
                 }

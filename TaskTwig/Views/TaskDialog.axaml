@@ -25,7 +25,8 @@
                     <u:FormItem Label="Name">
                         <TextBox Text="{Binding Task.Name}"
                                  AcceptsReturn="False" AcceptsTab="False"
-                                 TextWrapping="Wrap"/>
+                                 TextWrapping="Wrap"
+                                 TextInputOptions.AutoCapitalization="True"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Icon">
@@ -40,7 +41,8 @@
                     
                     <u:FormItem Label="Points">
                         <u:NumericIntUpDown Minimum="0" Value="{Binding Task.Points}"
-                                            HorizontalAlignment="Left" Width="80"/>
+                                            HorizontalAlignment="Left" Width="80"
+                                            TextInputOptions.ContentType="Number"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Interval">
@@ -69,7 +71,8 @@
                             <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
                                                 InnerLeftContent="Every"
                                                 Width="150"
-                                                HorizontalContentAlignment="Center"/>
+                                                HorizontalContentAlignment="Center"
+                                                TextInputOptions.ContentType="Number"/>
                             <u:EnumSelector EnumType="twigInterval:DateUnit"
                                             Value="{Binding Unit}"/>
                         </StackPanel>
@@ -90,7 +93,8 @@
                                                 HorizontalContentAlignment="Center"
                                                 InnerLeftContent="Every" 
                                                 InnerRightContent="{Binding IntervalSpacing, Converter={x:Static views:TaskDialog.WeekSpinnerTextConverter}}"
-                                                HorizontalAlignment="Left" MinWidth="175"/>
+                                                HorizontalAlignment="Left" MinWidth="175"
+                                                TextInputOptions.ContentType="Number"/>
                         </StackPanel>
                     </u:FormItem>
                     
@@ -101,7 +105,8 @@
                                                 HorizontalContentAlignment="Center"
                                                 InnerLeftContent="Every" 
                                                 InnerRightContent="{Binding IntervalSpacing, Converter={x:Static views:TaskDialog.MonthSpinnerTextConverter}}"
-                                                HorizontalAlignment="Left" MinWidth="180"/>
+                                                HorizontalAlignment="Left" MinWidth="180"
+                                                TextInputOptions.ContentType="Number"/>
                         </StackPanel>
                     </u:FormItem>
                     
