@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:core="clr-namespace:TaskTwig.Core"
+             xmlns:vm="using:TaskTwig.Dialog.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskTwig.Dialog.Views.NotesDrawer"
+             x:DataType="vm:NotesDrawerViewModel"
+             x:Name="NoteDrawer">
+    
+    <StackPanel>
+        <TabStrip ItemsSource="{Binding ViewModel.Notes}"
+                  SelectedItem="{Binding ViewModel.SelectedNote}">
+            <TabStrip.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </TabStrip.ItemsPanel>
+            <TabStrip.ItemTemplate>
+                <DataTemplate DataType="core:Note">
+                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                        <Button Content="x" 
+                                Classes="Danger"
+                                Command="{Binding #NoteDrawer.((vm:NotesDrawerViewModel)DataContext).ViewModel.DeleteNoteCommand}"
+                                CommandParameter="{Binding}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </TabStrip.ItemTemplate>
+        </TabStrip>
+        <Button VerticalAlignment="Top"
+                Content="+" 
+                Command="{Binding ViewModel.CreateNoteCommand}"/>
+    </StackPanel>
+    
+</UserControl>

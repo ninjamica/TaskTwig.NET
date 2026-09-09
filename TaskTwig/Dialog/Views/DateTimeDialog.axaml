@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             xmlns:vm="using:TaskTwig.ViewModels"
-             x:Class="TaskTwig.Views.DateTimeDialog"
+             xmlns:vm="using:TaskTwig.Dialog.ViewModels"
+             x:Class="TaskTwig.Dialog.Views.DateTimeDialog"
              x:DataType="vm:DateTimeDialogViewModel">
     <u:Form LabelPosition="Top">
         <u:FormItem Label="DateTime">

@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Dialog.Views;
 
 public partial class TaskCategoryDialog : UserControl
 {

@@ -4,11 +4,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="493" d:DesignHeight="916"
-             xmlns:vm="using:TaskTwig.ViewModels"
+             xmlns:vm="using:TaskTwig.Dialog.ViewModels"
              xmlns:core="clr-namespace:TaskTwig.Core"
              xmlns:twigInterval="clr-namespace:TaskTwig.Core.TwigInterval"
              xmlns:views="clr-namespace:TaskTwig.Views"
-             x:Class="TaskTwig.Views.TaskDialog"
+             xmlns:dialogViews="clr-namespace:TaskTwig.Dialog.Views"
+             x:Class="TaskTwig.Dialog.Views.TaskDialog"
              x:DataType="vm:TaskDialogViewModel">
     
     <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
@@ -92,7 +93,7 @@
                             <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
                                                 HorizontalContentAlignment="Center"
                                                 InnerLeftContent="Every" 
-                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static views:TaskDialog.WeekSpinnerTextConverter}}"
+                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static dialogViews:TaskDialog.WeekSpinnerTextConverter}}"
                                                 HorizontalAlignment="Left" MinWidth="175"
                                                 TextInputOptions.ContentType="Number"/>
                         </StackPanel>
@@ -104,7 +105,7 @@
                             <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
                                                 HorizontalContentAlignment="Center"
                                                 InnerLeftContent="Every" 
-                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static views:TaskDialog.MonthSpinnerTextConverter}}"
+                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static dialogViews:TaskDialog.MonthSpinnerTextConverter}}"
                                                 HorizontalAlignment="Left" MinWidth="180"
                                                 TextInputOptions.ContentType="Number"/>
                         </StackPanel>

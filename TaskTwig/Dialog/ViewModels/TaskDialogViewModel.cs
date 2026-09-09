@@ -10,8 +10,9 @@ using CommunityToolkit.Mvvm.Input;
 using Irihi.Avalonia.Shared.Contracts;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
+using TaskTwig.ViewModels;
 
-namespace TaskTwig.ViewModels;
+namespace TaskTwig.Dialog.ViewModels;
 
 public readonly record struct IntervalType(Type Type, string Name);
 

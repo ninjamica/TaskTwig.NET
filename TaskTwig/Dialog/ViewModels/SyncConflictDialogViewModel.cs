@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TaskTwig.Core;
+using TaskTwig.ViewModels;
 
-namespace TaskTwig.ViewModels;
+namespace TaskTwig.Dialog.ViewModels;
 
 public class FileActionResponse(DataFile file)
 {

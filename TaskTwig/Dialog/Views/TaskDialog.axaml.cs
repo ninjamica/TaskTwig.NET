@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Dialog.Views;
 
 public partial class TaskDialog : UserControl
 {

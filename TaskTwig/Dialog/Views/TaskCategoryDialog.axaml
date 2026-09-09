@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="230"
-             xmlns:vm="using:TaskTwig.ViewModels"
-             x:Class="TaskTwig.Views.TaskCategoryDialog"
+             xmlns:vm="using:TaskTwig.Dialog.ViewModels"
+             x:Class="TaskTwig.Dialog.Views.TaskCategoryDialog"
              x:DataType="vm:TaskCategoryDialogViewModel">
     
     <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">

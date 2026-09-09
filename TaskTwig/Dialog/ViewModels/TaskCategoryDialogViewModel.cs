@@ -3,8 +3,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Irihi.Avalonia.Shared.Contracts;
 using TaskTwig.Core;
+using TaskTwig.ViewModels;
 
-namespace TaskTwig.ViewModels;
+namespace TaskTwig.Dialog.ViewModels;
 
 public partial class TaskCategoryDialogViewModel(TaskCategory category) : ViewModelBase, IDialogContext
 {

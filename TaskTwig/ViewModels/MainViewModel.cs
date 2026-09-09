@@ -20,11 +20,19 @@ using DynamicData.Kernel;
 using Sortable.Avalonia;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
+using TaskTwig.Dialog.ViewModels;
+using TaskTwig.Dialog.Views;
 using TaskTwig.Views;
 using Ursa.Common;
 using Ursa.Controls;
 using Ursa.Controls.Options;
+using DateTimeDialog = TaskTwig.Dialog.Views.DateTimeDialog;
+using DbxDialog = TaskTwig.Dialog.Views.DbxDialog;
+using DualDateTimeDialog = TaskTwig.Dialog.Views.DualDateTimeDialog;
 using Notification = Ursa.Controls.Notification;
+using SyncConflictDialog = TaskTwig.Dialog.Views.SyncConflictDialog;
+using TaskCategoryDialog = TaskTwig.Dialog.Views.TaskCategoryDialog;
+using TaskDialog = TaskTwig.Dialog.Views.TaskDialog;
 using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
 namespace TaskTwig.ViewModels;
@@ -65,8 +73,8 @@ public partial class MainViewModel : ViewModelBase
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
-        var dialogViewModel = new TaskCategoryDialogViewModel(category);
-        OverlayDrawer.ShowCustomAsync<TaskCategoryDialog, TaskCategoryDialogViewModel, bool>(dialogViewModel, options: drawerOptions)
+        var dialogViewModel = new Dialog.ViewModels.TaskCategoryDialogViewModel(category);
+        OverlayDrawer.ShowCustomAsync<TaskCategoryDialog, Dialog.ViewModels.TaskCategoryDialogViewModel, bool>(dialogViewModel, options: drawerOptions)
             .ContinueWith(result =>
             {
                 if (result.Result)
@@ -103,8 +111,8 @@ public partial class MainViewModel : ViewModelBase
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
-        var dialogViewModel = new TaskDialogViewModel(task);
-        OverlayDrawer.ShowCustomAsync<TaskDialog, TaskDialogViewModel, bool>(dialogViewModel, options:drawerOptions)
+        var dialogViewModel = new Dialog.ViewModels.TaskDialogViewModel(task);
+        OverlayDrawer.ShowCustomAsync<TaskDialog, Dialog.ViewModels.TaskDialogViewModel, bool>(dialogViewModel, options:drawerOptions)
             .ContinueWith(result =>
             {
                 if (result.Result)
@@ -166,8 +174,8 @@ public partial class MainViewModel : ViewModelBase
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
-        var dialogViewModel = new DateTimeDialogViewModel();
-        OverlayDialog.ShowStandardAsync<DateTimeDialog, DateTimeDialogViewModel>(dialogViewModel, options:dialogOptions)
+        var dialogViewModel = new Dialog.ViewModels.DateTimeDialogViewModel();
+        OverlayDialog.ShowStandardAsync<DateTimeDialog, Dialog.ViewModels.DateTimeDialogViewModel>(dialogViewModel, options:dialogOptions)
             .ContinueWith(task => 
             {
                 if (task.Result.HasFlag(DialogResult.OK))
@@ -193,8 +201,8 @@ public partial class MainViewModel : ViewModelBase
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
-        var dialogVm = new DualDateTimeDialogViewModel();
-        OverlayDialog.ShowStandardAsync<DualDateTimeDialog, DualDateTimeDialogViewModel>(dialogVm, options:dialogOptions)
+        var dialogVm = new Dialog.ViewModels.DualDateTimeDialogViewModel();
+        OverlayDialog.ShowStandardAsync<DualDateTimeDialog, Dialog.ViewModels.DualDateTimeDialogViewModel>(dialogVm, options:dialogOptions)
             .ContinueWith(task => 
             {
                 if (task.Result.HasFlag(DialogResult.OK) && 
@@ -290,6 +298,19 @@ public partial class MainViewModel : ViewModelBase
         _twig.Notes.Remove(note);
     }
 
+    [RelayCommand]
+    private void ShowNotesDrawer()
+    {
+        var drawerOptions = new DrawerOptions()
+        {
+            Position = Position.Left,
+            Buttons = DialogButton.None,
+            CanLightDismiss = true
+        };
+        var drawerVm = new NotesDrawerViewModel(this);
+        OverlayDrawer.ShowStandardAsync<NotesDrawer, NotesDrawerViewModel>(drawerVm, options: drawerOptions);
+    }
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PushDbxCommand), nameof(PullDbxCommand), nameof(DbxSyncCommand))]
     public partial bool IsDbxConnected { get; set; } = false;
@@ -350,9 +371,9 @@ public partial class MainViewModel : ViewModelBase
                 Buttons = DialogButton.OKCancel,
                 CanLightDismiss = true,
             };
-            var dialogVm = new DbxDialogModelView(uri);
+            var dialogVm = new Dialog.ViewModels.DbxDialogModelView(uri);
             var result =
-                await OverlayDialog.ShowStandardAsync<DbxDialog, DbxDialogModelView>(dialogVm, options: dialogOptions);
+                await OverlayDialog.ShowStandardAsync<DbxDialog, Dialog.ViewModels.DbxDialogModelView>(dialogVm, options: dialogOptions);
 
             if (result.HasFlag(DialogResult.OK) &&
                 dialogVm is { CodeText: { } code })

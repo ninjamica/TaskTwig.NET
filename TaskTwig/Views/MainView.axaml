@@ -271,58 +271,35 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             </ContentPage>
             
             <ContentPage Header="Notes" Icon="{StaticResource SemiIconEdit2}">
-                <Grid Margin="20" ColumnSpacing="20" ColumnDefinitions="*, Auto" RowDefinitions="Auto, *">
-                    <u:UrsaGroupBox Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
-                                    Padding="4, 10, 4, 4"
-                                    Background="{DynamicResource SemiColorBackground1}"
-                                    BorderBrush="{DynamicResource SemiColorBorder}"
-                                    BorderThickness="2">
-                        <u:UrsaGroupBox.Header>
-                            <TextBox Text="{Binding SelectedNote?.Title}"
-                                     AcceptsReturn="False" AcceptsTab="False"
-                                     TextInputOptions.AutoCapitalization="True"/>
-                        </u:UrsaGroupBox.Header>
-                        <ScrollViewer>
-                            <TextBox Text="{Binding SelectedNote?.Text}" 
-                                     PlaceholderText="Type Note Here"
-                                     AcceptsReturn="True"
-                                     AcceptsTab="True" 
-                                     TextWrapping="Wrap"
-                                     VerticalAlignment="Stretch"
-                                     VerticalContentAlignment="Top"
-                                     TextInputOptions.ReturnKeyType="Return"
-                                     TextInputOptions.AutoCapitalization="True"
-                                     Theme="{StaticResource LooklessTextBox}"
-                                     Foreground="{DynamicResource SemiColorText1}"/>
-                        </ScrollViewer>
-                    </u:UrsaGroupBox>
-                    
-                    <ScrollViewer Grid.Row="0" Grid.Column="1">
-                        <TabStrip ItemsSource="{Binding Notes}"
-                                  SelectedItem="{Binding SelectedNote}">
-                            <TabStrip.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Vertical"/>
-                                </ItemsPanelTemplate>
-                            </TabStrip.ItemsPanel>
-                            <TabStrip.ItemTemplate>
-                                <DataTemplate DataType="core:Note">
-                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
-                                        <Button Content="x" 
-                                                Classes="Danger"
-                                                Command="{Binding #TabControl.((vm:MainViewModel)DataContext).DeleteNoteCommand}"
-                                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </TabStrip.ItemTemplate>
-                        </TabStrip>
+                <u:UrsaGroupBox Padding="4, 10, 4, 4"
+                                Margin="30"
+                                Background="{DynamicResource SemiColorBackground1}"
+                                BorderBrush="{DynamicResource SemiColorBorder}"
+                                BorderThickness="2">
+                    <u:UrsaGroupBox.Header>
+                        <!-- <TextBox Text="{Binding SelectedNote?.Title}" -->
+                        <!--          AcceptsReturn="False" AcceptsTab="False" -->
+                        <!--          FontSize="20" -->
+                        <!--          TextInputOptions.AutoCapitalization="True"/> -->
+                        <Button Content="{Binding SelectedNote?.Title}"
+                                FontSize="20"
+                                Command="{Binding ShowNotesDrawerCommand}"/>
+                    </u:UrsaGroupBox.Header>
+                    <ScrollViewer>
+                        <TextBox Text="{Binding SelectedNote?.Text}" 
+                                 PlaceholderText="Type Note Here"
+                                 AcceptsReturn="True"
+                                 AcceptsTab="True" 
+                                 TextWrapping="Wrap"
+                                 VerticalAlignment="Stretch"
+                                 VerticalContentAlignment="Top"
+                                 TextInputOptions.ReturnKeyType="Return"
+                                 TextInputOptions.AutoCapitalization="True"
+                                 Theme="{StaticResource LooklessTextBox}"
+                                 Foreground="{DynamicResource SemiColorText1}"/>
                     </ScrollViewer>
-                    
-                    <Button Grid.Row="1" Grid.Column="1" VerticalAlignment="Top"
-                            Content="+" 
-                            Command="{Binding CreateNoteCommand}"/>
-                </Grid>
+                </u:UrsaGroupBox>
+                
             </ContentPage>
             
             <ContentPage Header="Settings" Icon="{StaticResource SemiIconSetting}">

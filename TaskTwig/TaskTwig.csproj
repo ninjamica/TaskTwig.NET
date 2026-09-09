@@ -35,12 +35,36 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Views\DateTimeDialog.axaml.cs">
+      <Compile Update="Views\MonthDateSelect.axaml.cs">
+        <DependentUpon>MonthDateSelect.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Dialog\Views\NotesDrawer.axaml.cs">
+        <DependentUpon>NotesDrawer.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Dialog\Views\DateTimeDialog.axaml.cs">
         <DependentUpon>DateTimeDialog.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Views\MonthDateSelect.axaml.cs">
-        <DependentUpon>MonthDateSelect.axaml</DependentUpon>
+      <Compile Update="Dialog\Views\DbxDialog.axaml.cs">
+        <DependentUpon>DbxDialog.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Dialog\Views\TaskDialog.axaml.cs">
+        <DependentUpon>TaskDialog.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Dialog\Views\TaskCategoryDialog.axaml.cs">
+        <DependentUpon>TaskCategoryDialog.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Dialog\Views\SyncConflictDialog.axaml.cs">
+        <DependentUpon>SyncConflictDialog.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Dialog\Views\DualDateTimeDialog.axaml.cs">
+        <DependentUpon>DualDateTimeDialog.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>
