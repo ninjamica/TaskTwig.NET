@@ -281,7 +281,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         <!--          AcceptsReturn="False" AcceptsTab="False" -->
                         <!--          FontSize="20" -->
                         <!--          TextInputOptions.AutoCapitalization="True"/> -->
-                        <Button Content="{Binding SelectedNote?.Title}"
+                        <Button Content="{Binding SelectedNote?.Title, TargetNullValue=Select Note}"
                                 FontSize="20"
                                 Command="{Binding ShowNotesDrawerCommand}"/>
                     </u:UrsaGroupBox.Header>

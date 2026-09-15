@@ -61,6 +61,7 @@ public partial class TaskCategory : HashableObject
 
     public void AddTask(TwTask task, int? index = null)
     {
+        InvalidateCachedHash();
         task.Category?.RemoveTask(task);
         Tasks.Insert(index ?? Tasks.Count, task);
         task.Category = this;
@@ -68,11 +69,13 @@ public partial class TaskCategory : HashableObject
 
     public void MoveTask(int originalIndex, int destinationIndex)
     {
+        InvalidateCachedHash();
         Tasks.Move(originalIndex, destinationIndex);
     }
 
     public void RemoveTask(TwTask task)
     {
+        InvalidateCachedHash();
         Tasks.Remove(task);
     }
 
@@ -81,9 +84,6 @@ public partial class TaskCategory : HashableObject
         hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
         hashAlgorithm.Append(BitConverter.GetBytes(Color.ToArgb()));
         hashAlgorithm.Append(BitConverter.GetBytes(Expanded));
-        
-        // foreach (var task in Tasks) 
-        //     task.AppendHash(hashAlgorithm);
     }
 
     protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)

@@ -49,6 +49,15 @@ public abstract class HashableObject : ObservableObject
     
     public static void StopSaveTimer() => SaveTimer.Stop();
 
+    public static void SetSaveTimer()
+    {
+        AllCacheValid = false;
+        SaveTimer.Stop();
+        SaveTimer.Start();
+        
+        Console.WriteLine("Hashable Data Changed");
+    }
+
     static HashableObject()
     {
         SaveTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background, Dispatcher.UIThread);
@@ -67,15 +76,18 @@ public abstract class HashableObject : ObservableObject
     
     protected void InvalidateCachedHash()
     {
-        AllCacheValid = false;
+        if (IsReadingData) 
+            return;
+        
         _cachedHash = null;
+        SetSaveTimer();
     }
 
     protected abstract void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm);
 
     protected virtual void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher) {}
 
-    public byte[] GetHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    private byte[] _GetHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         if (_cachedHash is null)
         {
@@ -87,7 +99,7 @@ public abstract class HashableObject : ObservableObject
 
     public void AppendHashAndChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        mainHasher.Append(GetHash(childHasher));
+        mainHasher.Append(_GetHash(childHasher));
         AppendHashableChildren(mainHasher, childHasher);
     }
 
@@ -95,13 +107,5 @@ public abstract class HashableObject : ObservableObject
     {
         base.OnPropertyChanged(e);
         InvalidateCachedHash();
-
-        if (IsReadingData) 
-            return;
-        
-        SaveTimer.Stop();
-        SaveTimer.Start();
-            
-        Console.WriteLine("Hashable Property Changed");
     }
 }

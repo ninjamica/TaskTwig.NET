@@ -4,34 +4,92 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:core="clr-namespace:TaskTwig.Core"
              xmlns:vm="using:TaskTwig.Dialog.ViewModels"
+             xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+             xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="TaskTwig.Dialog.Views.NotesDrawer"
              x:DataType="vm:NotesDrawerViewModel"
              x:Name="NoteDrawer">
     
-    <StackPanel>
-        <TabStrip ItemsSource="{Binding ViewModel.Notes}"
-                  SelectedItem="{Binding ViewModel.SelectedNote}">
-            <TabStrip.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical"/>
-                </ItemsPanelTemplate>
-            </TabStrip.ItemsPanel>
-            <TabStrip.ItemTemplate>
-                <DataTemplate DataType="core:Note">
-                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
-                        <Button Content="x" 
-                                Classes="Danger"
-                                Command="{Binding #NoteDrawer.((vm:NotesDrawerViewModel)DataContext).ViewModel.DeleteNoteCommand}"
-                                CommandParameter="{Binding}"/>
-                    </StackPanel>
-                </DataTemplate>
-            </TabStrip.ItemTemplate>
-        </TabStrip>
-        <Button VerticalAlignment="Top"
-                Content="+" 
-                Command="{Binding ViewModel.CreateNoteCommand}"/>
-    </StackPanel>
+    <Panel>
+        <StackPanel IsVisible="{Binding !IsEditingList}"
+                    Spacing="10">
+            <u:Divider/>
+            <TabStrip ItemsSource="{Binding ViewModel.Notes}"
+                      SelectedItem="{Binding ViewModel.SelectedNote}"
+                      sortable:Sortable.Sortable="True"
+                      sortable:Sortable.AutoScroll="True"
+                      sortable:Sortable.UpdateCommand="{Binding ViewModel.UpdateNoteListCommand}">
+                <TabStrip.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"/>
+                    </ItemsPanelTemplate>
+                </TabStrip.ItemsPanel>
+                <TabStrip.ItemTemplate>
+                    <DataTemplate DataType="core:Note">
+                        <TextBlock Text="{Binding Title}"
+                                   TextAlignment="Center"
+                                   Padding="0,5,0,5"/>
+                    </DataTemplate>
+                </TabStrip.ItemTemplate>
+            </TabStrip>
+            <u:IconButton Icon="{StaticResource SemiIconEdit}"
+                          Content="Edit"
+                          Command="{Binding StartEditingListCommand}"/>
+        </StackPanel>
+        
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*, *"
+              RowSpacing="5" ColumnSpacing="5"
+              IsVisible="{Binding IsEditingList}">
+            <u:Divider Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"/>
+            <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                          ItemsSource="{Binding ViewModel.Notes}"
+                          sortable:Sortable.Sortable="True"
+                          sortable:Sortable.AutoScroll="True"
+                          sortable:Sortable.UpdateCommand="{Binding ViewModel.UpdateNoteListCommand}"
+                          HorizontalAlignment="Stretch">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="0"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="core:Note">
+                        <Border Theme="{StaticResource CardBorder}" 
+                                Padding="0"
+                                sortable:Sortable.IsSortable="True">
+                            <Grid ColumnDefinitions="Auto, *, Auto">
+                                <PathIcon Grid.Column="0" 
+                                          Data="{StaticResource SemiIconHandle}"
+                                          Margin="5,12,5,12"
+                                          Cursor="Hand"
+                                          sortable:Sortable.IsDragHandle="True" />
+                                <TextBox Grid.Column="1" 
+                                         Text="{Binding Title}"
+                                         VerticalAlignment="Center"/>
+                                <u:IconButton Grid.Column="2" 
+                                              Icon="{StaticResource SemiIconDelete}"
+                                              Command="{Binding #NoteDrawer.((vm:NotesDrawerViewModel)DataContext).ViewModel.DeleteNoteCommand}"
+                                              CommandParameter="{Binding}"
+                                              Theme="{StaticResource BorderlessIconButton}"
+                                              Classes="Danger"
+                                              VerticalAlignment="Stretch"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Separator Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"/>
+            <u:IconButton Grid.Row="3" Grid.Column="0" 
+                          Icon="{StaticResource SemiIconPlus}"
+                          Content="Create"
+                          Command="{Binding ViewModel.CreateNoteCommand}"/>
+            <u:IconButton Grid.Row="3" Grid.Column="1" 
+                          Icon="{StaticResource SemiIconTick}"
+                          Content="Finish"
+                          Command="{Binding StopEditingListCommand}"
+                          Classes="Success"/>
+        </Grid>
+    </Panel>
     
 </UserControl>

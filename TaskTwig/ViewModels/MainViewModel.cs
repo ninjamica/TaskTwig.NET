@@ -55,6 +55,9 @@ public partial class MainViewModel : ViewModelBase
     private readonly ReadOnlyObservableCollection<Sleep> _sleepList;
     public ReadOnlyObservableCollection<Sleep> SleepList => _sleepList;
     
+    private readonly ReadOnlyObservableCollection<Note> _notes;
+    public ReadOnlyObservableCollection<Note> Notes => _notes;
+    
     [RelayCommand]
     private void CreateTaskCategory()
     {
@@ -281,7 +284,6 @@ public partial class MainViewModel : ViewModelBase
         JournalBlackoutDates.Add(new CalendarDateRange(dates.Last().AddDays(1).ToDateTime(TimeOnly.MinValue), DateTime.MaxValue));
     }
     
-    public ObservableCollection<Note> Notes { get; set; }
     [ObservableProperty] public partial Note? SelectedNote { get; set; }
 
     [RelayCommand]
@@ -290,6 +292,15 @@ public partial class MainViewModel : ViewModelBase
         var newNote = new Note { Title = "New Note" };
         _twig.Notes.Add(newNote);
         SelectedNote = newNote;
+    }
+
+    [RelayCommand]
+    private void UpdateNoteList(SortableUpdateEventArgs args)
+    {
+        if (args.Item is Note)
+        {
+            _twig.Notes.Move(args.OldIndex, args.NewIndex);
+        }
     }
 
     [RelayCommand]
@@ -303,6 +314,7 @@ public partial class MainViewModel : ViewModelBase
     {
         var drawerOptions = new DrawerOptions()
         {
+            Title = "Notes",
             Position = Position.Left,
             Buttons = DialogButton.None,
             CanLightDismiss = true
@@ -557,8 +569,8 @@ public partial class MainViewModel : ViewModelBase
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
         {
-            if (SelectedNote != null && _twig.Notes.Count > 0 && !_twig.Notes.Contains(SelectedNote))
-                SelectedNote = _twig.Notes.First();
+            if (Notes.Count > 0 && (SelectedNote is null || !Notes.Contains(SelectedNote)))
+                SelectedNote = Notes.First();
             
             _twig.Journals.Connect().Subscribe(JournalsOnCollectionChanged);
             JournalSelectedDate = _twig.TodaysJournal().Date.ToDateTime(TimeOnly.MinValue);
@@ -579,7 +591,7 @@ public partial class MainViewModel : ViewModelBase
             .SortAndBind(out _sleepList, SortExpressionComparer<Sleep>.Descending(sleep => sleep.Date))
             .Subscribe();
         IsSleeping = _twig.SleepValues.IsSleeping;
-        Notes = _twig.Notes;
+        _twig.Notes.Connect().Bind(out _notes).Subscribe();
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
     }

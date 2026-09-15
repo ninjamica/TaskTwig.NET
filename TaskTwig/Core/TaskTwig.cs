@@ -212,7 +212,7 @@ public partial class TaskTwig : ObservableObject
     public ObservableCollection<Exercise> Exercises { get; } = [];
     public ObservableCollection<Workout> Workouts { get; } = [];
     public SourceCache<Journal, DateOnly> Journals { get; } = new(journal => journal.Date);
-    public ObservableCollection<Note> Notes { get; } = [];
+    public SourceList<Note> Notes { get; } = new();
     
     [ObservableProperty]
     public partial bool AutoSync { get; set; }
@@ -234,6 +234,11 @@ public partial class TaskTwig : ObservableObject
     
     public TaskTwig()
     {
+        // Watch for changes in lists/sets where no properties of the objects within are changed (e.g. reordering)
+        TaskCategories.Connect().Subscribe(_ => HashableObject.SetSaveTimer());
+        Journals.Connect().Subscribe(_ => HashableObject.SetSaveTimer());
+        Notes.Connect().Subscribe(_ => HashableObject.SetSaveTimer());
+        
         if (!Directory.Exists(DataDirPath))
             Directory.CreateDirectory(DataDirPath);
         
@@ -453,7 +458,7 @@ public partial class TaskTwig : ObservableObject
                     jsonText = JsonSerializer.Serialize(journals);
                     break;
                 case DataFile.Note:
-                    jsonText = JsonSerializer.Serialize(Notes);
+                    jsonText = JsonSerializer.Serialize(Notes.Items.ToList());
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(file), file, null);
@@ -765,11 +770,12 @@ public partial class TaskTwig : ObservableObject
     private void _ReadNote(string jsonText)
     {
         var noteRecords = JsonSerializer.Deserialize<List<Note>>(jsonText) ?? [];
-
-        Notes.Clear();
-            
-        foreach (var note in noteRecords)
-            Notes.Add(note);
+        
+        Notes.Edit(list =>
+        {
+            list.Clear();
+            list.AddRange(noteRecords);
+        });
     }
     
     private byte[] _HashTasks(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
@@ -816,7 +822,7 @@ public partial class TaskTwig : ObservableObject
     
     private byte[] _HashNote(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
     {
-        foreach (var note in Notes)
+        foreach (var note in Notes.Items)
             note.AppendHashAndChildren(mainHasher, childHasher);
         
         return mainHasher.GetCurrentHash();
