@@ -4,8 +4,14 @@ using System.IO.Hashing;
 using System.Threading;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WeakEvent;
 
 namespace TaskTwig.Core;
+
+public class CacheValidChangedEventArgs(bool isAllCacheValid) : EventArgs
+{
+    public virtual bool IsAllCacheValid { get; } = isAllCacheValid;
+}
 
 public abstract class HashableObject : ObservableObject
 {
@@ -15,9 +21,20 @@ public abstract class HashableObject : ObservableObject
         get => Interlocked.CompareExchange(ref _allCacheValid, 1, 1) == 1;
         set
         {
-            if (value) Interlocked.CompareExchange(ref _allCacheValid, 1, 0);
-            else Interlocked.CompareExchange(ref _allCacheValid, 0, 1);
+            var prevVal = value
+                ? Interlocked.CompareExchange(ref _allCacheValid, 1, 0)
+                : Interlocked.CompareExchange(ref _allCacheValid, 0, 1);
+            
+            if (value ^ prevVal == 1)
+                AllCacheValidChangedEventSource.Raise(null, new CacheValidChangedEventArgs(value));
         }
+    }
+    
+    private static readonly WeakEventSource<CacheValidChangedEventArgs> AllCacheValidChangedEventSource = new();
+    public static event EventHandler<CacheValidChangedEventArgs> CacheValidChanged
+    {
+        add => AllCacheValidChangedEventSource.Subscribe(value);
+        remove => AllCacheValidChangedEventSource.Unsubscribe(value);
     }
     
     private static int _isReadingData = 0;

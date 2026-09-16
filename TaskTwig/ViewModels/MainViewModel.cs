@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -329,6 +330,12 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string? DbxAccountName { get; private set; }
+    
+    [ObservableProperty]
+    public partial string? SyncStatusText { get; private set; }
+    
+    [ObservableProperty]
+    public partial bool CacheValid { get; private set; }
 
     public Task<IImage?>? DbxPhoto
     {
@@ -403,13 +410,19 @@ public partial class MainViewModel : ViewModelBase
         {
             HashableObject.StopSaveTimer();
             var files = await _twig.SaveDataFiles();
-            NotificationManager?.Show(new Notification("Saving Completed", string.Join(',', files)),
-                NotificationType.Success);
+            // NotificationManager?.Show(new Notification("Saving Completed", string.Join(',', files)),
+            //     NotificationType.Success);
+
+            SyncStatusText = "Saved";
+            if (files.Count > 0)
+                SyncStatusText += $": {string.Join(',', files)}";
         }
         catch (TwigInvalidOperationException)
         {
-            NotificationManager?.Show(new Notification("Save Canceled", "Data operation already in progress"),
-                NotificationType.Warning);
+            // NotificationManager?.Show(new Notification("Save Canceled", "Data operation already in progress"),
+            //     NotificationType.Warning);
+            
+            SyncStatusText = "Save Canceled (data operation already in progress)";
         }
     }
 
@@ -418,14 +431,20 @@ public partial class MainViewModel : ViewModelBase
     {
         try
         {
+            SyncStatusText = "Pushing to Dropbox";
+            
             HashableObject.StopSaveTimer();
             await _twig.PushDbx();
-            NotificationManager?.Show("Pushed To Dropbox", NotificationType.Success);
+            // NotificationManager?.Show("Pushed To Dropbox", NotificationType.Success);
+            
+            SyncStatusText = "Pushed to Dropbox";
         }
         catch (TwigInvalidOperationException)
         {
-            NotificationManager?.Show(new Notification("Push Canceled", "Data operation already in progress"),
-                NotificationType.Warning);
+            // NotificationManager?.Show(new Notification("Push Canceled", "Data operation already in progress"),
+            //     NotificationType.Warning);
+            
+            SyncStatusText = "Pushed Canceled (data operation already in progress)";
         }
     }
 
@@ -434,14 +453,20 @@ public partial class MainViewModel : ViewModelBase
     {
         try
         {
+            SyncStatusText = "Pulling from Dropbox";
+            
             HashableObject.StopSaveTimer();
             await _twig.PullDbx();
-            NotificationManager?.Show("Pulled From Dropbox", NotificationType.Success);
+            // NotificationManager?.Show("Pulled from Dropbox", NotificationType.Success);
+            
+            SyncStatusText = "Pulled from Dropbox";
         }
         catch (TwigInvalidOperationException)
         {
-            NotificationManager?.Show(new Notification("Pull Canceled", "Data operation already in progress"),
-                NotificationType.Warning);
+            // NotificationManager?.Show(new Notification("Pull Canceled", "Data operation already in progress"),
+            //     NotificationType.Warning);
+            
+            SyncStatusText = "Pull Canceled (data operation already in progress)";
         }
     }
 
@@ -463,60 +488,64 @@ public partial class MainViewModel : ViewModelBase
     {
         try
         {
-            var notifTitle = new TextBlock
-            {
-                Text = "Syncing",
-                FontSize = 16,
-                FontWeight = FontWeight.SemiBold,
-            };
-            var notifContent = new TextBlock
-            {
-                Classes = { "Secondary" }
-            };
-            var loadingCircle = new LoadingIcon();
-            var notifGrid = new Grid
-            {
-                Children = { notifTitle, notifContent, loadingCircle },
-                RowDefinitions = new RowDefinitions("Auto, Auto"),
-                ColumnDefinitions = new ColumnDefinitions("Auto, Auto"),
-                ColumnSpacing = 10
-            };
-            Grid.SetRow(notifTitle, 0);
-            Grid.SetColumn(notifTitle, 1);
-            Grid.SetRow(notifContent, 1);
-            Grid.SetColumn(notifContent, 1);
-            Grid.SetRow(loadingCircle, 0);
-            Grid.SetColumn(loadingCircle, 0);
-
-            NotificationManager?.Show(notifGrid, NotificationType.Information, expiration: TimeSpan.Zero,
-                showIcon: false);
+            // var notifTitle = new TextBlock
+            // {
+            //     Text = "Syncing",
+            //     FontSize = 16,
+            //     FontWeight = FontWeight.SemiBold,
+            // };
+            // var notifContent = new TextBlock
+            // {
+            //     Classes = { "Secondary" }
+            // };
+            // var loadingCircle = new LoadingIcon();
+            // var notifGrid = new Grid
+            // {
+            //     Children = { notifTitle, notifContent, loadingCircle },
+            //     RowDefinitions = new RowDefinitions("Auto, Auto"),
+            //     ColumnDefinitions = new ColumnDefinitions("Auto, Auto"),
+            //     ColumnSpacing = 10
+            // };
+            // Grid.SetRow(notifTitle, 0);
+            // Grid.SetColumn(notifTitle, 1);
+            // Grid.SetRow(notifContent, 1);
+            // Grid.SetColumn(notifContent, 1);
+            // Grid.SetRow(loadingCircle, 0);
+            // Grid.SetColumn(loadingCircle, 0);
+            //
+            // NotificationManager?.Show(notifGrid, NotificationType.Information, expiration: TimeSpan.Zero,
+            //     showIcon: false);
 
             var progress = new Progress<SyncProgress>(syncProgress =>
             {
                 switch (syncProgress.Stage)
                 {
                     case SyncProgressStage.Hash:
-                        notifTitle.Text = "Hashing Files";
-                        notifContent.Text = null;
+                        // notifTitle.Text = "Hashing Files";
+                        // notifContent.Text = null;
+                        SyncStatusText = "Hashing Files";
                         break;
 
                     case SyncProgressStage.Save:
-                        notifTitle.Text = "Saving Files";
+                        // notifTitle.Text = "Saving Files";
+                        SyncStatusText = "Saving Files: ";
 
-                        notifContent.Text = syncProgress.SyncFiles is { } files && files.Any()
+                        SyncStatusText += syncProgress.SyncFiles is { } files && files.Any()
                             ? string.Join(", ", files)
                             : "Nothing to save";
                         break;
 
                     case SyncProgressStage.Compare:
-                        notifTitle.Text = "Comparing Files To Cloud";
-                        notifContent.Text = null;
+                        // notifTitle.Text = "Comparing Files To Cloud";
+                        // notifContent.Text = null;
+                        SyncStatusText = "Comparing Files to Cloud";
                         break;
 
                     case SyncProgressStage.Sync:
-                        notifTitle.Text = "Syncing Files";
+                        // notifTitle.Text = "Syncing Files";
+                        SyncStatusText = "Syncing Files: ";
 
-                        notifContent.Text = syncProgress.SyncActions is { Count: > 0 } actions
+                        SyncStatusText += syncProgress.SyncActions is { Count: > 0 } actions
                             ? string.Join(", ",
                                 actions.Select(pair =>
                                     $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
@@ -526,6 +555,10 @@ public partial class MainViewModel : ViewModelBase
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+                
+                // SyncStatusText = notifTitle.Text;
+                // if (notifContent.Text is not null)
+                //     SyncStatusText += $" {notifContent.Text}";
             });
 
             HashableObject.StopSaveTimer();
@@ -535,19 +568,35 @@ public partial class MainViewModel : ViewModelBase
 
             if (actions is null)
             {
-                NotificationManager?.Show(new Notification("Sync Canceled", null), NotificationType.Warning,
-                    classes: ["Light"]);
+                // NotificationManager?.Show(new Notification("Sync Canceled", null), NotificationType.Warning,
+                //     classes: ["Light"]);
+
+                SyncStatusText = "Sync Canceled";
             }
             else
             {
-                NotificationManager?.Show(new Notification("Sync Completed", notifContent.Text),
-                    NotificationType.Success, classes: ["Light"]);
+                // NotificationManager?.Show(new Notification("Sync Completed", notifContent.Text),
+                //     NotificationType.Success, classes: ["Light"]);
+
+                SyncStatusText = SyncStatusText?.Replace("Syncing Files: ", "Sync Completed: ");
+
+                // SyncStatusText = "Sync Completed";
+                // SyncStatusText += progress.SyncActions is { Count: > 0 } actions
+                //     ? string.Join(", ",
+                //         actions.Select(pair =>
+                //             $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
+                //     : "Nothing to do";
+
+                // if (notifContent.Text is not null)
+                //     SyncStatusText += $" {notifContent.Text}";
             }
         }
         catch (TwigInvalidOperationException)
         {
-            NotificationManager?.Show(new Notification("Sync Canceled", "Data operation already in progress"),
-                NotificationType.Warning);
+            // NotificationManager?.Show(new Notification("Sync Canceled", "Data operation already in progress"),
+            //     NotificationType.Warning);
+            
+            SyncStatusText = "Sync Canceled (data operation already in progress)";
         }
     }
     
@@ -566,6 +615,7 @@ public partial class MainViewModel : ViewModelBase
         _twig.SleepValues.PropertyChanged += OnSleepPropertyChanged;
         TwigTime.OnTodayChanged += OnTodayChanged;
         _twig.DbxHandler.AccountChanged += DbxHandlerOnAccountChanged;
+        HashableObject.CacheValidChanged += CacheValidChanged;
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
         {
@@ -651,6 +701,11 @@ public partial class MainViewModel : ViewModelBase
             DbxAccountName = _twig.DbxHandler.GetAccountName();
             DbxPhoto = _getDbxPhoto(_twig.DbxHandler.GetAccountPhotoUri());
         });
+    }
+
+    private void CacheValidChanged(object? sender, CacheValidChangedEventArgs args)
+    {
+        CacheValid = args.IsAllCacheValid;
     }
 
     public async Task Cleanup()
