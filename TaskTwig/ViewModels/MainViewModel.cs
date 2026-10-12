@@ -42,7 +42,13 @@ public partial class MainViewModel : ViewModelBase
 {
     public WindowNotificationManager? NotificationManager { get; set; }
     private readonly Core.TaskTwig _twig;
-    
+
+
+    private readonly TaskCategoryDialog _taskCategoryEditDialog = new();
+    private readonly TaskCategoryDialogViewModel _taskCategoryEditDialogVm = new();
+
+    private readonly TaskDialog _taskEditDialog = new();
+    private readonly TaskDialogViewModel _taskEditDialogVm = new();
 
     [ObservableProperty]
     public partial bool TodayDoneExpanded { get; set; } = true;
@@ -77,8 +83,9 @@ public partial class MainViewModel : ViewModelBase
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
-        var dialogViewModel = new Dialog.ViewModels.TaskCategoryDialogViewModel(category);
-        OverlayDrawer.ShowCustomAsync<TaskCategoryDialog, Dialog.ViewModels.TaskCategoryDialogViewModel, bool>(dialogViewModel, options: drawerOptions)
+        
+        _taskCategoryEditDialogVm.Category = category;
+        OverlayDrawer.ShowCustomAsync<bool>(_taskCategoryEditDialog, _taskCategoryEditDialogVm, options: drawerOptions)
             .ContinueWith(result =>
             {
                 if (result.Result)
@@ -102,6 +109,7 @@ public partial class MainViewModel : ViewModelBase
             Category = category
         };
         category.AddTask(task);
+        category.Expanded = true;
         EditTask(task);
     }
     
@@ -115,8 +123,9 @@ public partial class MainViewModel : ViewModelBase
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
-        var dialogViewModel = new Dialog.ViewModels.TaskDialogViewModel(task);
-        OverlayDrawer.ShowCustomAsync<TaskDialog, Dialog.ViewModels.TaskDialogViewModel, bool>(dialogViewModel, options:drawerOptions)
+        
+        _taskEditDialogVm.Task = task;
+        OverlayDrawer.ShowCustomAsync<bool>(_taskEditDialog, _taskEditDialogVm, options:drawerOptions)
             .ContinueWith(result =>
             {
                 if (result.Result)

@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO.Hashing;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,8 +18,13 @@ public enum DateUnit
 public partial class UnitInterval : RepeatingInterval
 {
 
-    [ObservableProperty] public required partial int UnitAmount { get; set; }
-    [ObservableProperty] public required partial DateUnit Unit { get; set; }
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 unit.")]
+    public partial int UnitAmount { get; set; } = 1;
+
+    [ObservableProperty] 
+    public partial DateUnit Unit { get; set; }
 
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {

@@ -1,24 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Numerics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
-using Avalonia.Controls.Presenters;
-using Avalonia.Controls.Primitives;
 using Avalonia.Data;
-using Avalonia.Data.Converters;
-using Avalonia.Interactivity;
-using Avalonia.LogicalTree;
-using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.MarkupExtensions;
-using Avalonia.Media;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using ObservableCollections;
-using TaskTwig.ViewModels;
 using Ursa.Controls;
 
 namespace TaskTwig.Views;
@@ -68,11 +52,6 @@ public class MonthDateCell : Button
     
     protected override Type StyleKeyOverride => typeof(DatePickerCalendarDayButton);
 
-    public MonthDateCell()
-    {
-        // PseudoClasses.Add(":in-range");
-    }
-
     protected override void OnClick()
     {
         base.OnClick();
@@ -82,9 +61,9 @@ public class MonthDateCell : Button
         else
             DateMap |= 1u << (_date - 1);
     }
-    
+
     private bool IsSelected(int date) => (DateMap & (1u << (date - 1))) != 0;
-    
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

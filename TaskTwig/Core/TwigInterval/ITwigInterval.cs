@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace TaskTwig.Core.TwigInterval;
@@ -9,7 +10,7 @@ namespace TaskTwig.Core.TwigInterval;
 [JsonDerivedType(typeof(UnitInterval), typeDiscriminator: "Unit")]
 [JsonDerivedType(typeof(WeekInterval), typeDiscriminator: "Week")]
 [JsonDerivedType(typeof(MonthInterval), typeDiscriminator: "Month")]
-public interface ITwigInterval
+public interface ITwigInterval : INotifyPropertyChanged
 {
     [JsonIgnore]
     DateOnly? NextOccurrence { get; }

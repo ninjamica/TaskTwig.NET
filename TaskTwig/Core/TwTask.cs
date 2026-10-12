@@ -1,11 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO.Hashing;
 using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using TaskTwig.Core.TwigInterval;
 
 namespace TaskTwig.Core;
@@ -41,12 +41,17 @@ public partial class TwTask : HashableObject
     public partial TaskCategory? Category { get; set; }
     
     [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Range(0, int.MaxValue, ErrorMessage = "Points must be a positive integer")]
     public partial int Points { get; set; } = 1;
 
     [ObservableProperty]
     public required partial ITwigInterval Interval { get; set; }
-    partial void OnIntervalChanged(ITwigInterval value)
+    partial void OnIntervalChanged(ITwigInterval oldValue, ITwigInterval newValue)
     {
+        oldValue?.PropertyChanged -= OnPropChanged;
+        newValue.PropertyChanged += OnPropChanged;
+        
         _UpdateOPattern(OPattern);
         _UpdateEPattern(EPattern);
         _UpdateStatusVars();
@@ -92,7 +97,7 @@ public partial class TwTask : HashableObject
 
     public TwTask()
     {
-        TwigTime.OnTodayChanged += OnTodayChanged;
+        TwigTime.OnTodayChanged += OnPropChanged;
     }
     
     internal bool _IsDone(DateOnly? lastDone)
@@ -106,7 +111,6 @@ public partial class TwTask : HashableObject
         return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
     }
     
-    [RelayCommand]
     public void SetDone(bool done)
     {
         LastDone = done ? TwigTime.Today : null;
@@ -204,7 +208,7 @@ public partial class TwTask : HashableObject
         IsOverdue = _IsOverdue();
     }
 
-    private void OnTodayChanged(object? sender, PropertyChangedEventArgs e) => _UpdateStatusVars();
+    private void OnPropChanged(object? sender, PropertyChangedEventArgs e) => _UpdateStatusVars();
 
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {

@@ -13,7 +13,7 @@ public class CacheValidChangedEventArgs(bool isAllCacheValid) : EventArgs
     public virtual bool IsAllCacheValid { get; } = isAllCacheValid;
 }
 
-public abstract class HashableObject : ObservableObject
+public abstract class HashableObject : ObservableValidator
 {
     private static int _allCacheValid = 0;
     public static bool AllCacheValid

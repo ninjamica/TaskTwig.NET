@@ -21,7 +21,8 @@
                 <TextBox Text="{Binding Category.Name}"
                          AcceptsReturn="False" AcceptsTab="False"
                          TextWrapping="Wrap"
-                         TextInputOptions.AutoCapitalization="True"/>
+                         TextInputOptions.AutoCapitalization="True"
+                         u:FocusHelper.DialogFocusHint="True"/>
             </u:FormItem>
             <u:FormItem Label="Color">
                 <!-- TODO: Implement when color support is updated in TaskCategory -->

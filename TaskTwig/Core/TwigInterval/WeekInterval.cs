@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO.Hashing;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -20,16 +21,9 @@ public enum DayOfWeekFlag
 public partial class WeekInterval : RepeatingInterval
 {
     [ObservableProperty]
-    public required partial int WeekSpacing { get; set; }
-
-    // {
-    //     get;
-    //     set
-    //     {
-    //         if (value > 0)
-    //             field = value;
-    //     }
-    // } = 1;
+    [NotifyDataErrorInfo]
+    [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 week.")]
+    public partial int WeekSpacing { get; set; } = 1;
 
     [ObservableProperty]
     public partial DayOfWeekFlag DayOfWeekMap { get; set; } = DayOfWeekFlag.None;
@@ -57,7 +51,7 @@ public partial class WeekInterval : RepeatingInterval
         if (prevDay == -1)
             return null;
         
-        DateOnly prevDate = refDate.AddDays(-(prevDay - refDay));
+        DateOnly prevDate = refDate.AddDays(prevDay - refDay);
         if (prevDay >= refDay)
             prevDate = prevDate.AddDays(-7 * WeekSpacing);
         

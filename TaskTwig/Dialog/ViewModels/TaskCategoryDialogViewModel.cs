@@ -7,10 +7,10 @@ using TaskTwig.ViewModels;
 
 namespace TaskTwig.Dialog.ViewModels;
 
-public partial class TaskCategoryDialogViewModel(TaskCategory category) : ViewModelBase, IDialogContext
+public partial class TaskCategoryDialogViewModel : ViewModelBase, IDialogContext
 {
     [ObservableProperty] 
-    public partial TaskCategory Category { get; private set; } = category;
+    public partial TaskCategory Category { get; set; }
     
     [RelayCommand]
     public void Close()

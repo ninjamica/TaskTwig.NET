@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO.Hashing;
 using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,8 +8,15 @@ namespace TaskTwig.Core.TwigInterval;
 
 public partial class MonthInterval : RepeatingInterval
 {
-    [ObservableProperty] public partial int MonthSpacing { get; set; } = 1;
-    [ObservableProperty] public partial uint DaysOfMonthMap { get; set; } = 0u;
+    [ObservableProperty]
+    [NotifyDataErrorInfo]
+    [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 month.")]
+    public partial int MonthSpacing { get; set; } = 1;
+    
+    [ObservableProperty] 
+    [NotifyDataErrorInfo]
+    [Range(0, 0x7FFF_FFFF, ErrorMessage = "Invalid month date map, must be between {0} and {1}.")]
+    public partial uint DaysOfMonthMap { get; set; } = 0u;
 
     protected override DateOnly? NextFromDate(DateOnly refDate)
     {

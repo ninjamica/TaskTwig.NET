@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             mc:Ignorable="d" d:DesignWidth="493" d:DesignHeight="916"
+             mc:Ignorable="d" d:DesignWidth="493" d:DesignHeight="700"
              xmlns:vm="using:TaskTwig.Dialog.ViewModels"
              xmlns:core="clr-namespace:TaskTwig.Core"
              xmlns:twigInterval="clr-namespace:TaskTwig.Core.TwigInterval"
@@ -11,6 +11,19 @@
              xmlns:dialogViews="clr-namespace:TaskTwig.Dialog.Views"
              x:Class="TaskTwig.Dialog.Views.TaskDialog"
              x:DataType="vm:TaskDialogViewModel">
+    
+    <Design.DataContext>
+        <vm:TaskDialogViewModel>
+            <vm:TaskDialogViewModel.Task>
+                <core:TwTask Name="PreviewTask"
+                             Icon="👾">
+                    <core:TwTask.Interval>
+                        <twigInterval:WeekInterval DayOfWeekMap="Sunday"/>
+                    </core:TwTask.Interval>
+                </core:TwTask>
+            </vm:TaskDialogViewModel.Task>
+        </vm:TaskDialogViewModel>
+    </Design.DataContext>
     
     <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
         
@@ -22,17 +35,19 @@
         
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,15,0">
-                <u:Form LabelPosition="Left" LabelWidth="*">
+                <u:Form LabelPosition="Left" LabelWidth="*" HorizontalAlignment="Stretch">
                     <u:FormItem Label="Name">
-                        <TextBox Text="{Binding Task.Name}"
+                        <TextBox Text="{Binding Task?.Name, Delay=500}"
                                  AcceptsReturn="False" AcceptsTab="False"
                                  TextWrapping="Wrap"
-                                 TextInputOptions.AutoCapitalization="True"/>
+                                 TextInputOptions.AutoCapitalization="True"
+                                 TextInputOptions.ContentType="Name"
+                                 u:FocusHelper.DialogFocusHint="True"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Icon">
                         <vm:EmojiTextBox x:Name="IconBox" 
-                                 Text="{Binding Task.Icon}"
+                                 Text="{Binding Task?.Icon}"
                                  FontFamily="{StaticResource NotoColorEmoji}"
                                  MaxLines="1"
                                  FontSize="24"
@@ -41,95 +56,124 @@
                     </u:FormItem>
                     
                     <u:FormItem Label="Points">
-                        <u:NumericIntUpDown Minimum="0" Value="{Binding Task.Points}"
+                        <u:NumericIntUpDown Minimum="0" Value="{Binding Task?.Points}"
                                             HorizontalAlignment="Left" Width="80"
-                                            TextInputOptions.ContentType="Number"/>
+                                            TextInputOptions.ContentType="Digits"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Interval">
                         <ComboBox ItemsSource="{Binding IntervalTypes}"
-                                  DisplayMemberBinding="{Binding Name}"
+                                  DisplayMemberBinding="{Binding Converter={x:Static dialogViews:TaskDialog.IntervalTypeNameConverter}}"
                                   SelectedItem="{Binding SelectedInterval}"/>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Occurrence" IsVisible="{Binding ShowOPattern}">
+                    <u:FormItem Label="Due Pattern" IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.ShowOPatternConverter}}">
                         <u:EnumSelector EnumType="core:OccurrencePattern"
-                                        Value="{Binding Task.OPattern}"/>
+                                        Value="{Binding Task?.OPattern}"/>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Repeat" IsVisible="{Binding ShowEPattern}">
+                    <u:FormItem Label="Repeat" IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsRepeatingIntervalConverter}}">
                         <u:EnumSelector EnumType="core:AutoExtendPattern"
-                                        Value="{Binding Task.EPattern}"/>
+                                        Value="{Binding Task?.EPattern}" />
                     </u:FormItem>
                     
-                    <u:FormItem Label="Date" IsVisible="{Binding ShowDate}">
-                        <u:DateOnlyPicker SelectedDate="{Binding ReferenceDate}"
-                                          Width="150"/>
+                    <u:FormItem Label="Date"
+                                Content="{Binding Task?.Interval}"
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsSingleIntervalConverter}}">
+                        <u:FormItem.DataTemplates>
+                            <DataTemplate DataType="twigInterval:SingleDateInterval">
+                                <u:DateOnlyPicker SelectedDate="{Binding Date}"
+                                                  Width="150" />
+                            </DataTemplate>
+                        </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Unit Interval" IsVisible="{Binding ShowUnitInterval}">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
-                                                InnerLeftContent="Every"
-                                                Width="150"
-                                                HorizontalContentAlignment="Center"
-                                                TextInputOptions.ContentType="Number"/>
-                            <u:EnumSelector EnumType="twigInterval:DateUnit"
-                                            Value="{Binding Unit}"/>
-                        </StackPanel>
+                    <u:FormItem Label="Unit Interval"
+                                Content="{Binding Task?.Interval}"
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsUnitIntervalConverter}}">
+                        <u:FormItem.DataTemplates>
+                            <DataTemplate DataType="twigInterval:UnitInterval">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <u:NumericIntUpDown Minimum="1"
+                                                        Value="{Binding UnitAmount}"
+                                                        InnerLeftContent="Every"
+                                                        Width="150"
+                                                        HorizontalContentAlignment="Center"
+                                                        TextInputOptions.ContentType="Number" />
+                                    <u:EnumSelector EnumType="twigInterval:DateUnit"
+                                                    Value="{Binding Unit}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Week Interval" IsVisible="{Binding ShowWeekInterval}">
-                        <StackPanel Spacing="10">
-                            <StackPanel x:Name="WeekButtonsPanel" Orientation="Horizontal">
-                                <ToggleButton IsChecked="{Binding IsOnM}" Classes="">M</ToggleButton>
-                                <ToggleButton IsChecked="{Binding IsOnTu}">Tu</ToggleButton>
-                                <ToggleButton IsChecked="{Binding IsOnW}">W</ToggleButton>
-                                <ToggleButton IsChecked="{Binding IsOnTh}">Th</ToggleButton>
-                                <ToggleButton IsChecked="{Binding IsOnF}">F</ToggleButton>
-                                <ToggleButton IsChecked="{Binding IsOnSa}">Sa</ToggleButton>
-                                <ToggleButton IsChecked="{Binding IsOnSu}">Su</ToggleButton>
-                            </StackPanel>
-                            <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
-                                                HorizontalContentAlignment="Center"
-                                                InnerLeftContent="Every" 
-                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static dialogViews:TaskDialog.WeekSpinnerTextConverter}}"
-                                                HorizontalAlignment="Left" MinWidth="175"
-                                                TextInputOptions.ContentType="Number"/>
-                        </StackPanel>
+                    <u:FormItem Label="Week Interval" 
+                                Content="{Binding Task?.Interval}"
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsWeekIntervalConverter}}">
+                        <u:FormItem.DataTemplates>
+                            <DataTemplate DataType="twigInterval:WeekInterval">
+                                <StackPanel Spacing="10">
+                                    <views:WeekDaySelect WeekDayMap="{Binding DayOfWeekMap}"/>
+                                    <u:NumericIntUpDown Value="{Binding WeekSpacing}"
+                                                        Minimum="1" 
+                                                        HorizontalContentAlignment="Center"
+                                                        InnerLeftContent="Every"
+                                                        InnerRightContent="{Binding $self.Value, Converter={x:Static dialogViews:TaskDialog.WeekSpinnerTextConverter}}"
+                                                        HorizontalAlignment="Left" MinWidth="175"
+                                                        TextInputOptions.ContentType="Number" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Month Interval" IsVisible="{Binding ShowMonthInterval}">
-                        <StackPanel Spacing="10">
-                            <views:MonthDateSelect DateMap="{Binding MonthDateMap}"/>
-                            <u:NumericIntUpDown Minimum="1" Value="{Binding IntervalSpacing}"
-                                                HorizontalContentAlignment="Center"
-                                                InnerLeftContent="Every" 
-                                                InnerRightContent="{Binding IntervalSpacing, Converter={x:Static dialogViews:TaskDialog.MonthSpinnerTextConverter}}"
-                                                HorizontalAlignment="Left" MinWidth="180"
-                                                TextInputOptions.ContentType="Number"/>
-                        </StackPanel>
+                    <u:FormItem Label="Month Interval" 
+                                Content="{Binding Task?.Interval}"
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsMonthIntervalConverter}}">
+                        <u:FormItem.DataTemplates>
+                            <DataTemplate DataType="twigInterval:MonthInterval">
+                                <StackPanel Spacing="10">
+                                    <views:MonthDateSelect
+                                        DateMap="{Binding DaysOfMonthMap, FallbackValue=0}" />
+                                    <u:NumericIntUpDown
+                                        Value="{Binding MonthSpacing}"
+                                        Minimum="1"
+                                        HorizontalContentAlignment="Center"
+                                        InnerLeftContent="Every"
+                                        InnerRightContent="{Binding $self.Value, Converter={x:Static dialogViews:TaskDialog.MonthSpinnerTextConverter}}"
+                                        HorizontalAlignment="Left" MinWidth="180"
+                                        TextInputOptions.ContentType="Number" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Reference Date" IsVisible="{Binding ShowReferenceDate}">
-                        <u:DateOnlyPicker SelectedDate="{Binding ReferenceDate}"
-                                          Width="150"/>
+                    <u:FormItem Label="Reference Date" 
+                                Content="{Binding Task?.Interval}"
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsRepeatingIntervalConverter}}">
+                        <u:FormItem.DataTemplates>
+                            <DataTemplate DataType="twigInterval:RepeatingInterval">
+                                <u:DateOnlyPicker
+                                    SelectedDate="{Binding ReferenceDate}"
+                                    Width="150" />
+                            </DataTemplate>
+                        </u:FormItem.DataTemplates>
                     </u:FormItem>
+                    
                 </u:Form>
                 
-                <Expander Header="Info">
+                <Expander Header="More Info">
                     <u:Descriptions>
                         <u:DescriptionsItem Label="LastDone">
-                            <u:DateOnlyPicker SelectedDate="{Binding Task.LastDone}"
+                            <u:DateOnlyPicker SelectedDate="{Binding Task?.LastDone}"
                                               Width="150"/>
                         </u:DescriptionsItem>
-                        <u:DescriptionsItem Label="IsDone" Content="{Binding Task.IsDone}"/>
-                        <u:DescriptionsItem Label="IsToday" Content="{Binding Task.IsToday}"/>
-                        <u:DescriptionsItem Label="IsOverdue" Content="{Binding Task.IsOverdue}"/>
+                        <u:DescriptionsItem Label="IsDone" Content="{Binding Task?.IsDone}"/>
+                        <u:DescriptionsItem Label="IsToday" Content="{Binding Task?.IsToday}"/>
+                        <u:DescriptionsItem Label="IsOverdue" Content="{Binding Task?.IsOverdue}"/>
                         <u:DescriptionsItem Label="Next Occurrence" 
-                                            Content="{Binding Task.Interval.NextOccurrence}"/>
+                                            Content="{Binding Task?.Interval.NextOccurrence, TargetNullValue=N/A}"/>
                         <u:DescriptionsItem Label="Previous Occurrence" 
-                                            Content="{Binding Task.Interval.PreviousOccurrence}"/>
+                                            Content="{Binding Task?.Interval.PreviousOccurrence, TargetNullValue=N/A}"/>
                     </u:Descriptions>
                 </Expander>
             </StackPanel>
@@ -150,6 +194,7 @@
             
             <Button Content="Okay"
                     Command="{Binding Close}"
+                    IsDefault="True"
                     Theme="{StaticResource SolidButton}"
                     HorizontalAlignment="Right"
                     DockPanel.Dock="Right"/>
