@@ -4,8 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Reactive;
-using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -194,6 +192,12 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty] 
     public partial bool IsSleeping { get; private set; }
+    
+    [ObservableProperty]
+    public partial bool IsDaytime { get; private set; }
+    
+    [ObservableProperty]
+    public partial bool HasSleepRecordLastNight { get; private set; }
 
     [RelayCommand]
     private void OnSleepButton()
@@ -617,6 +621,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial TimeSpan DayStart { get; set; } = TwigTime.DayStart;
     partial void OnDayStartChanged(TimeSpan value) => TwigTime.DayStart = value;
+    
+    // [ObservableProperty]
+    // public partial TimeSpan NightStart { get; set; } = TwigTime.NightStart;
+    // partial void OnNightStartChanged(TimeSpan value) => TwigTime.NightStart = value;
 
     [ObservableProperty]
     public partial bool AutoSync { get; set; }
@@ -660,7 +668,14 @@ public partial class MainViewModel : ViewModelBase
             .SortAndBind(out _sleepList, SortExpressionComparer<Sleep>.Descending(sleep => sleep.Date))
             .DisposeMany()
             .Subscribe();
+        _twig.SleepValues.SleepRecords.Connect()
+            .AutoRefresh()
+            .AutoRefreshOnObservable(_ => TwigTime.TodayChangedReevaluator)
+            .ToObservableOptional(TwigTime.Today.AddDays(-1))
+            .Subscribe(sleep => HasSleepRecordLastNight = sleep.HasValue);
+
         IsSleeping = _twig.SleepValues.IsSleeping;
+        IsDaytime = TwigTime.IsDaytime();
         _twig.Notes.Connect().Bind(out _notes).Subscribe();
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());

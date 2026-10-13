@@ -35,9 +35,6 @@ public partial class MainView : UserControl
             return;
 
         mainViewModel.JournalBlackoutDates = JournalCalendar.BlackoutDates;
-    }
-
-    private void TodayNameClicked(object? sender, PointerPressedEventArgs e)
         
         TopLevel.GetTopLevel(this)?.InputPane?.StateChanged += InputPaneStateChanged;
         
@@ -130,6 +127,7 @@ public partial class MainView : UserControl
         }
     }
 
+    private void TodayNameTapped(object? sender, TappedEventArgs e)
     {
         if (sender is Control { DataContext: TaskCategory category })
         {
@@ -165,6 +163,40 @@ public partial class MainView : UserControl
 
     public static readonly FuncValueConverter<bool, string> SleepButtonTextConverter =
         new(isSleeping => isSleeping ? "Wake Up" : "Go To Sleep");
+    
+    public static readonly FuncMultiValueConverter<bool, string> TodaySleepButtonTextConverter = new(values =>
+    {
+        var isSleeping = values[0];
+        var isDaytime = values[1];
+        var hasRecordLastNight = values[2];
+
+        if (isDaytime)
+        {
+            if (!isSleeping && !hasRecordLastNight)
+                return "Missed Last Night";
+            
+            return isSleeping ? "Wake Up" : "Awake";
+        }
+        else
+            return isSleeping ? "Sleeping" : "Go To Sleep";
+    });
+    
+    public static readonly FuncMultiValueConverter<bool, bool> TodaySleepButtonEnabledConverter = new(values =>
+    {
+        var isSleeping = values[0];
+        var isDaytime = values[1];
+
+        return isDaytime ^ !isSleeping;
+    });
+
+    public static readonly FuncMultiValueConverter<bool, bool> TodayAddSleepButtonVisibleConverter = new(values =>
+    {
+        var isSleeping = values[0];
+        var isDaytime = values[1];
+        var hasRecordLastNight = values[2];
+
+        return isDaytime && !isSleeping && !hasRecordLastNight;
+    });
 
     public static readonly FuncValueConverter<DateOnly?, string> JournalDateConverter =
         new(date => date?.ToString("dddd MMMM d") ?? "Select Journal");
@@ -179,4 +211,7 @@ public partial class MainView : UserControl
             viewModel.LoadTaskCategoriesAsync();
         }
     }
+
+    public static readonly FuncValueConverter<string?, string?> AppendEmojiSelectorConverter =
+        new(s => string.IsNullOrEmpty(s) || s.Last() == '\uFE0F' ? s : s + '\uFE0F');
 }

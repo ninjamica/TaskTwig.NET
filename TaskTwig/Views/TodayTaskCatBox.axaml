@@ -1,0 +1,91 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:TaskTwig.Views"
+                    xmlns:u="https://irihi.tech/ursa"
+                    xmlns:core="clr-namespace:TaskTwig.Core">
+    <Design.PreviewWith>
+        <controls:TodayTaskCatBox HeaderText="TodayTaskCatBox"/>
+    </Design.PreviewWith>
+    
+    <ControlTheme x:Key="{x:Type controls:TodayTaskCatBox}" TargetType="controls:TodayTaskCatBox">
+        
+        <Setter Property="Template">
+            <ControlTemplate TargetType="controls:TodayTaskCatBox">
+                <u:UrsaGroupBox Padding="15, 5, 15, 5"
+                                Background="{DynamicResource SemiColorBackground1}"
+                                BorderBrush="{DynamicResource SemiColorBorder}"
+                                BorderThickness="2">
+                    <u:UrsaGroupBox.Header>
+                        <Grid x:Name="PART_HeaderGrid"
+                              ColumnDefinitions="Auto, *"
+                              ColumnSpacing="5"
+                              Cursor="Hand"
+                              ContextMenu="{TemplateBinding HeaderContextMenu}">
+                            <Panel >
+                                <PathIcon Data="{StaticResource SemiIconChevronDown}"
+                                          Classes="Expander"
+                                          Width="12" Height="12"
+                                          IsVisible="{TemplateBinding IsExpanded}"/>
+                                <PathIcon Data="{StaticResource SemiIconChevronRight}"
+                                          Classes="Expander"
+                                          Width="12" Height="12"
+                                          IsVisible="{TemplateBinding IsExpanded, Converter={x:Static BoolConverters.Not}}"/>
+                            </Panel>
+                            <TextBlock Grid.Column="1"
+                                       Text="{TemplateBinding HeaderText}"
+                                       TextWrapping="Wrap"
+                                       Classes="H4"
+                                       Theme="{StaticResource TitleTextBlock}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </u:UrsaGroupBox.Header>
+                    <ItemsRepeater ItemsSource="{TemplateBinding TasksSource}"
+                                   Margin="0, 5, 0, 10"
+                                   IsVisible="{TemplateBinding IsExpanded}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="5"/>
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate DataType="core:TwTask">
+                                <controls:TodayTaskBlock BoundTask="{Binding}">
+                                    <controls:TodayTaskBlock.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Edit"
+                                                      Command="{Binding $parent[controls:TodayTaskCatBox].EditTaskCommand}"
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <PathIcon
+                                                        Data="{StaticResource SemiIconEdit}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="{Binding IsDone, Converter={x:Static controls:TodayTaskBlock.DoneMenuItemHeaderConverter}}"
+                                                      Command="{Binding SetDone}"
+                                                      CommandParameter="{Binding !IsDone}">
+                                                <MenuItem.Icon>
+                                                    <PathIcon Data="{Binding IsDone, Converter={x:Static controls:TodayTaskBlock.DoneMenuItemIconConverter}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </controls:TodayTaskBlock.ContextMenu>
+                                </controls:TodayTaskBlock>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </u:UrsaGroupBox>
+            </ControlTemplate>
+        </Setter>
+        
+        <Style Selector="^ /template/ PathIcon.Expander">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}"/>
+        </Style>
+        
+        <Style Selector="^ /template/ Grid#PART_HeaderGrid">
+            <Style Selector="^:pointerover PathIcon.Expander">
+                <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}"/>
+            </Style>
+        </Style>
+        
+    </ControlTheme>
+    
+    
+</ResourceDictionary>

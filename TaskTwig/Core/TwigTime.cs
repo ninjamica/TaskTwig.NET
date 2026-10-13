@@ -1,5 +1,7 @@
 using System;
 using System.ComponentModel;
+using System.Reactive;
+using System.Reactive.Linq;
 using WeakEvent;
 
 namespace TaskTwig.Core;
@@ -18,6 +20,11 @@ public static class TwigTime
             Today = EffectiveDate(DateTime.Now);
         }
     } = new(5, 0, 0);
+
+    /// <summary>
+    /// The time at which the evening starts, used to determine when it's day vs night.
+    /// </summary>
+    public static TimeSpan NightStart { get; set; } = new(18, 0, 0);
 
     /// <summary>
     /// The current effective date. If the current time is after midnight but before <c>DayStart</c>,
@@ -46,6 +53,16 @@ public static class TwigTime
             date = date.AddDays(-1);
         
         return date;
+    }
+
+    public static bool IsDaytime()
+    {
+        return IsDaytime(DateTime.Now.TimeOfDay);
+    }
+
+    public static bool IsDaytime(TimeSpan time)
+    {
+        return time >= DayStart && time < NightStart;
     }
 
     private static readonly WeakEventSource<PropertyChangedEventArgs> TodayChangedEventSource = new();
