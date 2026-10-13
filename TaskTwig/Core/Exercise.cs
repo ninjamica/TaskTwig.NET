@@ -3,6 +3,7 @@ using System.IO.Hashing;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using JsonException = System.Text.Json.JsonException;
 
 namespace TaskTwig.Core;
 
@@ -25,32 +26,39 @@ public readonly struct Exercise
     {
         public override Exercise Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            // return JsonSerializer.Deserialize<Exercise>(ref reader, options);
-            string[] parts = reader.GetString().Split(':');
-            return new Exercise()
-            {
-                Name = parts[0],
-                Unit = Enum.Parse<ExerciseUnit>(parts[1])
-            };
+            return ReadExercise(ref reader, typeToConvert, options);
         }
-    
-        public override void Write(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
-        {
-            // JsonSerializer.Serialize(writer, value, value.GetType(), options);
-            writer.WriteStringValue($"{value.Name}:{value.Unit}");
-        }
-    
+
         public override Exercise ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            string[] parts = reader.GetString().Split(':');
+            return ReadExercise(ref reader, typeToConvert, options);
+        }
+        
+        public override void Write(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
+        {
+            WriteExercise(writer, value, options);
+        }
+
+        public override void WriteAsPropertyName(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
+        {
+            WriteExercise(writer, value, options);
+        }
+        
+
+        private static Exercise ReadExercise(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var parts = reader.GetString()?.Split(':');
+            if (parts is null)
+                throw new JsonException("Error Deserializing, expected a string but did not find it.");
+            
             return new Exercise()
             {
                 Name = parts[0],
                 Unit = Enum.Parse<ExerciseUnit>(parts[1])
             };
         }
-        
-        public override void WriteAsPropertyName(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
+
+        private static void WriteExercise(Utf8JsonWriter writer, Exercise value, JsonSerializerOptions options)
         {
             writer.WritePropertyName($"{value.Name}:{value.Unit}");
         }

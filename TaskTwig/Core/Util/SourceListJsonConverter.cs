@@ -9,7 +9,7 @@ namespace TaskTwig.Core.Util;
 
 public class SourceListJsonConverter<T> : JsonConverter<SourceList<T>> where T : notnull
 {
-    public override SourceList<T>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override SourceList<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var items = JsonSerializer.Deserialize<List<T>>(ref reader, options);
         var list = new SourceList<T>();

@@ -93,11 +93,10 @@ public abstract class HashableObject : ObservableValidator
     
     protected void InvalidateCachedHash()
     {
-        if (IsReadingData) 
-            return;
-        
         _cachedHash = null;
-        SetSaveTimer();
+
+        if (!IsReadingData)
+            SetSaveTimer();
     }
 
     protected abstract void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm);
@@ -123,6 +122,15 @@ public abstract class HashableObject : ObservableValidator
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        InvalidateCachedHash();
+        
+        if (e.PropertyName is null 
+            || GetType().GetProperty(e.PropertyName) is not { } property 
+            || !Attribute.IsDefined(property, typeof(IgnoreHashableAttribute)))
+        {
+            InvalidateCachedHash();
+        }
     }
 }
+
+[AttributeUsage(AttributeTargets.Property)]
+public class IgnoreHashableAttribute : Attribute;

@@ -8,7 +8,6 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -23,24 +22,20 @@ using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
 using TaskTwig.Dialog.ViewModels;
 using TaskTwig.Dialog.Views;
-using TaskTwig.Views;
 using Ursa.Common;
 using Ursa.Controls;
 using Ursa.Controls.Options;
 using DateTimeDialog = TaskTwig.Dialog.Views.DateTimeDialog;
 using DbxDialog = TaskTwig.Dialog.Views.DbxDialog;
 using DualDateTimeDialog = TaskTwig.Dialog.Views.DualDateTimeDialog;
-using Notification = Ursa.Controls.Notification;
 using SyncConflictDialog = TaskTwig.Dialog.Views.SyncConflictDialog;
 using TaskCategoryDialog = TaskTwig.Dialog.Views.TaskCategoryDialog;
 using TaskDialog = TaskTwig.Dialog.Views.TaskDialog;
-using WindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
 namespace TaskTwig.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
-    public WindowNotificationManager? NotificationManager { get; set; }
     private readonly Core.TaskTwig _twig;
 
 
@@ -187,8 +182,8 @@ public partial class MainViewModel : ViewModelBase
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
-        var dialogViewModel = new Dialog.ViewModels.DateTimeDialogViewModel();
-        OverlayDialog.ShowStandardAsync<DateTimeDialog, Dialog.ViewModels.DateTimeDialogViewModel>(dialogViewModel, options:dialogOptions)
+        var dialogViewModel = new DateTimeDialogViewModel();
+        OverlayDialog.ShowStandardAsync<DateTimeDialog, DateTimeDialogViewModel>(dialogViewModel, options:dialogOptions)
             .ContinueWith(task => 
             {
                 if (task.Result.HasFlag(DialogResult.OK))
@@ -214,8 +209,8 @@ public partial class MainViewModel : ViewModelBase
             Buttons = DialogButton.OKCancel,
             CanLightDismiss = true,
         };
-        var dialogVm = new Dialog.ViewModels.DualDateTimeDialogViewModel();
-        OverlayDialog.ShowStandardAsync<DualDateTimeDialog, Dialog.ViewModels.DualDateTimeDialogViewModel>(dialogVm, options:dialogOptions)
+        var dialogVm = new DualDateTimeDialogViewModel();
+        OverlayDialog.ShowStandardAsync<DualDateTimeDialog, DualDateTimeDialogViewModel>(dialogVm, options:dialogOptions)
             .ContinueWith(task => 
             {
                 if (task.Result.HasFlag(DialogResult.OK) && 
@@ -334,7 +329,8 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(PushDbxCommand), nameof(PullDbxCommand), nameof(DbxSyncCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PushDbxCommand), nameof(PullDbxCommand), 
+                                nameof(DbxSyncCommand), nameof(FetchDbxCommand))]
     public partial bool IsDbxConnected { get; set; } = false;
 
     [ObservableProperty]
@@ -345,6 +341,9 @@ public partial class MainViewModel : ViewModelBase
     
     [ObservableProperty]
     public partial bool CacheValid { get; private set; }
+    
+    [ObservableProperty]
+    public partial bool InSync { get; private set; }
 
     public Task<IImage?>? DbxPhoto
     {
@@ -399,9 +398,9 @@ public partial class MainViewModel : ViewModelBase
                 Buttons = DialogButton.OKCancel,
                 CanLightDismiss = true,
             };
-            var dialogVm = new Dialog.ViewModels.DbxDialogModelView(uri);
+            var dialogVm = new DbxDialogModelView(uri);
             var result =
-                await OverlayDialog.ShowStandardAsync<DbxDialog, Dialog.ViewModels.DbxDialogModelView>(dialogVm, options: dialogOptions);
+                await OverlayDialog.ShowStandardAsync<DbxDialog, DbxDialogModelView>(dialogVm, options: dialogOptions);
 
             if (result.HasFlag(DialogResult.OK) &&
                 dialogVm is { CodeText: { } code })
@@ -444,15 +443,12 @@ public partial class MainViewModel : ViewModelBase
             
             HashableObject.StopSaveTimer();
             await _twig.PushDbx();
-            // NotificationManager?.Show("Pushed To Dropbox", NotificationType.Success);
+            InSync = CacheValid;
             
             SyncStatusText = "Pushed to Dropbox";
         }
         catch (TwigInvalidOperationException)
         {
-            // NotificationManager?.Show(new Notification("Push Canceled", "Data operation already in progress"),
-            //     NotificationType.Warning);
-            
             SyncStatusText = "Pushed Canceled (data operation already in progress)";
         }
     }
@@ -466,16 +462,41 @@ public partial class MainViewModel : ViewModelBase
             
             HashableObject.StopSaveTimer();
             await _twig.PullDbx();
-            // NotificationManager?.Show("Pulled from Dropbox", NotificationType.Success);
+            InSync = CacheValid;
             
             SyncStatusText = "Pulled from Dropbox";
         }
         catch (TwigInvalidOperationException)
         {
-            // NotificationManager?.Show(new Notification("Pull Canceled", "Data operation already in progress"),
-            //     NotificationType.Warning);
-            
             SyncStatusText = "Pull Canceled (data operation already in progress)";
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(IsDbxConnected))]
+    private async Task FetchDbx()
+    {
+        try
+        {
+            SyncStatusText = "Fetching from Dropbox";
+            
+            HashableObject.StopSaveTimer();
+            var diffs = await _twig.FetchDbx();
+
+            if (diffs.Count > 0)
+            {
+                InSync = false;
+                SyncStatusText = $"Out of Sync: {string.Join(", ", 
+                    diffs.Select(pair => $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))}";
+            }
+            else
+            {
+                InSync = CacheValid;
+                SyncStatusText = "In Sync With Dropbox";
+            }
+        }
+        catch (TwigInvalidOperationException)
+        {
+            SyncStatusText = "Fetch Canceled (data operation already in progress)";
         }
     }
 
@@ -497,46 +518,15 @@ public partial class MainViewModel : ViewModelBase
     {
         try
         {
-            // var notifTitle = new TextBlock
-            // {
-            //     Text = "Syncing",
-            //     FontSize = 16,
-            //     FontWeight = FontWeight.SemiBold,
-            // };
-            // var notifContent = new TextBlock
-            // {
-            //     Classes = { "Secondary" }
-            // };
-            // var loadingCircle = new LoadingIcon();
-            // var notifGrid = new Grid
-            // {
-            //     Children = { notifTitle, notifContent, loadingCircle },
-            //     RowDefinitions = new RowDefinitions("Auto, Auto"),
-            //     ColumnDefinitions = new ColumnDefinitions("Auto, Auto"),
-            //     ColumnSpacing = 10
-            // };
-            // Grid.SetRow(notifTitle, 0);
-            // Grid.SetColumn(notifTitle, 1);
-            // Grid.SetRow(notifContent, 1);
-            // Grid.SetColumn(notifContent, 1);
-            // Grid.SetRow(loadingCircle, 0);
-            // Grid.SetColumn(loadingCircle, 0);
-            //
-            // NotificationManager?.Show(notifGrid, NotificationType.Information, expiration: TimeSpan.Zero,
-            //     showIcon: false);
-
             var progress = new Progress<SyncProgress>(syncProgress =>
             {
                 switch (syncProgress.Stage)
                 {
                     case SyncProgressStage.Hash:
-                        // notifTitle.Text = "Hashing Files";
-                        // notifContent.Text = null;
                         SyncStatusText = "Hashing Files";
                         break;
 
                     case SyncProgressStage.Save:
-                        // notifTitle.Text = "Saving Files";
                         SyncStatusText = "Saving Files: ";
 
                         SyncStatusText += syncProgress.SyncFiles is { } files && files.Any()
@@ -545,13 +535,10 @@ public partial class MainViewModel : ViewModelBase
                         break;
 
                     case SyncProgressStage.Compare:
-                        // notifTitle.Text = "Comparing Files To Cloud";
-                        // notifContent.Text = null;
                         SyncStatusText = "Comparing Files to Cloud";
                         break;
 
                     case SyncProgressStage.Sync:
-                        // notifTitle.Text = "Syncing Files";
                         SyncStatusText = "Syncing Files: ";
 
                         SyncStatusText += syncProgress.SyncActions is { Count: > 0 } actions
@@ -564,40 +551,20 @@ public partial class MainViewModel : ViewModelBase
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                
-                // SyncStatusText = notifTitle.Text;
-                // if (notifContent.Text is not null)
-                //     SyncStatusText += $" {notifContent.Text}";
             });
 
             HashableObject.StopSaveTimer();
             var actions = await _twig.SyncWithDbx(SyncConflictCallback, progress);
-            // NotificationManager?.Close(notifGrid);
-            NotificationManager?.CloseAll();
 
             if (actions is null)
             {
-                // NotificationManager?.Show(new Notification("Sync Canceled", null), NotificationType.Warning,
-                //     classes: ["Light"]);
-
+                InSync = false;
                 SyncStatusText = "Sync Canceled";
             }
             else
             {
-                // NotificationManager?.Show(new Notification("Sync Completed", notifContent.Text),
-                //     NotificationType.Success, classes: ["Light"]);
-
+                InSync = CacheValid;
                 SyncStatusText = SyncStatusText?.Replace("Syncing Files: ", "Sync Completed: ");
-
-                // SyncStatusText = "Sync Completed";
-                // SyncStatusText += progress.SyncActions is { Count: > 0 } actions
-                //     ? string.Join(", ",
-                //         actions.Select(pair =>
-                //             $"{pair.Key}{(pair.Value == DataFileAction.Download ? "↓" : "↑")}"))
-                //     : "Nothing to do";
-
-                // if (notifContent.Text is not null)
-                //     SyncStatusText += $" {notifContent.Text}";
             }
         }
         catch (TwigInvalidOperationException)
@@ -635,19 +602,25 @@ public partial class MainViewModel : ViewModelBase
             JournalSelectedDate = _twig.TodaysJournal().Date.ToDateTime(TimeOnly.MinValue);
             Dispatcher.UIThread.Post(UpdateJournalBlackoutDates);
             HashableObject.SaveCallback = OnSaveTimerTick;
+
+            if (IsDbxConnected)
+                Dispatcher.UIThread.InvokeAsync(() => FetchDbxCommand.ExecuteAsync(null));
         });
         
-        _twig.TaskCategories.Connect().Bind(out _taskCategoriesView).Subscribe();
+        _twig.TaskCategories.Connect()
+            .Bind(out _taskCategoriesView).Subscribe();
         _twig.TaskCategories.Connect()
             .MergeManyChangeSets(category => category.ConnectTasks())
-            .DisposeMany()
             .AutoRefresh()
-            .AutoRefreshOnObservable(_ => Observable.FromEventPattern<PropertyChangedEventArgs>(handler => TwigTime.OnTodayChanged += handler, handler => TwigTime.OnTodayChanged -= handler))
+            .AutoRefreshOnObservable(_ => TwigTime.TodayChangedReevaluator)
             .Filter(task => task.LastDone.Equals(TwigTime.Today))
             .Bind(out _doneTodaytasks)
+            .DisposeMany()
             .Subscribe();
         _twig.SleepValues.SleepRecords.Connect()
+            .AutoRefresh()
             .SortAndBind(out _sleepList, SortExpressionComparer<Sleep>.Descending(sleep => sleep.Date))
+            .DisposeMany()
             .Subscribe();
         IsSleeping = _twig.SleepValues.IsSleeping;
         _twig.Notes.Connect().Bind(out _notes).Subscribe();
@@ -715,6 +688,7 @@ public partial class MainViewModel : ViewModelBase
     private void CacheValidChanged(object? sender, CacheValidChangedEventArgs args)
     {
         CacheValid = args.IsAllCacheValid;
+        InSync &= args.IsAllCacheValid;
     }
 
     public async Task Cleanup()

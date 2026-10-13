@@ -16,7 +16,9 @@ public partial class TaskCategory : HashableObject
 
     [ObservableProperty] public partial Color Color { get; set; } = Color.White;
 
-    [ObservableProperty] public partial bool Expanded { get; set; } = true;
+    [ObservableProperty]
+    [IgnoreHashable]
+    public partial bool Expanded { get; set; } = true;
     
     // public int CompletedPoints => DoneTodayTasks.Sum(task  => task.Points);
     // public int TotalPoints => TodayTasks.Sum(task => task.Points) + DoneTodayTasks.Sum(task => task.Points);
@@ -59,11 +61,16 @@ public partial class TaskCategory : HashableObject
         }
     }
 
-    public void AddTask(TwTask task, int? index = null)
+    public void AddTask(TwTask task)
+    {
+        AddTask(task, Tasks.Count);
+    }
+
+    public void AddTask(TwTask task, int index)
     {
         InvalidateCachedHash();
         task.Category?.RemoveTask(task);
-        Tasks.Insert(index ?? Tasks.Count, task);
+        Tasks.Insert(index, task);
         task.Category = this;
     }
 
@@ -75,8 +82,23 @@ public partial class TaskCategory : HashableObject
 
     public void RemoveTask(TwTask task)
     {
+        if(Tasks.Remove(task))
+            InvalidateCachedHash();
+    }
+
+    public void RemovePermaDoneTasks()
+    {
+        Tasks.Edit(list =>
+        {
+            foreach (var task in list)
+            {
+                if (task is { IsDone: true, Interval.NextOccurrence: null })
+                {
+                    list.Remove(task);
+                }
+            }
+        });
         InvalidateCachedHash();
-        Tasks.Remove(task);
     }
 
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)

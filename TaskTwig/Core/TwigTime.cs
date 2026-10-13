@@ -59,4 +59,8 @@ public static class TwigTime
     {
         Today = EffectiveDate(DateTime.Now);
     }
+
+    public static IObservable<EventPattern<PropertyChangedEventArgs>> TodayChangedReevaluator =>
+        Observable.FromEventPattern<PropertyChangedEventArgs>(handler => OnTodayChanged += handler,
+                                                              handler => OnTodayChanged -= handler);
 }

@@ -1,16 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                xmlns:vm="using:TaskTwig.ViewModels"
-                xmlns:u="https://irihi.tech/ursa"
-                xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
-                xmlns:core="clr-namespace:TaskTwig.Core"
-                xmlns:views="clr-namespace:TaskTwig.Views"
-                mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
-                x:Class="TaskTwig.Views.MainView"
-                x:DataType="vm:MainViewModel"
-                x:Name="RootControl">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TaskTwig.ViewModels"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+             xmlns:core="clr-namespace:TaskTwig.Core"
+             xmlns:views="clr-namespace:TaskTwig.Views"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
+             x:Class="TaskTwig.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             x:Name="RootControl">
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
@@ -31,30 +31,44 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                         <Binding Path="DbxSyncCommand.IsRunning" />
                                         <Binding Path="PullDbxCommand.IsRunning" />
                                         <Binding Path="PushDbxCommand.IsRunning" />
+                                        <Binding Path="FetchDbxCommand.IsRunning" />
                                     </MultiBinding>
                                 </u:LoadingIcon.IsVisible>
                             </u:LoadingIcon>
-                            <PathIcon Data="{StaticResource SemiIconTick}"
+                            <PathIcon Data="{StaticResource SemiIconCheckCircleStroked}"
                                       Foreground="{DynamicResource SemiColorSuccess}">
                                 <PathIcon.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                        <Binding Path="CacheValid"/>
-                                        <Binding Path="!SaveFilesCommand.IsRunning" />
-                                        <Binding Path="!DbxSyncCommand.IsRunning" />
-                                        <Binding Path="!PullDbxCommand.IsRunning" />
-                                        <Binding Path="!PushDbxCommand.IsRunning" />
+                                        <Binding Path="InSync"/>
+                                        <Binding Path="!#SyncLoadingIcon.IsVisible" />
                                     </MultiBinding>
                                 </PathIcon.IsVisible>
                             </PathIcon>
-                            <PathIcon Data="{StaticResource SemiIconUnlink}"
+                            <Panel>
+                                <Panel.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!InSync"/>
+                                        <Binding Path="!#SyncLoadingIcon.IsVisible" />
+                                    </MultiBinding>
+                                </Panel.IsVisible>
+                                
+                            </Panel>
+                            <PathIcon Data="{StaticResource SemiIconUnChainStroked}"
                                       Foreground="{DynamicResource SemiColorWarning}">
                                 <PathIcon.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!#SyncLoadingIcon.IsVisible" />
+                                        <Binding Path="!InSync"/>
+                                        <Binding Path="CacheValid"/>
+                                    </MultiBinding>
+                                </PathIcon.IsVisible>
+                            </PathIcon>
+                            <PathIcon Data="{StaticResource SemiIconCrossCircleStroked}"
+                                      Foreground="{DynamicResource SemiColorWarning}">
+                                <PathIcon.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!#SyncLoadingIcon.IsVisible" />
                                         <Binding Path="!CacheValid"/>
-                                        <Binding Path="!SaveFilesCommand.IsRunning" />
-                                        <Binding Path="!DbxSyncCommand.IsRunning" />
-                                        <Binding Path="!PullDbxCommand.IsRunning" />
-                                        <Binding Path="!PushDbxCommand.IsRunning" />
                                     </MultiBinding>
                                 </PathIcon.IsVisible>
                             </PathIcon>
@@ -75,6 +89,8 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                       Command="{Binding PullDbxCommand}"/>
                     <CommandBarButton Label="Push" Icon="{StaticResource SemiIconAlignTop}"
                                       Command="{Binding PushDbxCommand}"/>
+                    <CommandBarButton Label="Fetch" Icon="{StaticResource SemiIconServer}"
+                                      Command="{Binding FetchDbxCommand}"/>
                 </CommandBar.SecondaryCommands>
             </CommandBar>
             
@@ -249,7 +265,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 </ContentPage>
             
                 <ContentPage Header="Sleep" Icon="{StaticResource SemiIconAlarm}">
-                    <ScrollViewer>
+                    <ScrollViewer u:ScrollTo.Direction="Top">
                     <StackPanel>
                         <u:ButtonGroup>
                             <Button Content="{Binding IsSleeping, Converter={x:Static views:MainView.SleepButtonTextConverter}}"
@@ -266,7 +282,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                         </u:ButtonGroup>
                         <ListBox ItemsSource="{Binding SleepList}">
                             <ListBox.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate DataType="core:Sleep">
                                     <TextBlock>
                                         <TextBlock.Text>
                                             <MultiBinding StringFormat="{}{0}: slept from {1:t} to {2:t} for {3:F1} hours">

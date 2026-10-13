@@ -26,7 +26,7 @@ public struct DbxCredentials
 
 public class DbxAccountChangedEventArgs(bool isAccountConnected) : EventArgs
 {
-    public virtual bool IsAccountConnected { get; } = isAccountConnected;
+    public bool IsAccountConnected { get; } = isAccountConnected;
 }
 
 public class DbxHandler
@@ -125,7 +125,7 @@ public class DbxHandler
 
         DropboxClient = new DropboxClient(tokenResult.AccessToken, 
                                           tokenResult.RefreshToken, 
-                                          tokenResult.ExpiresAt.Value, 
+                                          tokenResult.ExpiresAt!.Value, 
                                           ApiKey, DbxClientConfig);
 
         _credentials = new DbxCredentials(tokenResult.AccessToken, tokenResult.RefreshToken, tokenResult.ExpiresAt.Value);

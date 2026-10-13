@@ -122,7 +122,7 @@ public partial class SleepValuesBacking : HashableObject
 
     public class SleepSourceCacheConverter : JsonConverter<SourceCache<Sleep, DateOnly>>
     {
-        public override SourceCache<Sleep, DateOnly>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override SourceCache<Sleep, DateOnly> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var cache = new SourceCache<Sleep, DateOnly>(sleep => sleep.Date);
 
@@ -245,6 +245,11 @@ public partial class TaskTwig : ObservableObject
         DbxHandler = new DbxHandler(DataDirPath);
     }
 
+    /// <summary>
+    /// Returns a <see cref="Journal"/> for the current date (<see cref="TwigTime.Today"/>), creating a new journal if
+    /// one does not yet exist.
+    /// </summary>
+    /// <returns></returns>
     public Journal TodaysJournal()
     {
         var journal = Journals.Lookup(TwigTime.Today);
@@ -257,7 +262,12 @@ public partial class TaskTwig : ObservableObject
         return newJournal;
 
     }
-
+    
+    /// <summary>
+    /// Initialize data and settings by reading from local data files. This should be run after instantiating this
+    /// <see cref="TaskTwig"/> and after data structures are bound and ready to receive data. Runs asynchronously but
+    /// must be run on the render thread.
+    /// </summary>
     public async Task InitDataFromFiles()
     {
         Dispatcher.UIThread.VerifyAccess();
@@ -411,6 +421,11 @@ public partial class TaskTwig : ObservableObject
         await DbxHandler.UploadFileAsync(stream, file.DbxPath);
     }
 
+    /// <summary>
+    /// Saves live data from data internal structures to local files. Also stores data hashes. Asynchronous but must be
+    /// run on the render thread.
+    /// </summary>
+    /// <returns>A list of data files which were saved.</returns>
     public async Task<List<DataFile>> SaveDataFiles()
     {
         Dispatcher.UIThread.VerifyAccess();
@@ -623,6 +638,38 @@ public partial class TaskTwig : ObservableObject
             await _UploadDbxHashes(_dbxCommitFile);
     }
 
+    /// <summary>
+    /// Saves current data to file, and fetches hashes from the cloud, finally comparing the two to determine if there
+    /// are any differences (and which is more up to date, or if there are any conflicts). Asynchronous but must be run
+    /// on the render thread.
+    /// </summary>
+    /// <returns>
+    /// A dictionary whose keys are all the relevant data files, and each value is the status of that file
+    /// (<c>Download</c> means the cloud is more up to date, <c>Upload</c> means the local data is more up to date,
+    /// <c>Conflict</c> means there is a data conflict or it can not be determined whether local or cloud is more up
+    /// to date). Only data files with differences between local and cloud (or those that only exist on one source) are
+    /// included, any data files not included are identical between local and cloud.
+    /// </returns>
+    public async Task<Dictionary<DataFile, DataFileAction>> FetchDbx()
+    {
+        Dispatcher.UIThread.VerifyAccess();
+
+        try
+        {
+            _BeginDataOperation();
+            
+            await _WriteSettingsFile();
+            await _WriteDataFiles();
+            
+            var remoteHashes = await _DownloadDbxHashes();
+            return _CompareRemoteHashes(remoteHashes);
+        }
+        finally
+        {
+            _EndDataOperation();
+        }
+    }
+    
     public async Task<Dictionary<DataFile, DataFileAction>?> SyncWithDbx(
         Func<Dictionary<DataFile, DataFileAction>, Task<Dictionary<DataFile, DataFileAction>?>>? conflictCallback = null,
         IProgress<SyncProgress>? progress = null)
@@ -669,6 +716,9 @@ public partial class TaskTwig : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Uploads all local files to the cloud, regardless of any data conflicts or which source is more up to date.
+    /// </summary>
     public async Task PushDbx()
     {
         Dispatcher.UIThread.VerifyAccess();
@@ -689,6 +739,9 @@ public partial class TaskTwig : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Downloads all files from the cloud, regardless of any data conflicts or which source is more up to date.
+    /// </summary>
     public async Task PullDbx()
     {
         Dispatcher.UIThread.VerifyAccess();

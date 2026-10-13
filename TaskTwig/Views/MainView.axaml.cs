@@ -23,7 +23,6 @@ public partial class MainView : UserControl
         if (DataContext is not MainViewModel mainViewModel)
             return;
 
-        mainViewModel.NotificationManager = NotificationManager;
         mainViewModel.JournalBlackoutDates = JournalCalendar.BlackoutDates;
     }
 
