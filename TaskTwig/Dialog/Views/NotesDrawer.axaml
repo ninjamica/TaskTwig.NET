@@ -63,7 +63,8 @@
                                           Data="{StaticResource SemiIconHandle}"
                                           Margin="5,12,5,12"
                                           Cursor="Hand"
-                                          sortable:Sortable.IsDragHandle="True" />
+                                          sortable:Sortable.IsDragHandle="True"
+                                          PointerPressed="NoteDragStarted"/>
                                 <TextBox Grid.Column="1" 
                                          Text="{Binding Title}"
                                          VerticalAlignment="Center"/>

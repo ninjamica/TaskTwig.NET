@@ -1,9 +1,14 @@
 using System;
+using System.Linq;
 using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Platform;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using CommunityToolkit.Mvvm.Input;
 using TaskTwig.Core;
 using TaskTwig.ViewModels;
 
@@ -11,11 +16,17 @@ namespace TaskTwig.Views;
 
 public partial class MainView : UserControl
 {
+
+    public static readonly DirectProperty<MainView, bool> IsReorderCategoriesProperty =
+        AvaloniaProperty.RegisterDirect<MainView, bool>(nameof(IsReorderCategories), view => view.IsReorderCategories);
     
-    public MainView()
+    public bool IsReorderCategories
     {
-        InitializeComponent();
-    }
+        get;
+        private set => SetAndRaise(IsReorderCategoriesProperty, ref field, value);
+    } = false;
+
+    public MainView() => InitializeComponent();
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -33,6 +44,17 @@ public partial class MainView : UserControl
         DialogHost.Transitions ??= [new ThicknessTransition {Property = MarginProperty, Duration = TimeSpan.Zero}];
     }
 
+    [RelayCommand]
+    private void EnterCategoryReorder()
+    {
+        IsReorderCategories = true;
+    }
+
+    [RelayCommand]
+    private void ExitCategoryReorder()
+    {
+        IsReorderCategories = false;
+    }
 
     private void InputPaneStateChanged(object? sender, InputPaneStateEventArgs e)
     {
@@ -123,6 +145,15 @@ public partial class MainView : UserControl
         }
     }
 
+    private void CategoryDragStarted(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Pointer.Type != PointerType.Mouse)
+        {
+            Console.WriteLine("Starting TaskCategory drag");
+            e.PreventGestureRecognition();
+        }
+    }
+
     private void TaskDragStarted(object? sender, PointerPressedEventArgs e)
     {
         if (e.Pointer.Type != PointerType.Mouse)
@@ -140,4 +171,12 @@ public partial class MainView : UserControl
     
     public static readonly FuncValueConverter<bool, string> AccountButtonTextConverter =
         new(connected => connected ? "Sign Out" : "Sign In");
+
+    private void LoadedTasksPage(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel viewModel)
+        {
+            viewModel.LoadTaskCategoriesAsync();
+        }
+    }
 }

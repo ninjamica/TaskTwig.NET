@@ -169,6 +169,29 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void TaskListRelease(SortableReleaseEventArgs args)
+    {
+        if (args.LastPreviewedIndex != args.OldIndex && args.Item is TwTask { Category: { } category })
+        {
+            if (args.OldIndex != -1)
+            {
+                category.MoveTask(args.OldIndex, args.LastPreviewedIndex);
+            }
+            // TODO: currently no way to determine last previewed collection (where to drop the item)
+            // else { }
+        }
+    }
+
+    [RelayCommand]
+    private void DeletePermaDoneTasks()
+    {
+        foreach (var category in TaskCategoriesView)
+        {
+            category.RemovePermaDoneTasks();
+        }
+    }
+
     [ObservableProperty] 
     public partial bool IsSleeping { get; private set; }
 
@@ -368,6 +391,24 @@ public partial class MainViewModel : ViewModelBase
         return new Bitmap(new MemoryStream(data));
     }
 
+    [ObservableProperty]
+    public partial Task<ReadOnlyObservableCollection<TaskCategory>>? GetTaskCategoriesAsync { get; private set; }
+
+    public void LoadTaskCategoriesAsync()
+    {
+        if (GetTaskCategoriesAsync is null)
+        {
+            GetTaskCategoriesAsync = _getTaskCategoriesAsync();
+            OnPropertyChanged(nameof(GetTaskCategoriesAsync));
+        }
+    }
+
+    private async Task<ReadOnlyObservableCollection<TaskCategory>> _getTaskCategoriesAsync()
+    {
+        await Dispatcher.UIThread.Resume(DispatcherPriority.Background);
+        return TaskCategoriesView;
+    }
+    
 
     [RelayCommand]
     private async Task DbxSignInOut()
@@ -569,9 +610,6 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (TwigInvalidOperationException)
         {
-            // NotificationManager?.Show(new Notification("Sync Canceled", "Data operation already in progress"),
-            //     NotificationType.Warning);
-            
             SyncStatusText = "Sync Canceled (data operation already in progress)";
         }
     }

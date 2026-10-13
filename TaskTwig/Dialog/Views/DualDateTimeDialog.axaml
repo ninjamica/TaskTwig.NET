@@ -10,11 +10,14 @@
     <u:Form LabelPosition="Top">
         <u:FormItem Label="Start">
             <u:DateTimePicker SelectedDate="{Binding StartDateTimeValue}" 
-                              PanelFormat="hh mm t" DisplayFormat="M/d/yyy h:mm tt"/>
+                              PanelFormat="hh mm t" 
+                              DisplayFormat="M/d/yyy h:mm tt"
+                              u:FocusHelper.DialogFocusHint="True"/>
         </u:FormItem>
         <u:FormItem Label="End">
             <u:DateTimePicker SelectedDate="{Binding EndDateTimeValue}" 
-                              PanelFormat="hh mm t" DisplayFormat="M/d/yyy h:mm tt"/>
+                              PanelFormat="hh mm t" 
+                              DisplayFormat="M/d/yyy h:mm tt"/>
         </u:FormItem>
     </u:Form>
 </UserControl>

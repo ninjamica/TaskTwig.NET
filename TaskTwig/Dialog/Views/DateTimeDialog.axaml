@@ -9,7 +9,10 @@
              x:DataType="vm:DateTimeDialogViewModel">
     <u:Form LabelPosition="Top">
         <u:FormItem Label="DateTime">
-            <u:DateTimePicker SelectedDate="{Binding DateTimeValue}" PanelFormat="hh mm t" DisplayFormat="M/d/yyy h:mm tt"/>
+            <u:DateTimePicker SelectedDate="{Binding DateTimeValue}" 
+                              PanelFormat="hh mm t" 
+                              DisplayFormat="M/d/yyy h:mm tt"
+                              u:FocusHelper.DialogFocusHint="True"/>
         </u:FormItem>
     </u:Form>
 </UserControl>
