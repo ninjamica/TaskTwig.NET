@@ -301,11 +301,18 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 </ContentPage>
             
                 <ContentPage Header="Journal" Icon="{StaticResource SemiIconBook}">
-                    <u:UrsaGroupBox Margin="30"
+                    <u:UrsaGroupBox x:Name="JournalGroupBox"
+                                    Margin="30"
                                     Padding="4, 10, 4, 4"
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBorder}"
-                                    BorderThickness="2">
+                                    BorderThickness="2"
+                                    VerticalAlignment="Stretch">
+                        <u:UrsaGroupBox.Transitions>
+                            <Transitions>
+                                <ThicknessTransition Property="Margin" Duration="0:0:0" />
+                            </Transitions>
+                        </u:UrsaGroupBox.Transitions>
                         <u:UrsaGroupBox.Header>
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <TextBlock Text="Journal:"
@@ -329,7 +336,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             </StackPanel>
                         </u:UrsaGroupBox.Header>
                         <ScrollViewer>
-                            <TextBox Text="{Binding SelectedJournal?.Text}"
+                            <TextBox Text="{Binding SelectedJournal?.Text, Delay=500}"
                                      PlaceholderText="Daily Journal"
                                      AcceptsReturn="True"
                                      AcceptsTab="True"
@@ -339,17 +346,24 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                      TextInputOptions.ReturnKeyType="Return"
                                      TextInputOptions.AutoCapitalization="True"
                                      Theme="{StaticResource LooklessTextBox}"
-                                     Foreground="{DynamicResource SemiColorText1}" />
+                                     Foreground="{DynamicResource SemiColorText1}"/>
                         </ScrollViewer>
                     </u:UrsaGroupBox>
                 </ContentPage>
             
                 <ContentPage Header="Notes" Icon="{StaticResource SemiIconEdit2}">
-                    <u:UrsaGroupBox Padding="4, 10, 4, 4"
+                    <u:UrsaGroupBox x:Name="NotesGroupBox" 
+                                    Padding="4, 10, 4, 4"
                                     Margin="30"
                                     Background="{DynamicResource SemiColorBackground1}"
                                     BorderBrush="{DynamicResource SemiColorBorder}"
-                                    BorderThickness="2">
+                                    BorderThickness="2"
+                                    VerticalAlignment="Stretch">
+                        <u:UrsaGroupBox.Transitions>
+                            <Transitions>
+                                <ThicknessTransition Property="Margin" Duration="0:0:0" />
+                            </Transitions>
+                        </u:UrsaGroupBox.Transitions>
                         <u:UrsaGroupBox.Header>
                             <!-- <TextBox Text="{Binding SelectedNote?.Title}" -->
                             <!--          AcceptsReturn="False" AcceptsTab="False" -->
@@ -360,7 +374,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     Command="{Binding ShowNotesDrawerCommand}"/>
                         </u:UrsaGroupBox.Header>
                         <ScrollViewer>
-                            <TextBox Text="{Binding SelectedNote?.Text}"
+                            <TextBox Text="{Binding SelectedNote?.Text, Delay=500}"
                                      PlaceholderText="Type Note Here"
                                      AcceptsReturn="True"
                                      AcceptsTab="True"
@@ -409,6 +423,5 @@ to set the actual DataContext for runtime, set the DataContext property in code 
             </TabbedPage>
         </DockPanel>
         <u:OverlayDialogHost x:Name="DialogHost"/>
-        <u:WindowNotificationManager x:Name="NotificationManager"/>
     </Panel>
 </UserControl>
