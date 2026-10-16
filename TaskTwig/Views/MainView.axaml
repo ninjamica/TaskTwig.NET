@@ -149,9 +149,16 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                 <ContextMenu>
                                                     <MenuItem Header="Edit"
                                                               Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
-                                                              CommandParameter="{Binding }">
+                                                              CommandParameter="{Binding}">
                                                         <MenuItem.Icon>
                                                             <PathIcon Data="{StaticResource SemiIconEdit}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Add Task"
+                                                              Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <PathIcon Data="{StaticResource SemiIconPlus}"/>
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                 </ContextMenu>
@@ -237,167 +244,72 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             </UniformGrid>
                                 
                             <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
-                                          x:Name="TaskCategoryItemsControl"
-                                          ItemsSource="{Binding GetTaskCategoriesAsync^}"
-                                          sortable:Sortable.Sortable="True"
-                                          sortable:Sortable.Droppable="False"
-                                          sortable:Sortable.Group="categories"
-                                          sortable:Sortable.AutoScroll="True"
-                                          sortable:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="core:TaskCategory">
-                                        <Border Theme="{StaticResource CardBorder}"
-                                                Classes="Hover"
-                                                Padding="0"
-                                                Background="{DynamicResource SemiColorBackground1}"
-                                                sortable:Sortable.IsSortable="True">
-                                            <Grid RowSpacing="5" ColumnSpacing="5" Margin="10, 10, 5, 10"
-                                                  RowDefinitions="Auto, *"
-                                                  ColumnDefinitions="Auto, Auto, *">
-                                                <PathIcon Grid.Row="0" Grid.Column="0"
-                                                          Data="{StaticResource SemiIconHandle}"
-                                                          IsVisible="{Binding #RootControl.IsReorderCategories}"
-                                                          Cursor="Hand"
-                                                          sortable:Sortable.IsDragHandle="True"
-                                                          PointerPressed="CategoryDragStarted" />
-                                                <views:ExpanderButton Grid.Row="0" Grid.Column="0"
-                                                                      IsExpanded="{Binding Expanded}"
-                                                                      IsVisible="{Binding !#RootControl.IsReorderCategories}"
-                                                                      Padding="3,0,5,0" />
-                                                <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
-                                                        Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Theme="{DynamicResource OutlineButton}"
-                                                        Classes="Tertiary"
-                                                        Padding="12,4">
-                                                    <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}">
-                                                        <!-- <Run Text="{Binding Icon}" -->
-                                                        <!--      FontFamily="{StaticResource NotoColorEmoji}" -->
-                                                        <!--      FontSize="24" /> -->
-                                                        <Run Text="{Binding Name}"
-                                                             BaselineAlignment="Center" />
-                                                        <InlineUIContainer
-                                                            BaselineAlignment="Center">
-                                                            <PathIcon
-                                                                Data="{StaticResource SemiIconMore}"
-                                                                Width="16"
-                                                                RenderTransform="rotate(90deg) translate(5px, 0px)" />
-                                                        </InlineUIContainer>
-                                                    </TextBlock>
-                                                </Button>
-                                                <Button Grid.Row="0" Grid.Column="2"
-                                                        Foreground="White"
-                                                        Background="Transparent"
-                                                        Margin="0"
-                                                        HorizontalAlignment="Left"
-                                                        Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        IsVisible="{Binding !#RootControl.IsReorderCategories}">
-                                                    <PathIcon Data="{StaticResource SemiIconPlus}"
-                                                              Width="10" Height="10" />
-                                                </Button>
-
-                                                <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
-                                                              ItemsSource="{Binding TasksView}"
-                                                              sortable:Sortable.IsSortable="True"
-                                                              sortable:Sortable.Droppable="True"
-                                                              sortable:Sortable.Group="tasks"
-                                                              sortable:Sortable.AutoScroll="True"
-                                                              sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdateCommand}"
-                                                              sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDropCommand}"
-                                                              sortable:Sortable.ReleaseCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListReleaseCommand}">
-                                                    <ItemsControl.IsVisible>
-                                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                            <Binding Path="Expanded" />
-                                                            <Binding Path="!#RootControl.IsReorderCategories" />
-                                                        </MultiBinding>
-                                                    </ItemsControl.IsVisible>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate DataType="core:TwTask">
-                                                            <Border Theme="{StaticResource CardBorder}"
-                                                                    Classes="Hover"
-                                                                    Background="{DynamicResource SemiColorBackground2}"
-                                                                    Padding="10,4, 3, 4"
-                                                                    HorizontalAlignment="Left"
-                                                                    sortable:Sortable.IsSortable="True"
-                                                                    sortable:Sortable.IsDroppable="True">
-                                                                <Grid ColumnDefinitions="Auto,*">
-                                                                    <Panel Grid.Column="0" 
-                                                                           Width="30"
-                                                                           PointerPressed="TaskDragStarted">
-                                                                        <PathIcon
-                                                                            Data="{StaticResource SemiIconHandle}"
-                                                                            Cursor="Hand"
-                                                                            HorizontalAlignment="Left" />
-                                                                    </Panel>
-
-                                                                    <Button Grid.Column="1" 
-                                                                            Classes="Tertiary"
-                                                                            Theme="{DynamicResource BorderlessButton}"
-                                                                            Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            Padding="0,0,10,0">
-                                                                        <Grid ColumnDefinitions="Auto, *, Auto">
-                                                                            <TextBlock Grid.Column="0" 
-                                                                                       Text="{Binding Icon}"
-                                                                                       FontFamily="{StaticResource NotoColorEmoji}"
-                                                                                       FontSize="24"
-                                                                                       Margin="0,0,5,0"
-                                                                                       IsVisible="{Binding Icon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                                                                       VerticalAlignment="Center"/>
-                                                                            <TextBlock Grid.Column="1" 
-                                                                                       Text="{Binding Name}"
-                                                                                       TextWrapping="Wrap"
-                                                                                       VerticalAlignment="Center"/>
-                                                                            <PathIcon Grid.Column="2"
-                                                                                      Data="{StaticResource SemiIconMore}"
-                                                                                      Width="16"
-                                                                                      RenderTransform="rotate(90deg) translate(5px, 0px)"
-                                                                                      VerticalAlignment="Center"/>
-                                                                        </Grid>
-                                                                    </Button>
-                                                                    <Grid.ContextMenu>
-                                                                        <ContextMenu>
-                                                                            <MenuItem Header="Edit"
-                                                                                    Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
-                                                                                    CommandParameter="{Binding}" />
-                                                                            <MenuItem Header="Move To"
-                                                                                    ItemsSource="{Binding #RootControl.((vm:MainViewModel)DataContext).TaskCategoriesView}"
-                                                                                    Command="{Binding $self.((core:TaskCategory)SelectedItem)?.AddTask}"
-                                                                                    CommandParameter="{Binding}">
-                                                                                <MenuItem.ItemTemplate>
-                                                                                    <DataTemplate DataType="core:TaskCategory">
-                                                                                        <TextBlock
-                                                                                            Text="{Binding Name}" />
-                                                                                    </DataTemplate>
-                                                                                </MenuItem.ItemTemplate>
-                                                                            </MenuItem>
-                                                                        </ContextMenu>
-                                                                    </Grid.ContextMenu>
-                                                                </Grid>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Grid>
-                                            <Border.ContextMenu>
+                                          ItemsSource="{Binding TasksFlatList}">
+                                <ItemsControl.DataTemplates>
+                                    
+                                    <DataTemplate DataType="vm:TaskCategoryListItem">
+                                        <Grid ColumnSpacing="5" Margin="10, 10, 5, 10"
+                                              ColumnDefinitions="Auto, Auto, *">
+                                            <PathIcon Grid.Column="0"
+                                                      Data="{StaticResource SemiIconHandle}"
+                                                      IsVisible="{Binding #RootControl.IsReorderCategories}"
+                                                      Cursor="Hand"
+                                                      sortable:Sortable.IsDragHandle="True"
+                                                      PointerPressed="CategoryDragStarted" />
+                                            <views:ExpanderButton Grid.Column="0"
+                                                                  IsExpanded="{Binding Category.Expanded}"
+                                                                  IsVisible="{Binding !#RootControl.IsReorderCategories}"
+                                                                  Padding="3,0,5,0" />
+                                            <Button Grid.Column="1" HorizontalAlignment="Left"
+                                                    Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
+                                                    CommandParameter="{Binding Category}"
+                                                    Theme="{DynamicResource OutlineButton}"
+                                                    Classes="Tertiary"
+                                                    Padding="12,4">
+                                                <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}">
+                                                    <!-- <Run Text="{Binding Icon}" -->
+                                                    <!--      FontFamily="{StaticResource NotoColorEmoji}" -->
+                                                    <!--      FontSize="24" /> -->
+                                                    <Run Text="{Binding Category.Name}"
+                                                         BaselineAlignment="Center" />
+                                                    <InlineUIContainer
+                                                        BaselineAlignment="Center">
+                                                        <PathIcon
+                                                            Data="{StaticResource SemiIconMore}"
+                                                            Width="16"
+                                                            RenderTransform="rotate(90deg) translate(5px, 0px)" />
+                                                    </InlineUIContainer>
+                                                </TextBlock>
+                                            </Button>
+                                            <Button Grid.Column="2"
+                                                    Foreground="White"
+                                                    Background="Transparent"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Left"
+                                                    Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
+                                                    CommandParameter="{Binding Category}"
+                                                    IsVisible="{Binding !#RootControl.IsReorderCategories}">
+                                                <PathIcon Data="{StaticResource SemiIconPlus}"
+                                                          Width="10" Height="10" />
+                                            </Button>
+                                            <Grid.ContextMenu>
                                                 <ContextMenu>
                                                     <MenuItem Header="Edit"
                                                               Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
-                                                              CommandParameter="{Binding}">
+                                                              CommandParameter="{Binding Category}">
                                                         <MenuItem.Icon>
                                                             <PathIcon Data="{StaticResource SemiIconEdit}" />
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                     <MenuItem Header="Add Task"
                                                               Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
-                                                              CommandParameter="{Binding}">
+                                                              CommandParameter="{Binding Category}">
                                                         <MenuItem.Icon>
                                                             <PathIcon Data="{StaticResource SemiIconPlus}" />
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                     <MenuItem Header="Delete Finished Tasks"
-                                                              Command="{Binding RemovePermaDoneTasks}"
+                                                              Command="{Binding Category.RemovePermaDoneTasks}"
                                                               Foreground="{DynamicResource SemiColorWarning}">
                                                         <MenuItem.Icon>
                                                             <PathIcon
@@ -405,11 +317,252 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                 </ContextMenu>
-                                            </Border.ContextMenu>
+                                            </Grid.ContextMenu>
+                                        </Grid>
+                                    </DataTemplate>
+                                    
+                                    <DataTemplate DataType="vm:TaskListItem">
+                                        <Border Theme="{StaticResource CardBorder}"
+                                                Classes="Hover"
+                                                Margin="30,4,4,4"
+                                                Padding="10,4, 3, 4"
+                                                HorizontalAlignment="Left"
+                                                IsVisible="{Binding Task.Category.Expanded}"
+                                                sortable:Sortable.IsSortable="True"
+                                                sortable:Sortable.IsDroppable="True">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Panel Grid.Column="0"
+                                                       Width="30"
+                                                       PointerPressed="TaskDragStarted">
+                                                    <PathIcon
+                                                        Data="{StaticResource SemiIconHandle}"
+                                                        Cursor="Hand"
+                                                        HorizontalAlignment="Left" />
+                                                </Panel>
+        
+                                                <Button Grid.Column="1"
+                                                        Classes="Tertiary"
+                                                        Theme="{DynamicResource BorderlessButton}"
+                                                        Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
+                                                        CommandParameter="{Binding Task}"
+                                                        Padding="0,0,10,0">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding Task.Icon}"
+                                                                   FontFamily="{StaticResource NotoColorEmoji}"
+                                                                   FontSize="24"
+                                                                   Margin="0,0,5,0"
+                                                                   IsVisible="{Binding Task.Icon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                                   VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding Task.Name}"
+                                                                   TextWrapping="Wrap"
+                                                                   VerticalAlignment="Center"/>
+                                                        <PathIcon Grid.Column="2"
+                                                                  Data="{StaticResource SemiIconMore}"
+                                                                  Width="16"
+                                                                  RenderTransform="rotate(90deg) translate(5px, 0px)"
+                                                                  VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                                <Grid.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Edit"
+                                                                Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
+                                                                CommandParameter="{Binding Task}" />
+                                                        <MenuItem Header="Move To"
+                                                                ItemsSource="{Binding #RootControl.((vm:MainViewModel)DataContext).TaskCategoriesView}"
+                                                                Command="{Binding $self.((core:TaskCategory)SelectedItem)?.AddTask}"
+                                                                CommandParameter="{Binding Task}">
+                                                            <MenuItem.ItemTemplate>
+                                                                <DataTemplate DataType="core:TaskCategory">
+                                                                    <TextBlock
+                                                                        Text="{Binding Name}" />
+                                                                </DataTemplate>
+                                                            </MenuItem.ItemTemplate>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Grid.ContextMenu>
+                                            </Grid>
                                         </Border>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
+                                    
+                                </ItemsControl.DataTemplates>
                             </ItemsControl>
+                            <!-- <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" -->
+                            <!--               x:Name="TaskCategoryItemsControl" -->
+                            <!--               ItemsSource="{Binding GetTaskCategoriesAsync^}" -->
+                            <!--               sortable:Sortable.Sortable="True" -->
+                            <!--               sortable:Sortable.Droppable="False" -->
+                            <!--               sortable:Sortable.Group="categories" -->
+                            <!--               sortable:Sortable.AutoScroll="True" -->
+                            <!--               sortable:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}"> -->
+                            <!--     <ItemsControl.ItemTemplate> -->
+                            <!--         <DataTemplate DataType="core:TaskCategory"> -->
+                            <!--             <Border Theme="{StaticResource CardBorder}" -->
+                            <!--                     Classes="Hover" -->
+                            <!--                     Padding="0" -->
+                            <!--                     Background="{DynamicResource SemiColorBackground1}" -->
+                            <!--                     sortable:Sortable.IsSortable="True"> -->
+                            <!--                 <Grid RowSpacing="5" ColumnSpacing="5" Margin="10, 10, 5, 10" -->
+                            <!--                       RowDefinitions="Auto, *" -->
+                            <!--                       ColumnDefinitions="Auto, Auto, *"> -->
+                            <!--                     <PathIcon Grid.Row="0" Grid.Column="0" -->
+                            <!--                               Data="{StaticResource SemiIconHandle}" -->
+                            <!--                               IsVisible="{Binding #RootControl.IsReorderCategories}" -->
+                            <!--                               Cursor="Hand" -->
+                            <!--                               sortable:Sortable.IsDragHandle="True" -->
+                            <!--                               PointerPressed="CategoryDragStarted" /> -->
+                            <!--                     <views:ExpanderButton Grid.Row="0" Grid.Column="0" -->
+                            <!--                                           IsExpanded="{Binding Expanded}" -->
+                            <!--                                           IsVisible="{Binding !#RootControl.IsReorderCategories}" -->
+                            <!--                                           Padding="3,0,5,0" /> -->
+                            <!--                     <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" -->
+                            <!--                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}" -->
+                            <!--                             CommandParameter="{Binding}" -->
+                            <!--                             Theme="{DynamicResource OutlineButton}" -->
+                            <!--                             Classes="Tertiary" -->
+                            <!--                             Padding="12,4"> -->
+                            <!--                         <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}"> -->
+                            <!--                             ~1~ <Run Text="{Binding Icon}" @1@ -->
+                            <!--                             ~1~      FontFamily="{StaticResource NotoColorEmoji}" @1@ -->
+                            <!--                             ~1~      FontSize="24" /> @1@ -->
+                            <!--                             <Run Text="{Binding Name}" -->
+                            <!--                                  BaselineAlignment="Center" /> -->
+                            <!--                             <InlineUIContainer -->
+                            <!--                                 BaselineAlignment="Center"> -->
+                            <!--                                 <PathIcon -->
+                            <!--                                     Data="{StaticResource SemiIconMore}" -->
+                            <!--                                     Width="16" -->
+                            <!--                                     RenderTransform="rotate(90deg) translate(5px, 0px)" /> -->
+                            <!--                             </InlineUIContainer> -->
+                            <!--                         </TextBlock> -->
+                            <!--                     </Button> -->
+                            <!--                     <Button Grid.Row="0" Grid.Column="2" -->
+                            <!--                             Foreground="White" -->
+                            <!--                             Background="Transparent" -->
+                            <!--                             Margin="0" -->
+                            <!--                             HorizontalAlignment="Left" -->
+                            <!--                             Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}" -->
+                            <!--                             CommandParameter="{Binding}" -->
+                            <!--                             IsVisible="{Binding !#RootControl.IsReorderCategories}"> -->
+                            <!--                         <PathIcon Data="{StaticResource SemiIconPlus}" -->
+                            <!--                                   Width="10" Height="10" /> -->
+                            <!--                     </Button> -->
+                            <!-- -->
+                            <!--                     <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" -->
+                            <!--                                   ItemsSource="{Binding TasksView}" -->
+                            <!--                                   sortable:Sortable.IsSortable="True" -->
+                            <!--                                   sortable:Sortable.Droppable="True" -->
+                            <!--                                   sortable:Sortable.Group="tasks" -->
+                            <!--                                   sortable:Sortable.AutoScroll="True" -->
+                            <!--                                   sortable:Sortable.UpdateCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListUpdateCommand}" -->
+                            <!--                                   sortable:Sortable.DropCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListDropCommand}" -->
+                            <!--                                   sortable:Sortable.ReleaseCommand="{Binding #TabControl.((vm:MainViewModel)DataContext).TaskListReleaseCommand}"> -->
+                            <!--                         <ItemsControl.IsVisible> -->
+                            <!--                             <MultiBinding Converter="{x:Static BoolConverters.And}"> -->
+                            <!--                                 <Binding Path="Expanded" /> -->
+                            <!--                                 <Binding Path="!#RootControl.IsReorderCategories" /> -->
+                            <!--                             </MultiBinding> -->
+                            <!--                         </ItemsControl.IsVisible> -->
+                            <!--                         <ItemsControl.ItemTemplate> -->
+                            <!--                             <DataTemplate DataType="core:TwTask"> -->
+                            <!--                                 <Border Theme="{StaticResource CardBorder}" -->
+                            <!--                                         Classes="Hover" -->
+                            <!--                                         Background="{DynamicResource SemiColorBackground2}" -->
+                            <!--                                         Padding="10,4, 3, 4" -->
+                            <!--                                         HorizontalAlignment="Left" -->
+                            <!--                                         sortable:Sortable.IsSortable="True" -->
+                            <!--                                         sortable:Sortable.IsDroppable="True"> -->
+                            <!--                                     <Grid ColumnDefinitions="Auto,*"> -->
+                            <!--                                         <Panel Grid.Column="0"  -->
+                            <!--                                                Width="30" -->
+                            <!--                                                PointerPressed="TaskDragStarted"> -->
+                            <!--                                             <PathIcon -->
+                            <!--                                                 Data="{StaticResource SemiIconHandle}" -->
+                            <!--                                                 Cursor="Hand" -->
+                            <!--                                                 HorizontalAlignment="Left" /> -->
+                            <!--                                         </Panel> -->
+                            <!-- -->
+                            <!--                                         <Button Grid.Column="1"  -->
+                            <!--                                                 Classes="Tertiary" -->
+                            <!--                                                 Theme="{DynamicResource BorderlessButton}" -->
+                            <!--                                                 Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}" -->
+                            <!--                                                 CommandParameter="{Binding}" -->
+                            <!--                                                 Padding="0,0,10,0"> -->
+                            <!--                                             <Grid ColumnDefinitions="Auto, *, Auto"> -->
+                            <!--                                                 <TextBlock Grid.Column="0"  -->
+                            <!--                                                            Text="{Binding Icon}" -->
+                            <!--                                                            FontFamily="{StaticResource NotoColorEmoji}" -->
+                            <!--                                                            FontSize="24" -->
+                            <!--                                                            Margin="0,0,5,0" -->
+                            <!--                                                            IsVisible="{Binding Icon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" -->
+                            <!--                                                            VerticalAlignment="Center"/> -->
+                            <!--                                                 <TextBlock Grid.Column="1"  -->
+                            <!--                                                            Text="{Binding Name}" -->
+                            <!--                                                            TextWrapping="Wrap" -->
+                            <!--                                                            VerticalAlignment="Center"/> -->
+                            <!--                                                 <PathIcon Grid.Column="2" -->
+                            <!--                                                           Data="{StaticResource SemiIconMore}" -->
+                            <!--                                                           Width="16" -->
+                            <!--                                                           RenderTransform="rotate(90deg) translate(5px, 0px)" -->
+                            <!--                                                           VerticalAlignment="Center"/> -->
+                            <!--                                             </Grid> -->
+                            <!--                                         </Button> -->
+                            <!--                                         <Grid.ContextMenu> -->
+                            <!--                                             <ContextMenu> -->
+                            <!--                                                 <MenuItem Header="Edit" -->
+                            <!--                                                         Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}" -->
+                            <!--                                                         CommandParameter="{Binding}" /> -->
+                            <!--                                                 <MenuItem Header="Move To" -->
+                            <!--                                                         ItemsSource="{Binding #RootControl.((vm:MainViewModel)DataContext).TaskCategoriesView}" -->
+                            <!--                                                         Command="{Binding $self.((core:TaskCategory)SelectedItem)?.AddTask}" -->
+                            <!--                                                         CommandParameter="{Binding}"> -->
+                            <!--                                                     <MenuItem.ItemTemplate> -->
+                            <!--                                                         <DataTemplate DataType="core:TaskCategory"> -->
+                            <!--                                                             <TextBlock -->
+                            <!--                                                                 Text="{Binding Name}" /> -->
+                            <!--                                                         </DataTemplate> -->
+                            <!--                                                     </MenuItem.ItemTemplate> -->
+                            <!--                                                 </MenuItem> -->
+                            <!--                                             </ContextMenu> -->
+                            <!--                                         </Grid.ContextMenu> -->
+                            <!--                                     </Grid> -->
+                            <!--                                 </Border> -->
+                            <!--                             </DataTemplate> -->
+                            <!--                         </ItemsControl.ItemTemplate> -->
+                            <!--                     </ItemsControl> -->
+                            <!--                 </Grid> -->
+                            <!--                 <Border.ContextMenu> -->
+                            <!--                     <ContextMenu> -->
+                            <!--                         <MenuItem Header="Edit" -->
+                            <!--                                   Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}" -->
+                            <!--                                   CommandParameter="{Binding}"> -->
+                            <!--                             <MenuItem.Icon> -->
+                            <!--                                 <PathIcon Data="{StaticResource SemiIconEdit}" /> -->
+                            <!--                             </MenuItem.Icon> -->
+                            <!--                         </MenuItem> -->
+                            <!--                         <MenuItem Header="Add Task" -->
+                            <!--                                   Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}" -->
+                            <!--                                   CommandParameter="{Binding}"> -->
+                            <!--                             <MenuItem.Icon> -->
+                            <!--                                 <PathIcon Data="{StaticResource SemiIconPlus}" /> -->
+                            <!--                             </MenuItem.Icon> -->
+                            <!--                         </MenuItem> -->
+                            <!--                         <MenuItem Header="Delete Finished Tasks" -->
+                            <!--                                   Command="{Binding RemovePermaDoneTasks}" -->
+                            <!--                                   Foreground="{DynamicResource SemiColorWarning}"> -->
+                            <!--                             <MenuItem.Icon> -->
+                            <!--                                 <PathIcon -->
+                            <!--                                     Data="{StaticResource SemiIconCheckList}" /> -->
+                            <!--                             </MenuItem.Icon> -->
+                            <!--                         </MenuItem> -->
+                            <!--                     </ContextMenu> -->
+                            <!--                 </Border.ContextMenu> -->
+                            <!--             </Border> -->
+                            <!--         </DataTemplate> -->
+                            <!--     </ItemsControl.ItemTemplate> -->
+                            <!-- </ItemsControl> -->
                             <u:IconButton Grid.Row="0" Grid.Column="0"
                                           Command="{Binding CreateTaskCategoryCommand}"
                                           Content="Category"

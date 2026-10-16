@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -48,6 +49,9 @@ public partial class MainViewModel : ViewModelBase
 
     private readonly ReadOnlyObservableCollection<TaskCategory> _taskCategoriesView;
     public ReadOnlyObservableCollection<TaskCategory> TaskCategoriesView => _taskCategoriesView;
+
+    private readonly ReadOnlyObservableCollection<ITaskListItem> _tasksFlatList;
+    public ReadOnlyObservableCollection<ITaskListItem> TasksFlatList => _tasksFlatList;
     
     private readonly ReadOnlyObservableCollection<TwTask> _doneTodaytasks;
     public ReadOnlyObservableCollection<TwTask> DoneTodayTasks => _doneTodaytasks;
@@ -655,6 +659,27 @@ public partial class MainViewModel : ViewModelBase
         
         _twig.TaskCategories.Connect()
             .Bind(out _taskCategoriesView).Subscribe();
+        // _twig.TaskCategories.Connect()
+        //     .MergeManyChangeSets(category => category.ConnectTasks()
+        //         .Transform<TwTask, ITaskListItem>(task => new TaskListItem(task)).Prepend(
+        //             new ChangeSet<ITaskListItem>([
+        //                 new Change<ITaskListItem>(ListChangeReason.Add, new TaskCategoryListItem(category))
+        //             ])))
+        //     .Bind(out _tasksFlatList)
+        //     .DisposeMany()
+        //     .Subscribe();
+        _twig.TaskCategories.Connect()
+            .Transform(category =>
+            {
+                return category.ConnectTasks()
+                    .Transform<TwTask, ITaskListItem>(task => new TaskListItem(task))
+                    .StartWith(new ChangeSet<ITaskListItem>([
+                        new Change<ITaskListItem>(ListChangeReason.Add, new TaskCategoryListItem(category), 0)
+                    ]));
+            })
+            .Bind(out _tasksFlatList)
+            .DisposeMany()
+            .Subscribe();
         _twig.TaskCategories.Connect()
             .MergeManyChangeSets(category => category.ConnectTasks())
             .AutoRefresh()
@@ -748,4 +773,16 @@ public partial class MainViewModel : ViewModelBase
     {
         await _twig.SaveDataFiles();
     }
+}
+
+public interface ITaskListItem { }
+
+public class TaskCategoryListItem(TaskCategory category) : ITaskListItem
+{
+    public TaskCategory Category { get; } = category;
+}
+
+public class TaskListItem(TwTask task) : ITaskListItem
+{
+    public TwTask Task { get; } = task;
 }
