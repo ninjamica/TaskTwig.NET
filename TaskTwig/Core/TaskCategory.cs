@@ -44,6 +44,15 @@ public partial class TaskCategory : HashableObject
     }
     
     [JsonIgnore]
+    public IObservableList<TwTask> TasksObservableList {
+        get
+        {
+            field ??= Tasks.AsObservableList();
+            return field;
+        }
+    }
+    
+    [JsonIgnore]
     public ReadOnlyObservableCollection<TwTask> TodayTasks 
     {
         get

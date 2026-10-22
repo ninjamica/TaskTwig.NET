@@ -19,6 +19,7 @@ using DynamicData.Kernel;
 using Sortable.Avalonia;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
+using TaskTwig.Core.Util;
 using TaskTwig.Dialog.ViewModels;
 using TaskTwig.Dialog.Views;
 using Ursa.Common;
@@ -133,55 +134,90 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void CategoryListUpdate(SortableUpdateEventArgs args)
     {
-        if (args.Item is TaskCategory category)
+        if (args.Item is TaskCategory)
         {
-            _twig.TaskCategories.Edit(list =>
-            {
-                list.Remove(category);
-                list.Insert(args.NewIndex, category);
-            });
+            _twig.TaskCategories.Move(args.OldIndex, args.NewIndex);
+        }
+    }
+    
+    [RelayCommand]
+    private void CategoryListRelease(SortableReleaseEventArgs args)
+    {
+        if (args.LastPreviewedIndex != args.OldIndex && args is { Item: TaskCategory, OldIndex: not -1 })
+        {
+            _twig.TaskCategories.Move(args.OldIndex, args.LastPreviewedIndex);
         }
     }
     
     [RelayCommand]
     private void TaskListUpdate(SortableUpdateEventArgs args)
     {
-        if (args.Item is TwTask { Category: { } category })
+        if (args is { Item: TaskListItem {Task: { Category: { } category } task }, SourceCollection: not null })
         {
-            category.MoveTask(args.OldIndex, args.NewIndex);
+            TaskCategory? destinationCat = null;
+            int catIndex = args.NewIndex < args.OldIndex ? args.NewIndex - 1 : args.NewIndex;
+            
+            for ( ; catIndex >= 0; catIndex--)
+            {
+                if (args.SourceCollection[catIndex] is TaskCategoryListItem catListItem)
+                {
+                    destinationCat = catListItem.Category;
+                    break;
+                }
+            }
+
+            if (destinationCat is null)
+                return;
+            
+            if(category == destinationCat)
+            {
+                category.MoveTask(args.OldIndex - catIndex - 1, args.NewIndex - catIndex - 1);
+            }
+            else
+            {
+                int newIndex = destinationCat.Expanded
+                    ? (args.NewIndex < args.OldIndex ? args.NewIndex - catIndex - 1 : args.NewIndex - catIndex)
+                    : destinationCat.TasksObservableList.Count;
+
+                category.RemoveTask(task);
+                destinationCat.AddTask(task, newIndex);
+
+                destinationCat.Expanded = true;
+            }
         }
     }
 
-    [RelayCommand]
-    private void TaskListDrop(SortableDropEventArgs args)
-    {
-        var targetCategory = _twig.TaskCategories.Items.FirstOrDefault(
-            cat => ReferenceEquals(cat.TasksView, args.TargetCollection));
-
-        if (targetCategory is not null && args.Item is TwTask task)
-        {
-            args.IsAccepted = true;
-            args.TransferMode = SortableTransferMode.Move;
-                
-            targetCategory.AddTask(task, args.NewIndex);
-        }
-        else
-        {
-            args.IsAccepted = false;
-        }
-    }
+    // [RelayCommand]
+    // private void TaskListDrop(SortableDropEventArgs args)
+    // {
+    //     var targetCategory = _twig.TaskCategories.Items.FirstOrDefault(
+    //         cat => ReferenceEquals(cat.TasksView, args.TargetCollection));
+    //
+    //     if (targetCategory is not null && args.Item is TwTask task)
+    //     {
+    //         args.IsAccepted = true;
+    //         args.TransferMode = SortableTransferMode.Move;
+    //             
+    //         targetCategory.AddTask(task, args.NewIndex);
+    //     }
+    //     else
+    //     {
+    //         args.IsAccepted = false;
+    //     }
+    // }
 
     [RelayCommand]
     private void TaskListRelease(SortableReleaseEventArgs args)
     {
-        if (args.LastPreviewedIndex != args.OldIndex && args.Item is TwTask { Category: { } category })
+        if (args.LastPreviewedIndex != args.OldIndex && args.LastPreviewedIndex != -1)
         {
-            if (args.OldIndex != -1)
+            TaskListUpdate(new SortableUpdateEventArgs
             {
-                category.MoveTask(args.OldIndex, args.LastPreviewedIndex);
-            }
-            // TODO: currently no way to determine last previewed collection (where to drop the item)
-            // else { }
+                Item = args.Item, 
+                OldIndex = args.OldIndex, 
+                NewIndex = args.LastPreviewedIndex,
+                SourceCollection = args.SourceCollection,
+            });
         }
     }
 
@@ -659,26 +695,10 @@ public partial class MainViewModel : ViewModelBase
         
         _twig.TaskCategories.Connect()
             .Bind(out _taskCategoriesView).Subscribe();
-        // _twig.TaskCategories.Connect()
-        //     .MergeManyChangeSets(category => category.ConnectTasks()
-        //         .Transform<TwTask, ITaskListItem>(task => new TaskListItem(task)).Prepend(
-        //             new ChangeSet<ITaskListItem>([
-        //                 new Change<ITaskListItem>(ListChangeReason.Add, new TaskCategoryListItem(category))
-        //             ])))
-        //     .Bind(out _tasksFlatList)
-        //     .DisposeMany()
-        //     .Subscribe();
         _twig.TaskCategories.Connect()
-            .Transform(category =>
-            {
-                return category.ConnectTasks()
-                    .Transform<TwTask, ITaskListItem>(task => new TaskListItem(task))
-                    .StartWith(new ChangeSet<ITaskListItem>([
-                        new Change<ITaskListItem>(ListChangeReason.Add, new TaskCategoryListItem(category), 0)
-                    ]));
-            })
+            .FlattenWithGroupHeaders<TaskCategory, TwTask, ITaskListItem>(category => category.TasksObservableList,
+                category => new TaskCategoryListItem(category), task => new TaskListItem(task))
             .Bind(out _tasksFlatList)
-            .DisposeMany()
             .Subscribe();
         _twig.TaskCategories.Connect()
             .MergeManyChangeSets(category => category.ConnectTasks())

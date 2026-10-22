@@ -113,11 +113,15 @@ public partial class SleepValuesBacking : HashableObject
 
     public void SetFrom(SleepValuesBacking? other)
     {
-        SleepRecords.Clear();
         SleepStart = other?.SleepStart;
-
-        if (other is not null)
-            SleepRecords.AddOrUpdate(other.SleepRecords.Items);
+        
+        SleepRecords.Edit(records =>
+        {
+            records.Clear();
+            
+            if (other is not null)
+                SleepRecords.AddOrUpdate(other.SleepRecords.Items);
+        });
     }
 
     public class SleepSourceCacheConverter : JsonConverter<SourceCache<Sleep, DateOnly>>
