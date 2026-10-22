@@ -83,14 +83,14 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                       Command="{Binding DbxSyncCommand}"/>
                 </CommandBar.PrimaryCommands>
                 <CommandBar.SecondaryCommands>
-                    <CommandBarButton Label="Save" Icon="{StaticResource SemiIconSave}"
-                                      Command="{Binding SaveFilesCommand}"/>
-                    <CommandBarButton Label="Pull" Icon="{StaticResource SemiIconAlignBottom}"
-                                      Command="{Binding PullDbxCommand}"/>
-                    <CommandBarButton Label="Push" Icon="{StaticResource SemiIconAlignTop}"
-                                      Command="{Binding PushDbxCommand}"/>
-                    <CommandBarButton Label="Fetch" Icon="{StaticResource SemiIconServer}"
+                    <CommandBarButton Label="Compare To Cloud" Icon="{StaticResource SemiIconCloud}"
                                       Command="{Binding FetchDbxCommand}"/>
+                    <CommandBarButton Label="Upload All" Icon="{StaticResource SemiIconUpload}"
+                                      Command="{Binding PushDbxCommand}"/>
+                    <CommandBarButton Label="Download All" Icon="{StaticResource SemiIconDownload}"
+                                      Command="{Binding PullDbxCommand}"/>
+                    <CommandBarButton Label="Save Locally" Icon="{StaticResource SemiIconSave}"
+                                      Command="{Binding SaveFilesCommand}"/>
                 </CommandBar.SecondaryCommands>
             </CommandBar>
             
@@ -308,19 +308,31 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                             <PathIcon Data="{StaticResource SemiIconEdit}" />
                                                         </MenuItem.Icon>
                                                     </MenuItem>
-                                                    <MenuItem Header="Add Task"
-                                                              Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
-                                                              CommandParameter="{Binding Category}">
+                                                    <MenuItem Header="Add Task">
                                                         <MenuItem.Icon>
                                                             <PathIcon Data="{StaticResource SemiIconPlus}" />
                                                         </MenuItem.Icon>
+                                                        
+                                                        <MenuItem Header="Add to Top"
+                                                                  Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskAtTopCommand}"
+                                                                  CommandParameter="{Binding Category}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource SemiIconAlignTop}"/>
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Add to Bottom"
+                                                                  Command="{Binding #TabControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
+                                                                  CommandParameter="{Binding Category}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource SemiIconAlignBottom}"/>
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
                                                     </MenuItem>
                                                     <MenuItem Header="Delete Finished Tasks"
                                                               Command="{Binding Category.RemovePermaDoneTasks}"
                                                               Foreground="{DynamicResource SemiColorWarning}">
                                                         <MenuItem.Icon>
-                                                            <PathIcon
-                                                                Data="{StaticResource SemiIconCheckList}" />
+                                                            <PathIcon Data="{StaticResource SemiIconTrueFalseStroked}" />
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                 </ContextMenu>
@@ -378,15 +390,41 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                     <ContextMenu>
                                                         <MenuItem Header="Edit"
                                                                 Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
-                                                                CommandParameter="{Binding Task}" />
-                                                        <MenuItem Header="Move To"
+                                                                CommandParameter="{Binding Task}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource SemiIconEdit}"/>
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Move To">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource SemiIconLineHeight}"/>
+                                                            </MenuItem.Icon>
+                                                            
+                                                            <MenuItem Header="Top of Category"
+                                                                      Command="{Binding #RootControl.((vm:MainViewModel)DataContext).MoveTaskToTopCommand}"
+                                                                      CommandParameter="{Binding Task}">
+                                                                <MenuItem.Icon>
+                                                                    <PathIcon Data="{StaticResource SemiIconAlignTop}"/>
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Bottom of Category"
+                                                                      Command="{Binding #RootControl.((vm:MainViewModel)DataContext).MoveTaskToBottomCommand}"
+                                                                      CommandParameter="{Binding Task}">
+                                                                <MenuItem.Icon>
+                                                                    <PathIcon Data="{StaticResource SemiIconAlignBottom}"/>
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Move To Category"
                                                                 ItemsSource="{Binding #RootControl.((vm:MainViewModel)DataContext).TaskCategoriesView}"
                                                                 Command="{Binding $self.((core:TaskCategory)SelectedItem)?.AddTask}"
                                                                 CommandParameter="{Binding Task}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource SemiIconAppCenter}"/>
+                                                            </MenuItem.Icon>
                                                             <MenuItem.ItemTemplate>
                                                                 <DataTemplate DataType="core:TaskCategory">
-                                                                    <TextBlock
-                                                                        Text="{Binding Name}" />
+                                                                    <TextBlock Text="{Binding Name}"/>
                                                                 </DataTemplate>
                                                             </MenuItem.ItemTemplate>
                                                         </MenuItem>

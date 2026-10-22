@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -110,6 +109,20 @@ public partial class MainViewModel : ViewModelBase
         category.Expanded = true;
         EditTask(task);
     }
+
+    [RelayCommand]
+    private void CreateTaskAtTop(TaskCategory category)
+    {
+        var task = new TwTask()
+        {
+            Name = "New Task",
+            Interval = new NoInterval(),
+            Category = category
+        };
+        category.AddTask(task, 0);
+        category.Expanded = true;
+        EditTask(task);
+    }
     
     [RelayCommand]
     private void EditTask(TwTask task)
@@ -129,6 +142,24 @@ public partial class MainViewModel : ViewModelBase
                 if (result.Result)
                     task.Category?.RemoveTask(task);
             });
+    }
+
+    [RelayCommand]
+    private void MoveTaskToTop(TwTask task)
+    {
+        if (task is { Category: { } category })
+        {
+            category.MoveTask(task, 0);
+        }
+    }
+
+    [RelayCommand]
+    private void MoveTaskToBottom(TwTask task)
+    {
+        if (task is { Category: { } category })
+        {
+            category.MoveTask(task, category.Count - 1);
+        }
     }
     
     [RelayCommand]

@@ -53,6 +53,9 @@ public partial class TaskCategory : HashableObject
     }
     
     [JsonIgnore]
+    public int Count => Tasks.Count;
+    
+    [JsonIgnore]
     public ReadOnlyObservableCollection<TwTask> TodayTasks 
     {
         get
@@ -85,9 +88,15 @@ public partial class TaskCategory : HashableObject
 
     public void MoveTask(int originalIndex, int destinationIndex)
     {
-        InvalidateCachedHash();
+        if (originalIndex < 0 || originalIndex >= Tasks.Count || 
+            destinationIndex < 0 || destinationIndex >= Tasks.Count)
+            return;
+        
         Tasks.Move(originalIndex, destinationIndex);
+        InvalidateCachedHash();
     }
+
+    public void MoveTask(TwTask task, int destinationIndex) => MoveTask(Tasks.Items.IndexOf(task), destinationIndex);
 
     public void RemoveTask(TwTask task)
     {
