@@ -10,7 +10,7 @@ namespace TaskTwig.Core;
 
 public class CacheValidChangedEventArgs(bool isAllCacheValid) : EventArgs
 {
-    public virtual bool IsAllCacheValid { get; } = isAllCacheValid;
+    public bool IsAllCacheValid { get; } = isAllCacheValid;
 }
 
 public abstract class HashableObject : ObservableValidator

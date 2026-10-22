@@ -7,6 +7,7 @@ using System.IO.Hashing;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -189,7 +190,27 @@ public partial class TaskTwig : ObservableObject
         public bool AutoSync { get; init; }
         public TimeSpan DayStart { get; init; }
     }
-    
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers =
+            {
+                typeInfo =>
+                {
+                    if (typeInfo.Kind != JsonTypeInfoKind.Object ||
+                        !typeof(ObservableValidator).IsAssignableFrom(typeInfo.Type)) return;
+                    
+                    foreach (var property in typeInfo.Properties)
+                    {
+                        if (property.DeclaringType == typeof(ObservableValidator))
+                            property.ShouldSerialize = (_, _) => false;
+                    }
+                }
+            }
+        }
+    };
 
     private static readonly string DataDirPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), 
@@ -347,7 +368,7 @@ public partial class TaskTwig : ObservableObject
         try
         {
             await using var file = File.OpenRead(_settingsFile.LocalPath);
-            var settings = await JsonSerializer.DeserializeAsync<UserSettings>(file);
+            var settings = await JsonSerializer.DeserializeAsync<UserSettings>(file, SerializerOptions);
 
             TwigTime.DayStart = settings.DayStart;
             AutoSync = settings.AutoSync;
@@ -366,7 +387,7 @@ public partial class TaskTwig : ObservableObject
     private static async Task<HashCommit?> _ReadHashFile(string path)
     {
         await using var file = File.OpenRead(path);
-        return await JsonSerializer.DeserializeAsync<HashCommit>(file);
+        return await JsonSerializer.DeserializeAsync<HashCommit>(file, SerializerOptions);
     }
 
     private async Task _ReadLocalHashes()
@@ -410,7 +431,7 @@ public partial class TaskTwig : ObservableObject
         try
         {
             await using var downloadStream = await DbxHandler.DownloadContentStreamAsync(_commitFile.DbxPath);
-            return await JsonSerializer.DeserializeAsync<HashCommit>(downloadStream);
+            return await JsonSerializer.DeserializeAsync<HashCommit>(downloadStream, SerializerOptions);
         }
         catch (ApiException<DownloadError>)
         {
@@ -461,23 +482,23 @@ public partial class TaskTwig : ObservableObject
             switch (file)
             {
                 case DataFile.Task:
-                    jsonText = JsonSerializer.Serialize(TaskCategories.Items.ToList());
+                    jsonText = JsonSerializer.Serialize(TaskCategories.Items.ToList(), SerializerOptions);
                     break;
                 case DataFile.Sleep:
-                    jsonText = JsonSerializer.Serialize(SleepValues);
+                    jsonText = JsonSerializer.Serialize(SleepValues, SerializerOptions);
                     break;
                 case DataFile.Exercise:
-                    jsonText = JsonSerializer.Serialize(Exercises);
+                    jsonText = JsonSerializer.Serialize(Exercises, SerializerOptions);
                     break;
                 case DataFile.Workout:
-                    jsonText = JsonSerializer.Serialize(Workouts);
+                    jsonText = JsonSerializer.Serialize(Workouts, SerializerOptions);
                     break;
                 case DataFile.Journal:
                     var journals = Journals.KeyValues.Where(pair => !pair.Value.IsEmpty()).ToDictionary();
-                    jsonText = JsonSerializer.Serialize(journals);
+                    jsonText = JsonSerializer.Serialize(journals, SerializerOptions);
                     break;
                 case DataFile.Note:
-                    jsonText = JsonSerializer.Serialize(Notes.Items.ToList());
+                    jsonText = JsonSerializer.Serialize(Notes.Items.ToList(), SerializerOptions);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(file), file, null);
@@ -497,14 +518,14 @@ public partial class TaskTwig : ObservableObject
 
     private async Task _WriteSettingsFile()
     {
-        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, DayStart = TwigTime.DayStart});
+        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, DayStart = TwigTime.DayStart}, SerializerOptions);
         await File.WriteAllTextAsync(_settingsFile.TempPath, jsonText);
         File.Move(_settingsFile.TempPath, _settingsFile.LocalPath, true);
     }
 
     private async Task _WriteLocalHashes(DataFilePaths file)
     {
-        var jsonText = JsonSerializer.Serialize(_liveHashes);
+        var jsonText = JsonSerializer.Serialize(_liveHashes, SerializerOptions);
         await File.WriteAllTextAsync(file.TempPath, jsonText);
         File.Move(file.TempPath, file.LocalPath, true);
     }
@@ -766,7 +787,7 @@ public partial class TaskTwig : ObservableObject
     
     private void _ReadTasks(string jsonText)
     {
-        var taskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(jsonText) ?? [];
+        var taskCategories = JsonSerializer.Deserialize<List<TaskCategory>>(jsonText, SerializerOptions) ?? [];
             
         TaskCategories.Edit(list =>
         {
@@ -784,13 +805,13 @@ public partial class TaskTwig : ObservableObject
 
     private void _ReadSleep(string jsonText)
     {
-        var sleepValues = JsonSerializer.Deserialize<SleepValuesBacking>(jsonText);
+        var sleepValues = JsonSerializer.Deserialize<SleepValuesBacking>(jsonText, SerializerOptions);
         SleepValues.SetFrom(sleepValues);
     }
 
     private void _ReadExercise(string jsonText)
     {
-        var exercises = JsonSerializer.Deserialize<List<Exercise>>(jsonText) ?? [];
+        var exercises = JsonSerializer.Deserialize<List<Exercise>>(jsonText, SerializerOptions) ?? [];
 
         Exercises.Clear();
         foreach (var exercise in exercises)
@@ -799,7 +820,7 @@ public partial class TaskTwig : ObservableObject
 
     private void _ReadWorkoutList(string jsonText)
     {
-        var workoutList = JsonSerializer.Deserialize<List<Workout>>(jsonText) ?? [];
+        var workoutList = JsonSerializer.Deserialize<List<Workout>>(jsonText, SerializerOptions) ?? [];
             
         Workouts.Clear();
         foreach (var workout in workoutList)
@@ -808,7 +829,7 @@ public partial class TaskTwig : ObservableObject
 
     private void _ReadJournal(string jsonText)
     {
-        var journalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(jsonText) ?? [];
+        var journalRecords = JsonSerializer.Deserialize<Dictionary<DateOnly, Journal>>(jsonText, SerializerOptions) ?? [];
 
         Dispatcher.UIThread.Post(() =>
         {
@@ -826,7 +847,7 @@ public partial class TaskTwig : ObservableObject
 
     private void _ReadNote(string jsonText)
     {
-        var noteRecords = JsonSerializer.Deserialize<List<Note>>(jsonText) ?? [];
+        var noteRecords = JsonSerializer.Deserialize<List<Note>>(jsonText, SerializerOptions) ?? [];
         
         Notes.Edit(list =>
         {
