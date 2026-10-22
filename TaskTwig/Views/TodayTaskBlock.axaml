@@ -10,6 +10,7 @@
         <Setter Property="MinHeight" Value="30"/>
         <Setter Property="IsChecked" Value="{Binding $self.BoundTask?.IsDone}"/>
         <Setter Property="Content" Value="{Binding $self.BoundTask}"/>
+        <Setter Property="ToolTip.Tip" Value="{Binding $self.BoundTask?.Description}" />
 
         <Setter Property="ContentTemplate">
             <DataTemplate DataType="core:TwTask">
@@ -17,6 +18,7 @@
                       Margin="5,0,0,0"
                       x:DataType="core:TwTask">
                     <TextBlock Grid.Column="0"
+                               Classes="TaskBlockLabel"
                                Text="{Binding Icon, Converter={x:Static controls:MainView.AppendEmojiSelectorConverter}}"
                                FontSize="24"
                                FontFamily="{StaticResource NotoColorEmoji}"
@@ -24,11 +26,13 @@
                                Margin="0,0,5,0"
                                IsVisible="{Binding Icon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     <TextBlock Grid.Column="1"
+                               Classes="TaskBlockLabel"
                                Text="{Binding Name}"
                                FontSize="16"
                                TextWrapping="Wrap"
                                VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="2"
+                               Classes="TaskBlockLabel"
                                Text="{Binding Interval, Converter={x:Static controls:TodayTaskBlock.TaskInfoTextConverter}}"
                                Foreground="{DynamicResource SemiColorText3}"
                                FontSize="12"
@@ -48,20 +52,20 @@
         
         
         <Style Selector="^:pointerover">
-            <Style Selector="^ TextBlock">
+            <Style Selector="^ TextBlock.TaskBlockLabel">
                 <Setter Property="TextDecorations" Value="Underline"/>
             </Style>
         </Style>
         
         <Style Selector="^:checked">
-            <Style Selector="^ TextBlock">
+            <Style Selector="^ TextBlock.TaskBlockLabel">
                 <Setter Property="TextDecorations" Value="Strikethrough"/>
                 <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}"/>
             </Style>
         </Style>
         
         <Style Selector="^:checked:pointerover">
-            <Style Selector="^ TextBlock">
+            <Style Selector="^ TextBlock.TaskBlockLabel">
                 <Setter Property="TextDecorations" Value="Strikethrough Underline"/>
                 <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}"/>
             </Style>
