@@ -32,9 +32,13 @@ public partial class TwTask : HashableObject
     [ObservableProperty]
     public required partial string Name { get; set; }
     
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [ObservableProperty]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public partial string? Icon { get; set; }
+    
+    [ObservableProperty]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public partial string? Description { get; set; }
     
     [JsonIgnore]
     [ObservableProperty]
@@ -213,8 +217,10 @@ public partial class TwTask : HashableObject
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
-        if (Icon is not null)
+        if (!string.IsNullOrEmpty(Icon))
             hashAlgorithm.Append(Encoding.UTF8.GetBytes(Icon));
+        if (!string.IsNullOrEmpty(Description))
+            hashAlgorithm.Append(Encoding.UTF8.GetBytes(Description));
         hashAlgorithm.Append(BitConverter.GetBytes(Points));
         // Interval.AppendHash(hashAlgorithm);
         hashAlgorithm.Append(BitConverter.GetBytes((int)OPattern));

@@ -16,7 +16,8 @@
         <vm:TaskDialogViewModel>
             <vm:TaskDialogViewModel.Task>
                 <core:TwTask Name="PreviewTask"
-                             Icon="👾">
+                             Icon="👾"
+                             Description="___________________________________________________________________">
                     <core:TwTask.Interval>
                         <twigInterval:WeekInterval DayOfWeekMap="Sunday"/>
                     </core:TwTask.Interval>
@@ -33,7 +34,7 @@
                    FontWeight="600"
                    Text="Edit Task"/>
         
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1">
             <StackPanel Margin="0,0,15,0">
                 <u:Form LabelPosition="Left" LabelWidth="*" HorizontalAlignment="Stretch">
                     <u:FormItem Label="Name">
@@ -53,6 +54,12 @@
                                  FontSize="24"
                                  MaxWidth="56"
                                  HorizontalAlignment="Left"/>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="Description">
+                        <TextBox Text="{Binding Task?.Description, Delay=500}" 
+                                 Classes="TextArea"
+                                 TextInputOptions.AutoCapitalization="True"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Points">
