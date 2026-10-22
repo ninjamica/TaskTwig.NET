@@ -10,11 +10,15 @@ using Irihi.Avalonia.Shared.Contracts;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
 using TaskTwig.ViewModels;
+using Ursa.Controls;
 
 namespace TaskTwig.Dialog.ViewModels;
 
 public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
 {
+    public OccurrencePattern[] DuePatternValues { get; } = Enum.GetValues<OccurrencePattern>();
+    public AutoExtendPattern[] ExtendValues { get; } = Enum.GetValues<AutoExtendPattern>();
+    
     [ObservableProperty]
     public partial TwTask? Task { get; set; }
 
@@ -24,8 +28,8 @@ public partial class TaskDialogViewModel : ViewModelBase, IDialogContext
     public static List<Type> IntervalTypes { get; } =
     [
         typeof(NoInterval),
-        typeof(SingleDateInterval),
         typeof(DailyInterval),
+        typeof(SingleDateInterval),
         typeof(UnitInterval),
         typeof(WeekInterval),
         typeof(MonthInterval),

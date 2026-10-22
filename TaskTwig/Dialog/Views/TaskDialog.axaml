@@ -68,20 +68,16 @@
                                             TextInputOptions.ContentType="Digits"/>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Interval">
+                    <u:FormItem Label="Due On">
                         <ComboBox ItemsSource="{Binding IntervalTypes}"
                                   DisplayMemberBinding="{Binding Converter={x:Static dialogViews:TaskDialog.IntervalTypeNameConverter}}"
                                   SelectedItem="{Binding SelectedInterval}"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Due Pattern" IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.ShowOPatternConverter}}">
-                        <u:EnumSelector EnumType="core:OccurrencePattern"
-                                        Value="{Binding Task?.OPattern}"/>
-                    </u:FormItem>
-                    
-                    <u:FormItem Label="Repeat" IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsRepeatingIntervalConverter}}">
-                        <u:EnumSelector EnumType="core:AutoExtendPattern"
-                                        Value="{Binding Task?.EPattern}" />
+                        <ComboBox ItemsSource="{Binding DuePatternValues}"
+                                  DisplayMemberBinding="{Binding Converter={x:Static dialogViews:TaskDialog.DuePatternNameConverter}}"
+                                  SelectedValue="{Binding Task?.OPattern}"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Date"
@@ -95,7 +91,7 @@
                         </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Unit Interval"
+                    <u:FormItem Label="Repeat"
                                 Content="{Binding Task?.Interval}"
                                 IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsUnitIntervalConverter}}">
                         <u:FormItem.DataTemplates>
@@ -114,9 +110,10 @@
                         </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Week Interval" 
+                    <u:FormItem Label="Repeat On" 
                                 Content="{Binding Task?.Interval}"
-                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsWeekIntervalConverter}}">
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsWeekOrMonthIntervalConverter}}">
+                        
                         <u:FormItem.DataTemplates>
                             <DataTemplate DataType="twigInterval:WeekInterval">
                                 <StackPanel Spacing="10">
@@ -130,13 +127,7 @@
                                                         TextInputOptions.ContentType="Number" />
                                 </StackPanel>
                             </DataTemplate>
-                        </u:FormItem.DataTemplates>
-                    </u:FormItem>
-                    
-                    <u:FormItem Label="Month Interval" 
-                                Content="{Binding Task?.Interval}"
-                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsMonthIntervalConverter}}">
-                        <u:FormItem.DataTemplates>
+                            
                             <DataTemplate DataType="twigInterval:MonthInterval">
                                 <StackPanel Spacing="10">
                                     <views:MonthDateSelect
@@ -151,12 +142,14 @@
                                         TextInputOptions.ContentType="Number" />
                                 </StackPanel>
                             </DataTemplate>
+                            
                         </u:FormItem.DataTemplates>
                     </u:FormItem>
                     
-                    <u:FormItem Label="Reference Date" 
+                    <u:FormItem Label="Starting On" 
                                 Content="{Binding Task?.Interval}"
-                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsRepeatingIntervalConverter}}">
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsRepeatingIntervalConverter}}"
+                                ToolTip.Tip="A reference date used for intervals that skip more than 1 unit (day, month, week) to determine which (day, month, week) should contain the first occurance.">
                         <u:FormItem.DataTemplates>
                             <DataTemplate DataType="twigInterval:RepeatingInterval">
                                 <u:DateOnlyPicker
@@ -164,6 +157,13 @@
                                     Width="150" />
                             </DataTemplate>
                         </u:FormItem.DataTemplates>
+                    </u:FormItem>
+                    
+                    <u:FormItem Label="After Missed" 
+                                IsVisible="{Binding Task?.Interval, Converter={x:Static dialogViews:TaskDialog.IsRepeatingIntervalConverter}}">
+                        <ComboBox ItemsSource="{Binding ExtendValues}"
+                                  DisplayMemberBinding="{Binding Converter={x:Static dialogViews:TaskDialog.ExtendPatternNameConverter}}"
+                                  SelectedValue="{Binding Task?.EPattern}"/>
                     </u:FormItem>
                     
                 </u:Form>
@@ -202,6 +202,7 @@
             <Button Content="Okay"
                     Command="{Binding Close}"
                     IsDefault="True"
+                    IsCancel="True"
                     Theme="{StaticResource SolidButton}"
                     HorizontalAlignment="Right"
                     DockPanel.Dock="Right"/>

@@ -13,10 +13,10 @@ namespace TaskTwig.Core;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AutoExtendPattern
 {
-    NoExtend,
+    Auto,
     OnCompletion,
     FromCompletion,
-    Auto
+    NoExtend,
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -24,7 +24,7 @@ public enum OccurrencePattern
 {
     DueBy,
     OccurOn,
-    StartOn
+    StartOn,
 }
 
 public partial class TwTask : HashableObject
