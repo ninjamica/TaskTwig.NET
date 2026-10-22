@@ -27,6 +27,7 @@
     <PackageVersion Include="Sortable.Avalonia" Version="2.4.0" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.13" />
     <PackageVersion Include="ThomasLevesque.WeakEvent" Version="4.1.0" />
+    <PackageVersion Include="Xamarin.AndroidX.AppCompat" Version="1.7.1.4" />
     <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.2.0.3" />
   </ItemGroup>
 </Project>
