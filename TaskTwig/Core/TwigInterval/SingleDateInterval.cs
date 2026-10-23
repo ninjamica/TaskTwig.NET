@@ -12,6 +12,7 @@ public partial class SingleDateInterval: HashableObject, ITwigInterval
     [JsonIgnore]
     public DateOnly? PreviousOccurrence => null;
 
+    [WatchForHash]
     [ObservableProperty]
     public required partial DateOnly Date { get; set; }
 

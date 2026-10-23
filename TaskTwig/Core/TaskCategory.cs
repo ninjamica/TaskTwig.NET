@@ -12,18 +12,22 @@ namespace TaskTwig.Core;
 
 public partial class TaskCategory : HashableObject
 {
-    [ObservableProperty] public partial string Name { get; set; } = "New Task Category";
+    [WatchForHash]
+    [ObservableProperty] 
+    public partial string Name { get; set; } = "New Task Category";
 
-    [ObservableProperty] public partial Color Color { get; set; } = Color.White;
-
+    [WatchForHash]
+    [ObservableProperty] 
+    public partial Color Color { get; set; } = Color.White;
+    
     [ObservableProperty]
-    [IgnoreHashable]
     public partial bool Expanded { get; set; } = true;
     
     // public int CompletedPoints => DoneTodayTasks.Sum(task  => task.Points);
     // public int TotalPoints => TodayTasks.Sum(task => task.Points) + DoneTodayTasks.Sum(task => task.Points);
     
     
+    [WatchForHash]
     [JsonInclude]
     [JsonConverter(typeof(SourceListJsonConverter<TwTask>))]
     private SourceList<TwTask> Tasks { get; init; } = new();

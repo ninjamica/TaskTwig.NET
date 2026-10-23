@@ -20,11 +20,13 @@ public enum DayOfWeekFlag
 
 public partial class WeekInterval : RepeatingInterval
 {
+    [WatchForHash]
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 week.")]
     public partial int WeekSpacing { get; set; } = 1;
 
+    [WatchForHash]
     [ObservableProperty]
     public partial DayOfWeekFlag DayOfWeekMap { get; set; } = DayOfWeekFlag.None;
 

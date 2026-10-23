@@ -8,11 +8,13 @@ namespace TaskTwig.Core.TwigInterval;
 
 public partial class MonthInterval : RepeatingInterval
 {
+    [WatchForHash]
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 month.")]
     public partial int MonthSpacing { get; set; } = 1;
     
+    [WatchForHash]
     [ObservableProperty] 
     [NotifyDataErrorInfo]
     [Range(0, 0x7FFF_FFFF, ErrorMessage = "Invalid month date map, must be between {0} and {1}.")]

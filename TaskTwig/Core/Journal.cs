@@ -7,10 +7,11 @@ namespace TaskTwig.Core;
 
 public partial class Journal : HashableObject
 {
-    
+    [WatchForHash]
     [ObservableProperty]
     public required partial DateOnly Date { get; set; }
     
+    [WatchForHash]
     [ObservableProperty]
     public partial string Text { get; set; } = "";
 

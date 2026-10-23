@@ -17,12 +17,13 @@ public enum DateUnit
 
 public partial class UnitInterval : RepeatingInterval
 {
-
+    [WatchForHash]
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 unit.")]
     public partial int UnitAmount { get; set; } = 1;
 
+    [WatchForHash]
     [ObservableProperty] 
     public partial DateUnit Unit { get; set; }
 

@@ -6,8 +6,13 @@ namespace TaskTwig.Core;
 
 public partial class Note : HashableObject
 {
-    [ObservableProperty] public required partial string Title { get; set; }
-    [ObservableProperty] public partial string Text { get; set; } = "";
+    [WatchForHash]
+    [ObservableProperty] 
+    public required partial string Title { get; set; }
+    
+    [WatchForHash]
+    [ObservableProperty] 
+    public partial string Text { get; set; } = "";
     
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {

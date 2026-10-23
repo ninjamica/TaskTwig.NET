@@ -29,26 +29,32 @@ public enum OccurrencePattern
 
 public partial class TwTask : HashableObject
 {
+    [WatchForHash]
     [ObservableProperty]
     public required partial string Name { get; set; }
     
+    [WatchForHash]
     [ObservableProperty]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public partial string? Icon { get; set; }
     
+    [WatchForHash]
     [ObservableProperty]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public partial string? Description { get; set; }
     
+    [WatchForHash]
     [JsonIgnore]
     [ObservableProperty]
     public partial TaskCategory? Category { get; set; }
     
+    [WatchForHash]
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Range(0, int.MaxValue, ErrorMessage = "Points must be a positive integer")]
     public partial int Points { get; set; } = 1;
 
+    [WatchForHash]
     [ObservableProperty]
     public required partial ITwigInterval Interval { get; set; }
     partial void OnIntervalChanged(ITwigInterval oldValue, ITwigInterval newValue)
@@ -61,6 +67,7 @@ public partial class TwTask : HashableObject
         _UpdateStatusVars();
     }
     
+    [WatchForHash]
     [ObservableProperty]
     public partial OccurrencePattern OPattern { get; set; }
     partial void OnOPatternChanged(OccurrencePattern value)
@@ -69,6 +76,7 @@ public partial class TwTask : HashableObject
         _UpdateStatusVars();
     }
     
+    [WatchForHash]
     [ObservableProperty]
     public partial AutoExtendPattern EPattern { get; set; }
     partial void OnEPatternChanged(AutoExtendPattern value)
@@ -77,24 +85,23 @@ public partial class TwTask : HashableObject
         _UpdateStatusVars();
     }
 
+    [WatchForHash]
     [ObservableProperty]
     public partial DateOnly? LastDone { get; set; }
     partial void OnLastDoneChanged(DateOnly? value) => _UpdateStatusVars();
 
+    [WatchForHash]
     public ObservableCollection<SubTask> SubTasks { get; init; } = [];
     
     
-    // TODO: Initialize
     [JsonIgnore]
     [ObservableProperty]
     public partial bool IsDone { get; private set; }
     
-    // TODO: Initialize
     [JsonIgnore]
     [ObservableProperty]
     public partial bool IsToday { get; private set; }
     
-    // TODO: Initialize
     [JsonIgnore]
     [ObservableProperty]
     public partial bool IsOverdue { get; private set; }
@@ -211,8 +218,14 @@ public partial class TwTask : HashableObject
         IsToday = _IsToday();
         IsOverdue = _IsOverdue();
     }
-
+    
     private void OnPropChanged(object? sender, PropertyChangedEventArgs e) => _UpdateStatusVars();
+
+    // protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    // {
+    //     base.OnPropertyChanged(e);
+    //     _UpdateStatusVars();
+    // }
 
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
@@ -222,15 +235,11 @@ public partial class TwTask : HashableObject
         if (!string.IsNullOrEmpty(Description))
             hashAlgorithm.Append(Encoding.UTF8.GetBytes(Description));
         hashAlgorithm.Append(BitConverter.GetBytes(Points));
-        // Interval.AppendHash(hashAlgorithm);
         hashAlgorithm.Append(BitConverter.GetBytes((int)OPattern));
         hashAlgorithm.Append(BitConverter.GetBytes((int)EPattern));
         
         if (LastDone is { } lastDone)
             hashAlgorithm.Append(BitConverter.GetBytes(lastDone.DayNumber));
-        
-        // foreach (var subTask in SubTasks)
-        //     subTask.AppendHash(hashAlgorithm);
     }
 
     protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)

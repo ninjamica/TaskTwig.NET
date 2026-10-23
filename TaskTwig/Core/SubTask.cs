@@ -11,6 +11,7 @@ public partial class SubTask : HashableObject
     [JsonIgnore]
     public TwTask? ParentTask { get; init; }
     
+    [WatchForHash]
     [ObservableProperty]
     public required partial string Name { get; set; }
 
@@ -22,6 +23,7 @@ public partial class SubTask : HashableObject
         set => LastDone = value ? TwigTime.Today : null;
     }
     
+    [WatchForHash]
     [ObservableProperty]
     private partial DateOnly? LastDone { get; set; }
 

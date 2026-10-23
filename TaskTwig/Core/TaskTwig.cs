@@ -75,10 +75,19 @@ public class HashCommit
 public partial class SleepValuesBacking : HashableObject
 {
     [JsonConverter(typeof(SleepSourceCacheConverter))]
-    public SourceCache<Sleep, DateOnly> SleepRecords { get; init; } = new(sleep => sleep.Date);
+    public SourceCache<Sleep, DateOnly> SleepRecords
+    {
+        get;
+        init
+        {
+            field = value;
+            field.Connect().Subscribe(_ => InvalidateCachedHash());
+        }
+    } = new(sleep => sleep.Date);
         
-    [ObservableProperty]
+    [WatchForHash]
     [JsonInclude]
+    [ObservableProperty]
     public partial DateTime? SleepStart { get; private set; }
         
     [JsonIgnore]
@@ -189,6 +198,7 @@ public partial class TaskTwig : ObservableObject
     {
         public bool AutoSync { get; init; }
         public TimeSpan DayStart { get; init; }
+        public TimeSpan NightStart { get; init; }
     }
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -371,6 +381,7 @@ public partial class TaskTwig : ObservableObject
             var settings = await JsonSerializer.DeserializeAsync<UserSettings>(file, SerializerOptions);
 
             TwigTime.DayStart = settings.DayStart;
+            TwigTime.NightStart = settings.NightStart;
             AutoSync = settings.AutoSync;
         }
         catch (FileNotFoundException)
@@ -458,7 +469,7 @@ public partial class TaskTwig : ObservableObject
         try
         {
             _BeginDataOperation();
-            await _WriteSettingsFile();
+            await WriteSettingsFile();
             return await _WriteDataFiles();
         }
         finally
@@ -516,9 +527,9 @@ public partial class TaskTwig : ObservableObject
         return diffFiles;
     }
 
-    private async Task _WriteSettingsFile()
+    public async Task WriteSettingsFile()
     {
-        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, DayStart = TwigTime.DayStart}, SerializerOptions);
+        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, DayStart = TwigTime.DayStart, NightStart = TwigTime.NightStart}, SerializerOptions);
         await File.WriteAllTextAsync(_settingsFile.TempPath, jsonText);
         File.Move(_settingsFile.TempPath, _settingsFile.LocalPath, true);
     }
@@ -683,7 +694,7 @@ public partial class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
             
-            await _WriteSettingsFile();
+            await WriteSettingsFile();
             await _WriteDataFiles();
             
             var remoteHashes = await _DownloadDbxHashes();
@@ -705,7 +716,7 @@ public partial class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
 
-            await _WriteSettingsFile();
+            await WriteSettingsFile();
             await _WriteDataFiles(progress);
 
             progress?.Report(new SyncProgress(SyncProgressStage.Compare));
@@ -752,7 +763,7 @@ public partial class TaskTwig : ObservableObject
         {
             _BeginDataOperation();
             
-            await _WriteSettingsFile();
+            await WriteSettingsFile();
             await _WriteDataFiles();
             await _PerformSyncTransactions(_dataFiles.Keys.ToDictionary(file => file, _ => DataFileAction.Upload));
 

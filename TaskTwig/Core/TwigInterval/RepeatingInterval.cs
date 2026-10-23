@@ -14,9 +14,17 @@ public enum RepeatPattern
 
 public abstract partial class RepeatingInterval : HashableObject, ITwigInterval
 {
-    [ObservableProperty] public partial DateOnly ReferenceDate { get; set; } = TwigTime.Today;
-    [ObservableProperty] public partial bool AutoRepeat { get; set; } = false;
-    [ObservableProperty] public partial RepeatPattern RepeatTo { get; set; } = RepeatPattern.OnAfter;
+    [WatchForHash]
+    [ObservableProperty] 
+    public partial DateOnly ReferenceDate { get; set; } = TwigTime.Today;
+    
+    [WatchForHash]
+    [ObservableProperty] 
+    public partial bool AutoRepeat { get; set; } = false;
+    
+    [WatchForHash]
+    [ObservableProperty] 
+    public partial RepeatPattern RepeatTo { get; set; } = RepeatPattern.OnAfter;
     
     [JsonIgnore]
     [ObservableProperty]

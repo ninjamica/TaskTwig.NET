@@ -691,8 +691,20 @@ public partial class MainViewModel : ViewModelBase
     
     [ObservableProperty]
     public partial TimeSpan DayStart { get; set; } = TwigTime.DayStart;
-    partial void OnDayStartChanged(TimeSpan value) => TwigTime.DayStart = value;
+    partial void OnDayStartChanged(TimeSpan value)
+    {
+        TwigTime.DayStart = value;
+        Task.Run(() => _twig.WriteSettingsFile());
+    }
     
+    [ObservableProperty]
+    public partial TimeSpan NightStart { get; set; } = TwigTime.NightStart;
+    partial void OnNightStartChanged(TimeSpan value)
+    {
+        TwigTime.NightStart = value;
+        Task.Run(() => _twig.WriteSettingsFile());
+    }
+
     // [ObservableProperty]
     // public partial TimeSpan NightStart { get; set; } = TwigTime.NightStart;
     // partial void OnNightStartChanged(TimeSpan value) => TwigTime.NightStart = value;

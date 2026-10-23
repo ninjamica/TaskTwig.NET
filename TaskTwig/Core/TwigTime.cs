@@ -2,6 +2,8 @@ using System;
 using System.ComponentModel;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using Avalonia.Threading;
 using WeakEvent;
 
 namespace TaskTwig.Core;
@@ -18,6 +20,8 @@ public static class TwigTime
         {
             field = value;
             Today = EffectiveDate(DateTime.Now);
+            Console.WriteLine($"DayStart={value}, Today={Today}");
+            SetRefreshTimer();
         }
     } = new(5, 0, 0);
 
@@ -75,6 +79,34 @@ public static class TwigTime
     public static void RefreshToday()
     {
         Today = EffectiveDate(DateTime.Now);
+    }
+    
+    static TwigTime()
+    {
+        RefreshTimer.Tick += OnRefreshTimerTick;
+        SetRefreshTimer();
+    }
+    
+    private static void OnRefreshTimerTick(object? sender, EventArgs e)
+    {
+        RefreshTimer.Stop();
+        RefreshToday();
+        SetRefreshTimer();
+        
+        Console.WriteLine($"Refreshing Today: Today={Today}");
+    }
+    
+    private static readonly DispatcherTimer RefreshTimer = new(DispatcherPriority.Background, Dispatcher.UIThread);
+
+    private static void SetRefreshTimer()
+    {
+        RefreshTimer.Stop();
+        
+        var now = DateTime.Now.TimeOfDay;
+        RefreshTimer.Interval = now < DayStart ? DayStart - now : TimeSpan.FromDays(1) + DayStart - now;
+        Console.WriteLine($"Setting Today Refresh Timer: Interval={RefreshTimer.Interval}");
+        
+        RefreshTimer.Start();
     }
 
     public static IObservable<EventPattern<PropertyChangedEventArgs>> TodayChangedReevaluator =>

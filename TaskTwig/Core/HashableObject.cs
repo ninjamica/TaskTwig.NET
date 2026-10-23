@@ -123,9 +123,9 @@ public abstract class HashableObject : ObservableValidator
     {
         base.OnPropertyChanged(e);
         
-        if (e.PropertyName is null 
-            || GetType().GetProperty(e.PropertyName) is not { } property 
-            || !Attribute.IsDefined(property, typeof(IgnoreHashableAttribute)))
+        if (e.PropertyName is not null 
+            && GetType().GetProperty(e.PropertyName) is { } property 
+            && Attribute.IsDefined(property, typeof(WatchForHashAttribute)))
         {
             InvalidateCachedHash();
         }
@@ -133,4 +133,4 @@ public abstract class HashableObject : ObservableValidator
 }
 
 [AttributeUsage(AttributeTargets.Property)]
-public class IgnoreHashableAttribute : Attribute;
+public class WatchForHashAttribute : Attribute;
