@@ -20,6 +20,7 @@ sealed class Program
 #if DEBUG
             .WithDeveloperTools()
 #endif
+            .WithDataAnnotationsValidation()
             .WithInterFont()
             .LogToTrace();
 }

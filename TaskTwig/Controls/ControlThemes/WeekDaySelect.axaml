@@ -1,0 +1,68 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:twigInterval="clr-namespace:TaskTwig.Core.TwigInterval"
+                    xmlns:controls="clr-namespace:TaskTwig.Controls">
+    <Design.PreviewWith>
+        <controls:WeekDaySelect WeekDayMap="{x:Static twigInterval:DayOfWeekFlag.Tuesday}"/>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="{x:Type controls:WeekDaySelect}" TargetType="controls:WeekDaySelect">
+
+        <Setter Property="Template">
+            <ControlTemplate TargetType="controls:WeekDaySelect">
+                <Border CornerRadius="{DynamicResource ButtonCornerRadius}" 
+                        ClipToBounds="True">
+                    <UniformGrid Rows="1" Columns="7">
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Monday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="M"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Tuesday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="Tu"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Wednesday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="W"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Thursday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="Th"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Friday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="F"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Saturday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="Sa"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                        <controls:WeekDayButton Day="{x:Static twigInterval:DayOfWeekFlag.Sunday}"
+                                             WeekDayMap="{TemplateBinding WeekDayMap, Mode=TwoWay}"
+                                             Content="Su"
+                                             CornerRadius="0"
+                                             HorizontalAlignment="Stretch"
+                                             Padding="8"/>
+                    </UniformGrid></Border>
+            </ControlTemplate>
+        </Setter>
+        
+        <Style Selector="^ /template/ controls|WeekDayButton">
+            <Setter Property="Theme" Value="{StaticResource {x:Type ToggleButton}}"/>
+        </Style>
+
+    </ControlTheme>
+
+</ResourceDictionary>

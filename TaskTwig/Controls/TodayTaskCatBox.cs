@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Windows.Input;
 using Avalonia;
@@ -10,7 +9,7 @@ using Avalonia.Input;
 using CommunityToolkit.Mvvm.Input;
 using TaskTwig.Core;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Controls;
 
 [TemplatePart(Name = "PART_HeaderGrid", Type = typeof(Grid), IsRequired = true)]
 public partial class TodayTaskCatBox : TemplatedControl

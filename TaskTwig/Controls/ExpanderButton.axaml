@@ -2,18 +2,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:views="clr-namespace:TaskTwig.Views"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="TaskTwig.Views.ExpanderButton">
+             x:Class="TaskTwig.Controls.ExpanderButton">
                 
     
     <Panel Cursor="Hand">
         <PathIcon Data="{StaticResource SemiIconChevronDown}"
                   Classes="Expander" Width="12" Height="12"
-                  IsVisible="{Binding $parent[views:ExpanderButton].IsExpanded}"/>
+                  IsVisible="{Binding $parent[controls:ExpanderButton].IsExpanded}"/>
         <PathIcon Data="{StaticResource SemiIconChevronRight}"
                   Classes="Expander" Width="12" Height="12"
-                  IsVisible="{Binding !$parent[views:ExpanderButton].IsExpanded}"/>
+                  IsVisible="{Binding !$parent[controls:ExpanderButton].IsExpanded}"/>
     </Panel>
     
     <UserControl.Styles>

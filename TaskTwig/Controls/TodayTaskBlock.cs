@@ -9,7 +9,7 @@ using Avalonia.Media;
 using TaskTwig.Core;
 using TaskTwig.Core.TwigInterval;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Controls;
 
 public class TodayTaskBlock : CheckBox
 {

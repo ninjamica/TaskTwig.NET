@@ -108,7 +108,7 @@ public partial class TwTask : HashableObject
 
     public TwTask()
     {
-        TwigTime.OnTodayChanged += OnPropChanged;
+        TwigTime.OnTodayChanged += (_, _) => _UpdateStatusVars();
     }
     
     internal bool _IsDone(DateOnly? lastDone)

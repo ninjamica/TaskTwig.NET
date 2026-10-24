@@ -14,15 +14,15 @@
         <FluentTheme />
         <semi:SemiTheme Locale="en-US" />
         <semi:UrsaSemiTheme Locale="en-US"/>
-        <StyleInclude Source="/Views/TodayTaskBlock.axaml"/>
+        <StyleInclude Source="/Controls/Styles/TodayTaskBlock.axaml"/>
     </Application.Styles>
              
      <Application.Resources>
-         <ResourceDictionary>
+         <ResourceDictionary >
              <FontFamily x:Key="NotoColorEmoji">avares://TaskTwig/Assets/Fonts/NotoColorEmoji_WindowsCompatible.ttf#Noto Color Emoji</FontFamily>
              <ResourceDictionary.MergedDictionaries>
-                 <ResourceInclude Source="avares://TaskTwig/Views/TodayTaskCatBox.axaml"/>
-                 <ResourceInclude Source="avares://TaskTwig/Views/WeekDaySelect.axaml"/>
+                 <ResourceInclude Source="/Controls/ControlThemes/TodayTaskCatBox.axaml"/>
+                 <ResourceInclude Source="/Controls/ControlThemes/WeekDaySelect.axaml"/>
              </ResourceDictionary.MergedDictionaries>
          </ResourceDictionary>
      </Application.Resources>

@@ -7,6 +7,7 @@
              xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
              xmlns:core="clr-namespace:TaskTwig.Core"
              xmlns:views="clr-namespace:TaskTwig.Views"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              x:Class="TaskTwig.Views.MainView"
              x:DataType="vm:MainViewModel"
@@ -140,13 +141,13 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             <ItemsRepeater ItemsSource="{Binding TaskCategoriesView}">
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate DataType="core:TaskCategory">
-                                        <views:TodayTaskCatBox TasksSource="{Binding TodayTasks}" 
+                                        <controls:TodayTaskCatBox TasksSource="{Binding TodayTasks}" 
                                                                HeaderText="{Binding Name}"
                                                                IsExpanded="{Binding Expanded}"
                                                                EditTaskCommand="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
                                                                Margin="10"
                                                                IsVisible="{Binding TodayTasks.Count}">
-                                            <views:TodayTaskCatBox.HeaderContextMenu>
+                                            <controls:TodayTaskCatBox.HeaderContextMenu>
                                                 <ContextMenu>
                                                     <MenuItem Header="Edit"
                                                               Command="{Binding #TabControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
@@ -163,12 +164,12 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                         </MenuItem.Icon>
                                                     </MenuItem>
                                                 </ContextMenu>
-                                            </views:TodayTaskCatBox.HeaderContextMenu>
-                                        </views:TodayTaskCatBox>
+                                            </controls:TodayTaskCatBox.HeaderContextMenu>
+                                        </controls:TodayTaskCatBox>
                                     </DataTemplate>
                                 </ItemsRepeater.ItemTemplate>
                             </ItemsRepeater>
-                            <views:TodayTaskCatBox TasksSource="{Binding DoneTodayTasks}" 
+                            <controls:TodayTaskCatBox TasksSource="{Binding DoneTodayTasks}" 
                                                    HeaderText="Done"
                                                    IsExpanded="{Binding TodayDoneExpanded}"
                                                    EditTaskCommand="{Binding EditTaskCommand}"
@@ -264,7 +265,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                       Cursor="Hand"
                                                       sortable:Sortable.IsDragHandle="True"
                                                       PointerPressed="CategoryDragStarted" />
-                                            <views:ExpanderButton Grid.Row="0" Grid.Column="0"
+                                            <controls:ExpanderButton Grid.Row="0" Grid.Column="0"
                                                                   IsExpanded="{Binding Category.Expanded}"
                                                                   Padding="3,0,5,0" />
                                             <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -463,6 +464,8 @@ public partial class MainViewModel : ViewModelBase
         response.EnsureSuccessStatusCode();
         var data = await response.Content.ReadAsByteArrayAsync();
         
+        Console.WriteLine($"Downloaded dbx photo: {data.Length}");
+        
         return new Bitmap(new MemoryStream(data));
     }
 
@@ -690,24 +693,41 @@ public partial class MainViewModel : ViewModelBase
     }
     
     [ObservableProperty]
-    public partial TimeSpan DayStart { get; set; } = TwigTime.DayStart;
+    [NotifyDataErrorInfo]
+    [CustomValidation(typeof(MainViewModel), nameof(ValidateDayStart))]
+    public partial TimeSpan DayStart { get; set; }
     partial void OnDayStartChanged(TimeSpan value)
     {
         TwigTime.DayStart = value;
-        Task.Run(() => _twig.WriteSettingsFile());
+        Dispatcher.UIThread.InvokeAsync(async () => await _twig.WriteSettingsFile());
     }
     
     [ObservableProperty]
-    public partial TimeSpan NightStart { get; set; } = TwigTime.NightStart;
+    [NotifyDataErrorInfo]
+    [CustomValidation(typeof(MainViewModel), nameof(ValidateNightStart))]
+    public partial TimeSpan NightStart { get; set; }
     partial void OnNightStartChanged(TimeSpan value)
     {
         TwigTime.NightStart = value;
-        Task.Run(() => _twig.WriteSettingsFile());
+        Dispatcher.UIThread.InvokeAsync(async () => await _twig.WriteSettingsFile());
     }
 
-    // [ObservableProperty]
-    // public partial TimeSpan NightStart { get; set; } = TwigTime.NightStart;
-    // partial void OnNightStartChanged(TimeSpan value) => TwigTime.NightStart = value;
+    
+    public static ValidationResult? ValidateDayStart(TimeSpan dayStart, ValidationContext context)
+    {
+        if (dayStart < TwigTime.NightStart)
+            return ValidationResult.Success;
+        
+        return new ValidationResult($"DayStart must be less than NightStart ({TwigTime.NightStart})");
+    }
+
+    public static ValidationResult? ValidateNightStart(TimeSpan nightStart, ValidationContext context)
+    {
+        if (nightStart > TwigTime.DayStart)
+            return ValidationResult.Success;
+        
+        return new ValidationResult($"NightStart must be greater than DayStart ({TwigTime.DayStart})");
+    }
 
     [ObservableProperty]
     public partial bool AutoSync { get; set; }
@@ -724,6 +744,11 @@ public partial class MainViewModel : ViewModelBase
         
         _twig.InitDataFromFiles().ContinueWith(_ =>
         {
+            DayStart = TwigTime.DayStart;
+            NightStart = TwigTime.NightStart;
+            IsSleeping = _twig.SleepValues.IsSleeping;
+            IsDaytime = TwigTime.IsDaytime();
+            
             if (Notes.Count > 0 && (SelectedNote is null || !Notes.Contains(SelectedNote)))
                 SelectedNote = Notes.First();
             
@@ -761,9 +786,6 @@ public partial class MainViewModel : ViewModelBase
             .AutoRefreshOnObservable(_ => TwigTime.TodayChangedReevaluator)
             .ToObservableOptional(TwigTime.Today.AddDays(-1))
             .Subscribe(sleep => HasSleepRecordLastNight = sleep.HasValue);
-
-        IsSleeping = _twig.SleepValues.IsSleeping;
-        IsDaytime = TwigTime.IsDaytime();
         _twig.Notes.Connect().Bind(out _notes).Subscribe();
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
@@ -802,9 +824,26 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    private void OnTodayChanged(object? sender, PropertyChangedEventArgs args)
+    private void OnTodayChanged(object? sender, TodayChangedEventArgs args)
     {
-        _twig.TodaysJournal();
+        IsDaytime = TwigTime.IsDaytime();
+        IsSleeping = _twig.SleepValues.IsSleeping;
+        OnPropertyChanged(nameof(IsSleeping));
+        OnPropertyChanged(nameof(IsDaytime));
+
+        if (SelectedJournal?.Date == args.PreviousDate)
+        {
+            if (SelectedJournal.IsEmpty())
+                _twig.Journals.Remove(args.PreviousDate);
+            
+            SelectedJournal = _twig.TodaysJournal();
+        }
+        else
+        {
+            _twig.TodaysJournal();
+        }
+        
+        Console.WriteLine($"Updated Today={TwigTime.Today} DayStart={TwigTime.DayStart} IsDaytime={IsDaytime}, IsSleeping={IsSleeping}");
     }
     
     private void JournalsOnCollectionChanged(IChangeSet<Journal, DateOnly> obj)

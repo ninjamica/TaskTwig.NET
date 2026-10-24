@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Controls;
 
 public partial class ExpanderButton : UserControl
 {

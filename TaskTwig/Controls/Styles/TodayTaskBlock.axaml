@@ -1,7 +1,8 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="using:TaskTwig.Views"
-        xmlns:core="clr-namespace:TaskTwig.Core">
+        xmlns:controls="using:TaskTwig.Controls"
+        xmlns:core="clr-namespace:TaskTwig.Core"
+        xmlns:views="clr-namespace:TaskTwig.Views">
     
     <Style Selector="controls|TodayTaskBlock">
 
@@ -19,7 +20,7 @@
                       x:DataType="core:TwTask">
                     <TextBlock Grid.Column="0"
                                Classes="TaskBlockLabel"
-                               Text="{Binding Icon, Converter={x:Static controls:MainView.AppendEmojiSelectorConverter}}"
+                               Text="{Binding Icon, Converter={x:Static views:MainView.AppendEmojiSelectorConverter}}"
                                FontSize="24"
                                FontFamily="{StaticResource NotoColorEmoji}"
                                VerticalAlignment="Center"

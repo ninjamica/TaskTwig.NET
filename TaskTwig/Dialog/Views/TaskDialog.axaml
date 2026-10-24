@@ -9,6 +9,7 @@
              xmlns:twigInterval="clr-namespace:TaskTwig.Core.TwigInterval"
              xmlns:views="clr-namespace:TaskTwig.Views"
              xmlns:dialogViews="clr-namespace:TaskTwig.Dialog.Views"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
              x:Class="TaskTwig.Dialog.Views.TaskDialog"
              x:DataType="vm:TaskDialogViewModel">
     
@@ -117,7 +118,7 @@
                         <u:FormItem.DataTemplates>
                             <DataTemplate DataType="twigInterval:WeekInterval">
                                 <StackPanel Spacing="10">
-                                    <views:WeekDaySelect WeekDayMap="{Binding DayOfWeekMap}"/>
+                                    <controls:WeekDaySelect WeekDayMap="{Binding DayOfWeekMap}"/>
                                     <u:NumericIntUpDown Value="{Binding WeekSpacing}"
                                                         Minimum="1" 
                                                         HorizontalContentAlignment="Center"

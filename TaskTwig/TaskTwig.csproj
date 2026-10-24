@@ -67,5 +67,9 @@
         <DependentUpon>DualDateTimeDialog.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="Controls\ExpanderButton.axaml.cs">
+        <DependentUpon>ExpanderButton.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>

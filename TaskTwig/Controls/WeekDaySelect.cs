@@ -3,7 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using TaskTwig.Core.TwigInterval;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Controls;
 
 public class WeekDaySelect : TemplatedControl
 {
