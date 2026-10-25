@@ -24,9 +24,11 @@ public struct DbxCredentials
     }
 }
 
-public class DbxAccountChangedEventArgs(bool isAccountConnected) : EventArgs
+public class DbxAccountChangedEventArgs(bool isAccountConnected, string? accountName, string? accountPhotoUri) : EventArgs
 {
     public bool IsAccountConnected { get; } = isAccountConnected;
+    public string? AccountName { get; } = accountName;
+    public string? AccountPhotoUri { get; } = accountPhotoUri;
 }
 
 public class DbxHandler
@@ -39,19 +41,19 @@ public class DbxHandler
     
     private DbxCredentials? _credentials;
 
-    private DropboxClient? DropboxClient
+    private DropboxClient? _dropboxClient;
+
+    private FullAccount? DbxAccount
     {
         get;
         set
         {
             field = value;
-            _accountChangedEventSource.Raise(this, new DbxAccountChangedEventArgs(IsAccountConnected));
+            _accountChangedEventSource.Raise(this, new DbxAccountChangedEventArgs(IsAccountConnected, GetAccountName(), GetAccountPhotoUri()));
         }
     }
-
-    private FullAccount? _dbxAccount;
     
-    public bool IsAccountConnected => DropboxClient is not null;
+    public bool IsAccountConnected => DbxAccount is not null;
 
     private readonly WeakEventSource<DbxAccountChangedEventArgs> _accountChangedEventSource = new();
     public event EventHandler<DbxAccountChangedEventArgs> AccountChanged
@@ -69,7 +71,7 @@ public class DbxHandler
 
     public async Task<bool> AuthFromStoredKeys()
     {
-        _dbxAccount = null;
+        DbxAccount = null;
         
         try
         {
@@ -92,11 +94,11 @@ public class DbxHandler
         {
             if (_credentials is { } credentials)
             {
-                DropboxClient = new DropboxClient(credentials.AccessToken, credentials.RefreshToken, 
+                _dropboxClient = new DropboxClient(credentials.AccessToken, credentials.RefreshToken, 
                                                    credentials.ExpiresAt, ApiKey, DbxClientConfig);
                 _WriteAuthKeys();
                 
-                _dbxAccount = await DropboxClient.Users.GetCurrentAccountAsync();
+                DbxAccount = await _dropboxClient.Users.GetCurrentAccountAsync();
                 return true;
             }
 
@@ -123,14 +125,14 @@ public class DbxHandler
     {
         var tokenResult = await oAuthFlow.ProcessCodeFlowAsync(code, ApiKey);
 
-        DropboxClient = new DropboxClient(tokenResult.AccessToken, 
+        _dropboxClient = new DropboxClient(tokenResult.AccessToken, 
                                           tokenResult.RefreshToken, 
                                           tokenResult.ExpiresAt!.Value, 
                                           ApiKey, DbxClientConfig);
 
         _credentials = new DbxCredentials(tokenResult.AccessToken, tokenResult.RefreshToken, tokenResult.ExpiresAt.Value);
 
-        _dbxAccount = await DropboxClient.Users.GetCurrentAccountAsync();
+        DbxAccount = await _dropboxClient.Users.GetCurrentAccountAsync();
         
         _WriteAuthKeys();
     }
@@ -144,35 +146,35 @@ public class DbxHandler
 
     public async Task Logout()
     {
-        if (DropboxClient is not null)
+        if (_dropboxClient is not null)
         {
-            await DropboxClient.Auth.TokenRevokeAsync();
-            DropboxClient.Dispose();
+            await _dropboxClient.Auth.TokenRevokeAsync();
+            _dropboxClient.Dispose();
             File.Delete(_credentialPath);
             
-            DropboxClient = null;
+            _dropboxClient = null;
             _credentials = null;
-            _dbxAccount = null;
+            DbxAccount = null;
         }
     }
 
     public async Task<Stream> DownloadContentStreamAsync(string dbxFilePath)
     {
-        if (DropboxClient is null)
+        if (_dropboxClient is null)
             throw new InvalidOperationException("Dropbox client not initialized!");
         
-        var download = await DropboxClient.Files.DownloadAsync(dbxFilePath);
+        var download = await _dropboxClient.Files.DownloadAsync(dbxFilePath);
         return await download.GetContentAsStreamAsync();
     }
 
     public async Task DownloadFileAsync(Stream fileStream, string dbxFilePath)
     {
-        if (DropboxClient is null)
+        if (_dropboxClient is null)
             throw new InvalidOperationException("Dropbox client not initialized!");
 
         try
         {
-            var download = await DropboxClient.Files.DownloadAsync(dbxFilePath);
+            var download = await _dropboxClient.Files.DownloadAsync(dbxFilePath);
             await using var downloadStream = await download.GetContentAsStreamAsync();
             await downloadStream.CopyToAsync(fileStream);
         }
@@ -188,10 +190,10 @@ public class DbxHandler
 
     public async Task<FileMetadata> UploadFileAsync(Stream fileStream, string dbxFilePath)
     {
-        if (DropboxClient is null)
+        if (_dropboxClient is null)
             throw new InvalidOperationException("Dropbox client not initialized!");
         
-        var metadata = await DropboxClient.Files.UploadAsync(dbxFilePath, mode: WriteMode.Overwrite.Instance, body:fileStream);
+        var metadata = await _dropboxClient.Files.UploadAsync(dbxFilePath, mode: WriteMode.Overwrite.Instance, body:fileStream);
         
         fileStream.Close();
         return metadata;
@@ -199,12 +201,12 @@ public class DbxHandler
 
     public string? GetAccountName()
     {
-        return _dbxAccount?.Name.DisplayName;
+        return DbxAccount?.Name.DisplayName;
     }
 
     public string? GetAccountPhotoUri()
     {
-        return _dbxAccount?.ProfilePhotoUrl;
+        return DbxAccount?.ProfilePhotoUrl;
     }
     
 }

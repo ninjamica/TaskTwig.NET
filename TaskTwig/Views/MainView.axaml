@@ -21,7 +21,8 @@ to set the actual DataContext for runtime, set the DataContext property in code 
     
     <Panel>
         <DockPanel>
-            <CommandBar DockPanel.Dock="{OnFormFactor Bottom, Mobile=Top}">
+            <CommandBar DockPanel.Dock="{OnFormFactor Bottom, Mobile=Top}"
+                        IsVisible="{Binding ShowCommandBar}">
                 <CommandBar.Content>
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="10,0,0,0">
                         <Panel>
@@ -653,11 +654,13 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 </ContentPage>
             
                 <ContentPage Header="Settings" Icon="{StaticResource SemiIconSetting}">
-                    <StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <u:Form LabelPosition="Left" LabelWidth="*" LabelAlignment="Right"
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
                         <u:Avatar Source="{Binding DbxPhoto^, FallbackValue=Null}"
                                   Content="DBX"
                                   Classes="Large"
-                                  Command="{Binding DbxSignInOutCommand}">
+                                  Command="{Binding DbxSignInOutCommand}"
+                                  ToolTip.Tip="{Binding IsDbxConnected, Converter={x:Static views:MainView.AccountButtonTextConverter}}">
                             <u:Avatar.HoverMask>
                                 <Border Opacity="0.6">
                                     <Panel>
@@ -682,17 +685,34 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             </u:Avatar.HoverMask>
                         </u:Avatar>
                         <TextBlock Text="{Binding DbxAccountName, TargetNullValue=No Account}"
-                                   TextAlignment="Center"/>
-                        <u:IconButton Content="{Binding IsDbxConnected, Converter={x:Static views:MainView.AccountButtonTextConverter}}"
-                                      Command="{Binding DbxSignInOutCommand}"
-                                      IsLoading="{Binding DbxSignInOutCommand.IsRunning}"/>
-                        <ToggleSwitch IsChecked="{Binding AutoSync}"
-                                      OffContent="Auto Save" OnContent="Auto Sync"/>
-                        <u:TimePicker SelectedTime="{Binding DayStart}"
-                                      DisplayFormat="h:mm tt" PanelFormat="hh mm tt"/>
-                        <u:TimePicker SelectedTime="{Binding NightStart}"
-                                      DisplayFormat="h:mm tt" PanelFormat="hh mm tt"/>
-                    </StackPanel>
+                                   TextAlignment="Center" />
+
+                        <u:FormItem Label="Auto Sync:">
+                            <ToggleSwitch IsChecked="{Binding AutoSync}"
+                                          OffContent="Auto Save" OnContent="Auto Sync" />
+                        </u:FormItem>
+
+                        <u:FormItem Label="Auto Fetch Interval:"
+                                    ToolTip.Tip="Interval at which to fetch or sync to the cloud, regardless of any local changes.">
+                            <u:NumericDoubleUpDown Value="{Binding FetchInterval}"
+                                                   Minimum="0.5"
+                                                   InnerRightContent="minutes"/>
+                        </u:FormItem>
+
+                        <u:FormItem Label="Show Command Bar:">
+                            <ToggleSwitch IsChecked="{Binding ShowCommandBar}"/>
+                        </u:FormItem>
+
+                        <u:FormItem Label="Start of Day:">
+                            <u:TimePicker SelectedTime="{Binding DayStart}"
+                                          DisplayFormat="h:mm tt" PanelFormat="hh mm tt" />
+                        </u:FormItem>
+
+                        <u:FormItem Label="Start of Night:">
+                            <u:TimePicker SelectedTime="{Binding NightStart}"
+                                          DisplayFormat="h:mm tt" PanelFormat="hh mm tt" />
+                        </u:FormItem>
+                    </u:Form>
                 </ContentPage>
             
             </TabbedPage>

@@ -68,11 +68,53 @@ public abstract class HashableObject : ObservableValidator
 
     public static void SetSaveTimer()
     {
+        if (IsReadingData) 
+            return;
+        
         AllCacheValid = false;
         SaveTimer.Stop();
         SaveTimer.Start();
-        
+
         Console.WriteLine("Hashable Data Changed");
+    }
+
+    private static readonly DispatcherTimer FetchTimer;
+
+    public static TimeSpan FetchInterval
+    {
+        get;
+        set
+        {
+            field = value;
+            FetchTimer.Interval = value;
+            ResetFetchTimer();
+        }
+    } = TimeSpan.FromMinutes(5);
+    
+    public static Action? FetchCallback
+    {
+        get;
+        set
+        {
+            field = value;
+            if (value is null)
+            {
+                FetchTimer.Stop();
+                FetchTimer.IsEnabled = false;
+            }
+            else
+            {
+                FetchTimer.IsEnabled = true;
+                FetchTimer.Start();
+            }
+        }
+    }
+    
+    public static void StopFetchTimer() => FetchTimer.Stop();
+    public static void ResetFetchTimer()
+    {
+        FetchTimer.Stop();
+        FetchTimer.Start();
     }
 
     static HashableObject()
@@ -80,6 +122,10 @@ public abstract class HashableObject : ObservableValidator
         SaveTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background, Dispatcher.UIThread);
         SaveTimer.IsEnabled = false;
         SaveTimer.Tick += OnSaveTimerElapsed;
+        
+        FetchTimer = new DispatcherTimer(FetchInterval, DispatcherPriority.Background, Dispatcher.UIThread);
+        FetchTimer.IsEnabled = false;
+        FetchTimer.Tick += OnFetchTimerElapsed;
     }
 
     private static void OnSaveTimerElapsed(object? sender, EventArgs e)
@@ -89,14 +135,18 @@ public abstract class HashableObject : ObservableValidator
         SaveCallback?.Invoke();
     }
     
+    private static void OnFetchTimerElapsed(object? sender, EventArgs e)
+    {
+        Console.WriteLine($"FetchTimer Tick");
+        FetchCallback?.Invoke();
+    }
+    
     private byte[]? _cachedHash;
     
     protected void InvalidateCachedHash()
     {
         _cachedHash = null;
-
-        if (!IsReadingData)
-            SetSaveTimer();
+        SetSaveTimer();
     }
 
     protected abstract void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm);

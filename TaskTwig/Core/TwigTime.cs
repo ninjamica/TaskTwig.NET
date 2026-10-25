@@ -25,9 +25,8 @@ public static class TwigTime
         set
         {
             field = value;
-            Today = EffectiveDate(DateTime.Now);
+            RefreshToday();
             Console.WriteLine($"DayStart={value}, Today={Today}");
-            SetRefreshTimer();
         }
     } = new(5, 0, 0);
 

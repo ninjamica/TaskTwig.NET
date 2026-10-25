@@ -194,11 +194,13 @@ public partial class TaskTwig : ObservableObject
         public string DbxPath { get; } = $"/{filename}.{extension}";
     }
 
-    public struct UserSettings
+    public readonly struct UserSettings
     {
         public bool AutoSync { get; init; }
+        public bool ShowCommandBar { get; init; }
         public TimeSpan DayStart { get; init; }
         public TimeSpan NightStart { get; init; }
+        public TimeSpan FetchInterval { get; init; }
     }
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -251,6 +253,17 @@ public partial class TaskTwig : ObservableObject
     
     [ObservableProperty]
     public partial bool AutoSync { get; set; }
+    partial void OnAutoSyncChanged(bool value)
+    {
+        Task.Run(async () => await WriteSettingsFile());
+    }
+    
+    [ObservableProperty]
+    public partial bool ShowCommandBar { get; set; } = true;
+    partial void OnShowCommandBarChanged(bool value)
+    {
+        Task.Run(async () => await WriteSettingsFile());
+    }
 
     public readonly DbxHandler DbxHandler;
 
@@ -382,7 +395,9 @@ public partial class TaskTwig : ObservableObject
 
             TwigTime.DayStart = settings.DayStart;
             TwigTime.NightStart = settings.NightStart;
+            HashableObject.FetchInterval = settings.FetchInterval;
             AutoSync = settings.AutoSync;
+            ShowCommandBar = settings.ShowCommandBar;
         }
         catch (FileNotFoundException)
         {
@@ -529,7 +544,7 @@ public partial class TaskTwig : ObservableObject
 
     public async Task WriteSettingsFile()
     {
-        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, DayStart = TwigTime.DayStart, NightStart = TwigTime.NightStart}, SerializerOptions);
+        var jsonText = JsonSerializer.Serialize(new UserSettings {AutoSync = AutoSync, ShowCommandBar = ShowCommandBar, DayStart = TwigTime.DayStart, NightStart = TwigTime.NightStart, FetchInterval = HashableObject.FetchInterval}, SerializerOptions);
         await File.WriteAllTextAsync(_settingsFile.TempPath, jsonText);
         File.Move(_settingsFile.TempPath, _settingsFile.LocalPath, true);
     }

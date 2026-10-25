@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="using:TaskTwig.Controls"
         xmlns:core="clr-namespace:TaskTwig.Core"
-        xmlns:views="clr-namespace:TaskTwig.Views">
+        xmlns:views="clr-namespace:TaskTwig.Views"
+        xmlns:u="https://irihi.tech/ursa">
     
     <Style Selector="controls|TodayTaskBlock">
 
@@ -11,7 +12,15 @@
         <Setter Property="MinHeight" Value="30"/>
         <Setter Property="IsChecked" Value="{Binding $self.BoundTask?.IsDone}"/>
         <Setter Property="Content" Value="{Binding $self.BoundTask}"/>
-        <Setter Property="ToolTip.Tip" Value="{Binding $self.BoundTask?.Description}" />
+        <Setter Property="ToolTip.Tip" Value="{Binding $self.BoundTask?.Description}"/>
+        <Style Selector="^ ToolTip">
+            <Setter Property="ContentTemplate">
+                <DataTemplate>
+                    <u:MarkdownLine Markdown="{ReflectionBinding}"
+                                    Foreground="{DynamicResource ToolTipForeground}"/>
+                </DataTemplate>
+            </Setter>
+        </Style>
 
         <Setter Property="ContentTemplate">
             <DataTemplate DataType="core:TwTask">

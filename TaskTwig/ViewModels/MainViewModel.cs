@@ -219,25 +219,6 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    // [RelayCommand]
-    // private void TaskListDrop(SortableDropEventArgs args)
-    // {
-    //     var targetCategory = _twig.TaskCategories.Items.FirstOrDefault(
-    //         cat => ReferenceEquals(cat.TasksView, args.TargetCollection));
-    //
-    //     if (targetCategory is not null && args.Item is TwTask task)
-    //     {
-    //         args.IsAccepted = true;
-    //         args.TransferMode = SortableTransferMode.Move;
-    //             
-    //         targetCategory.AddTask(task, args.NewIndex);
-    //     }
-    //     else
-    //     {
-    //         args.IsAccepted = false;
-    //     }
-    // }
-
     [RelayCommand]
     private void TaskListRelease(SortableReleaseEventArgs args)
     {
@@ -733,6 +714,18 @@ public partial class MainViewModel : ViewModelBase
     public partial bool AutoSync { get; set; }
     partial void OnAutoSyncChanged(bool value) => _twig.AutoSync = value;
 
+    [ObservableProperty]
+    public partial bool ShowCommandBar { get; set; }
+    partial void OnShowCommandBarChanged(bool value) => _twig.ShowCommandBar = value;
+
+    [ObservableProperty]
+    public partial double FetchInterval { get; set; }
+    partial void OnFetchIntervalChanged(double value)
+    {
+        HashableObject.FetchInterval = TimeSpan.FromMinutes(value);
+        Dispatcher.UIThread.InvokeAsync(async () => await _twig.WriteSettingsFile());
+    }
+
     public MainViewModel()
     {
         _twig = new Core.TaskTwig();
@@ -746,9 +739,11 @@ public partial class MainViewModel : ViewModelBase
         {
             DayStart = TwigTime.DayStart;
             NightStart = TwigTime.NightStart;
-            IsSleeping = _twig.SleepValues.IsSleeping;
             IsDaytime = TwigTime.IsDaytime();
-            
+            FetchInterval = HashableObject.FetchInterval.TotalMinutes;
+            IsSleeping = _twig.SleepValues.IsSleeping;
+            ShowCommandBar = _twig.ShowCommandBar;
+
             if (Notes.Count > 0 && (SelectedNote is null || !Notes.Contains(SelectedNote)))
                 SelectedNote = Notes.First();
             
@@ -756,9 +751,10 @@ public partial class MainViewModel : ViewModelBase
             JournalSelectedDate = _twig.TodaysJournal().Date.ToDateTime(TimeOnly.MinValue);
             Dispatcher.UIThread.Post(UpdateJournalBlackoutDates);
             HashableObject.SaveCallback = OnSaveTimerTick;
+            HashableObject.FetchCallback = OnFetchTimerTick;
 
             if (IsDbxConnected)
-                Dispatcher.UIThread.InvokeAsync(() => FetchDbxCommand.ExecuteAsync(null));
+                OnFetchTimerTick();
         });
         
         _twig.TaskCategories.Connect()
@@ -799,6 +795,17 @@ public partial class MainViewModel : ViewModelBase
                 await DbxSyncCommand.ExecuteAsync(null);
             else
                 await SaveFilesCommand.ExecuteAsync(null);
+        });
+    }
+
+    private void OnFetchTimerTick()
+    {
+        Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            if (AutoSync)
+                await DbxSyncCommand.ExecuteAsync(null);
+            else
+                await FetchDbxCommand.ExecuteAsync(null);
         });
     }
 
@@ -860,8 +867,8 @@ public partial class MainViewModel : ViewModelBase
         Dispatcher.UIThread.Post(() =>
         {
             IsDbxConnected = e.IsAccountConnected;
-            DbxAccountName = _twig.DbxHandler.GetAccountName();
-            DbxPhoto = _getDbxPhoto(_twig.DbxHandler.GetAccountPhotoUri());
+            DbxAccountName = e.AccountName;
+            DbxPhoto = _getDbxPhoto(e.AccountPhotoUri);
         });
     }
 
