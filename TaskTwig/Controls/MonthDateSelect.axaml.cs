@@ -5,7 +5,7 @@ using Avalonia.Controls.Metadata;
 using Avalonia.Data;
 using Ursa.Controls;
 
-namespace TaskTwig.Views;
+namespace TaskTwig.Controls;
 
 public partial class MonthDateSelect : UserControl
 {

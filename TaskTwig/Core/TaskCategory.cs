@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DynamicData;
+using TaskTwig.Core.TwigInterval;
 using TaskTwig.Core.Util;
 
 namespace TaskTwig.Core;
@@ -85,9 +86,14 @@ public partial class TaskCategory : HashableObject
     public void AddTask(TwTask task, int index)
     {
         InvalidateCachedHash();
-        task.Category?.RemoveTask(task);
+        
+        if (task.Category != this)
+            task.Category?.RemoveTask(task);
+        
         Tasks.Insert(index, task);
         task.Category = this;
+
+        Console.WriteLine($"{Name}: AddTask {task.Name}:{index}");
     }
 
     public void MoveTask(int originalIndex, int destinationIndex)
@@ -98,6 +104,8 @@ public partial class TaskCategory : HashableObject
         
         Tasks.Move(originalIndex, destinationIndex);
         InvalidateCachedHash();
+
+        Console.WriteLine($"{Name}: MoveTask {originalIndex}:{destinationIndex}");
     }
 
     public void MoveTask(TwTask task, int destinationIndex) => MoveTask(Tasks.Items.IndexOf(task), destinationIndex);
@@ -105,7 +113,12 @@ public partial class TaskCategory : HashableObject
     public void RemoveTask(TwTask task)
     {
         if(Tasks.Remove(task))
+        {
+            task.Category = null;
             InvalidateCachedHash();
+
+            Console.WriteLine($"{Name}: RemoveTask {task.Name}");
+        }
     }
 
     public void RemovePermaDoneTasks()
@@ -114,7 +127,7 @@ public partial class TaskCategory : HashableObject
         {
             foreach (var task in list)
             {
-                if (task is { IsDone: true, Interval.NextOccurrence: null })
+                if (task is { IsDone: true, Interval: NoInterval or SingleDateInterval })
                 {
                     list.Remove(task);
                 }

@@ -1,0 +1,74 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:TaskTwig.Controls"
+                    xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia.Tight">
+    
+    <Design.PreviewWith>
+        <DockPanel Margin="20">
+            <controls:MarkdownTextBox Markdown="~~*test*~~"
+                                      PlaceholderText="Type here..."
+                                      DockPanel.Dock="Top"
+                                      Width="200" Height="300"
+                                      VerticalAlignment="Stretch"
+                                      HorizontalAlignment="Stretch"/>
+            <Button DockPanel.Dock="Bottom"
+                    Content="Click here to de-select"
+                    HorizontalAlignment="Center"/>
+        </DockPanel>
+    </Design.PreviewWith>
+    
+    <ControlTheme x:Key="{x:Type controls:MarkdownTextBox}" TargetType="controls:MarkdownTextBox">
+        <Setter Property="Cursor" Value="Ibeam"/>
+        
+        <Setter Property="Template">
+            <ControlTemplate TargetType="controls:MarkdownTextBox">
+                <Panel>
+                    <TextBlock Text="{TemplateBinding PlaceholderText}"
+                               Foreground="{DynamicResource TextBoxPlaceholderForeground}"
+                               Padding="12,0,12,0"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch">
+                        <TextBlock.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <TemplateBinding Property="Markdown" 
+                                                 Converter="{x:Static StringConverters.IsNullOrEmpty}"/>
+                                <TemplateBinding Property="IsEditing" Converter="{x:Static BoolConverters.Not}"/>
+                            </MultiBinding>
+                        </TextBlock.IsVisible>
+                    </TextBlock>
+                    <!-- <u:MarkdownLine x:Name="PART_Markdown"  -->
+                    <!--                 Markdown="{TemplateBinding Markdown, Mode=TwoWay}" -->
+                    <!--                 IsVisible="{TemplateBinding IsEditing, Converter={x:Static BoolConverters.Not}}" -->
+                    <!--                 Padding="12,0,12,0" -->
+                    <!--                 Foreground="{DynamicResource SemiColorText1}" -->
+                    <!--                 Background="Transparent" -->
+                    <!--                 HorizontalAlignment="Stretch" -->
+                    <!--                 VerticalAlignment="Stretch"/> -->
+                    <mdxaml:MarkdownScrollViewer x:Name="PART_Markdown" 
+                                                 Markdown="{TemplateBinding Markdown, Mode=TwoWay}"
+                                                 IsVisible="{TemplateBinding IsEditing, Converter={x:Static BoolConverters.Not}}"
+                                                 Padding="12,0,12,0"/>
+                    <TextBox x:Name="PART_TextBox"
+                             Theme="{StaticResource LooklessTextBox}"
+                             Classes="TextArea"
+                             Foreground="{DynamicResource SemiColorText1}"
+                             Text="{TemplateBinding Markdown, Mode=TwoWay}"
+                             PlaceholderText="{TemplateBinding PlaceholderText}"
+                             IsVisible="{TemplateBinding IsEditing}"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             ClearSelectionOnLostFocus="True"
+                             HorizontalAlignment="Stretch"
+                             HorizontalContentAlignment="Left"
+                             VerticalAlignment="Stretch"
+                             VerticalContentAlignment="Top"
+                             TextInputOptions.ContentType="Normal"
+                             TextInputOptions.ReturnKeyType="Return"
+                             TextInputOptions.AutoCapitalization="True"/>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+    
+</ResourceDictionary>

@@ -44,6 +44,8 @@
             
             <Button Content="Okay"
                     Command="{Binding Close}"
+                    IsDefault="True"
+                    IsCancel="True"
                     Theme="{StaticResource SolidButton}"
                     HorizontalAlignment="Right"
                     DockPanel.Dock="Right"/>

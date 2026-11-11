@@ -111,19 +111,23 @@ public abstract class HashableObject : ObservableValidator
     }
     
     public static void StopFetchTimer() => FetchTimer.Stop();
-    public static void ResetFetchTimer()
+    public static void ResetFetchTimer(bool invokeNow = false)
     {
         FetchTimer.Stop();
+        
+        if (invokeNow)
+            OnFetchTimerElapsed(null, EventArgs.Empty);    
+        
         FetchTimer.Start();
     }
 
     static HashableObject()
     {
-        SaveTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background, Dispatcher.UIThread);
+        SaveTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Normal, Dispatcher.UIThread);
         SaveTimer.IsEnabled = false;
         SaveTimer.Tick += OnSaveTimerElapsed;
         
-        FetchTimer = new DispatcherTimer(FetchInterval, DispatcherPriority.Background, Dispatcher.UIThread);
+        FetchTimer = new DispatcherTimer(FetchInterval, DispatcherPriority.Normal, Dispatcher.UIThread);
         FetchTimer.IsEnabled = false;
         FetchTimer.Tick += OnFetchTimerElapsed;
     }
@@ -149,6 +153,15 @@ public abstract class HashableObject : ObservableValidator
         SetSaveTimer();
     }
 
+    /// <summary>
+    /// Method that should be overriden by derived classes to hash its properties. Use the provided hashing algorithm.
+    /// This method should not attempt to hash the properties of any children which derive from
+    /// <see cref="HashableObject"/> (for that, see <see cref="AppendHashableChildren"/>).
+    /// </summary>
+    /// <param name="hashAlgorithm">The hashing algorithm to hash properties with. Simply use a
+    /// <see cref="NonCryptographicHashAlgorithm"/> method (such as
+    /// <see cref="NonCryptographicHashAlgorithm.Append(byte[])"/>) to append bytes that represent the hashable
+    /// data of each property.</param>
     protected abstract void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm);
 
     protected virtual void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher) {}

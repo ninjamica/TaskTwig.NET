@@ -103,8 +103,7 @@ public partial class MainViewModel : ViewModelBase
         var task = new TwTask()
         {
             Name = "New Task",
-            Interval = new NoInterval(),
-            Category = category
+            Interval = new NoInterval()
         };
         category.AddTask(task);
         category.Expanded = true;
@@ -117,8 +116,7 @@ public partial class MainViewModel : ViewModelBase
         var task = new TwTask()
         {
             Name = "New Task",
-            Interval = new NoInterval(),
-            Category = category
+            Interval = new NoInterval()
         };
         category.AddTask(task, 0);
         category.Expanded = true;
@@ -324,12 +322,38 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial DateTime? JournalSelectedDate { get; set; }
 
-    partial void OnJournalSelectedDateChanged(DateTime? value)
+    partial void OnJournalSelectedDateChanged(DateTime? oldValue, DateTime? newValue)
     {
-        if (value is { } date)
+        if (oldValue is
+            { } oldDate &&
+            DateOnly.FromDateTime(oldDate) is var oldDateOnly &&
+            oldDateOnly != TwigTime.Today &&
+            _twig.Journals.Lookup(oldDateOnly) is var oldJournal &&
+            (oldJournal.ValueOrDefault()?.IsEmpty() ?? false))
         {
-            SelectedJournal = _twig.Journals.Lookup(DateOnly.FromDateTime(date)).ValueOrDefault();
+            _twig.Journals.Remove(oldDateOnly);
         }
+        if (newValue is { } newDate)
+        {
+            SelectedJournal = _twig.Journals.Lookup(DateOnly.FromDateTime(newDate)).ValueOrDefault();
+        }
+    }
+
+    [RelayCommand]
+    private void JournalCalendarDayClicked(DateTime? dateTime)
+    {
+        Console.WriteLine($"JournalCalendarDayClicked: {dateTime}");
+
+        if (!dateTime.HasValue)
+            return;
+        
+        var date = DateOnly.FromDateTime(dateTime.Value);
+        if (!_twig.Journals.Keys.Contains(date))
+            _twig.Journals.AddOrUpdate(new Journal {Date = date});
+        
+        UpdateJournalBlackoutDates();
+        
+        JournalSelectedDate = dateTime;
     }
 
     public CalendarBlackoutDatesCollection? JournalBlackoutDates
@@ -346,7 +370,7 @@ public partial class MainViewModel : ViewModelBase
     {
         if (JournalBlackoutDates is null) 
             return;
-        
+
         var dates = _twig.Journals.Keys.Order().ToList();
         
         JournalBlackoutDates.Clear();

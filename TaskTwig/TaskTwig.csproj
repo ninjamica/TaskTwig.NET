@@ -27,6 +27,7 @@
         <PackageReference Include="Irihi.Avalonia.Shared" />
         <PackageReference Include="Irihi.Ursa" />
         <PackageReference Include="Irihi.Ursa.Themes.Semi" />
+        <PackageReference Include="Markdown.Avalonia.Tight" />
         <PackageReference Include="ObservableCollections" />
         <PackageReference Include="Semi.Avalonia" />
         <PackageReference Include="Sortable.Avalonia" />
@@ -35,10 +36,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Views\MonthDateSelect.axaml.cs">
-        <DependentUpon>MonthDateSelect.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="Dialog\Views\NotesDrawer.axaml.cs">
         <DependentUpon>NotesDrawer.axaml</DependentUpon>
         <SubType>Code</SubType>
@@ -69,6 +66,10 @@
       </Compile>
       <Compile Update="Controls\ExpanderButton.axaml.cs">
         <DependentUpon>ExpanderButton.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Controls\MonthDateSelect.axaml.cs">
+        <DependentUpon>MonthDateSelect.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>

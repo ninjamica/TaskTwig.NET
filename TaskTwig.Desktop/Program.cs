@@ -1,5 +1,6 @@
 ﻿using System;
 using Avalonia;
+using Avalonia.Logging;
 
 namespace TaskTwig.Desktop;
 
@@ -19,6 +20,7 @@ sealed class Program
             // .UseWaylandWithFallback()
 #if DEBUG
             .WithDeveloperTools()
+            .LogToTrace(LogEventLevel.Verbose, LogArea.Binding)
 #endif
             .WithDataAnnotationsValidation()
             .WithInterFont()

@@ -46,7 +46,7 @@ public partial class TwTask : HashableObject
     [WatchForHash]
     [JsonIgnore]
     [ObservableProperty]
-    public partial TaskCategory? Category { get; set; }
+    public partial TaskCategory? Category { get; internal set; }
     
     [WatchForHash]
     [ObservableProperty]
@@ -108,7 +108,12 @@ public partial class TwTask : HashableObject
 
     public TwTask()
     {
-        TwigTime.OnTodayChanged += (_, _) => _UpdateStatusVars();
+        TwigTime.OnTodayChanged += (_, _) =>
+        {
+            if (Interval is RepeatingInterval repeatingInterval)
+                repeatingInterval.RecalcOccurrences();
+            _UpdateStatusVars();
+        };
     }
     
     internal bool _IsDone(DateOnly? lastDone)
@@ -119,32 +124,46 @@ public partial class TwTask : HashableObject
         if (lastDone == TwigTime.Today || Interval.PreviousOccurrence is null)
             return true;
         
-        return lastDone.Value.CompareTo(Interval.PreviousOccurrence.Value) > 0;
+        return OPattern switch
+        {
+            OccurrencePattern.DueBy or OccurrencePattern.OccurOn => lastDone > Interval.PreviousOccurrence,
+            OccurrencePattern.StartOn => lastDone > Interval.NextOccurrence,
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
     
     public void SetDone(bool done)
     {
+        if (IsDone == done)
+            return;
+        
         LastDone = done ? TwigTime.Today : null;
 
         if (Interval is RepeatingInterval repeatingInterval)
         {
             switch (EPattern)
             {
+                case AutoExtendPattern.Auto:
+                    break; // Short circuit Auto as we don't need to touch it
+                
+                case AutoExtendPattern.NoExtend when done:
+                {
+                    repeatingInterval.IncrementOnce();
+                    break;
+                }
                 case AutoExtendPattern.OnCompletion when done:
                 {
-                    if (repeatingInterval.NextFromToday() is { } nextFromToday)
-                        repeatingInterval.ReferenceDate = nextFromToday;
+                    repeatingInterval.SkipThroughToday();
                     break;
                 }
-                case AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend when done:
+                case AutoExtendPattern.FromCompletion when done:
                 {
-                    repeatingInterval.ReferenceDate = TwigTime.Today;
+                    repeatingInterval.RestartFromToday();
                     break;
                 }
-                case AutoExtendPattern.OnCompletion or AutoExtendPattern.FromCompletion or AutoExtendPattern.NoExtend:
+                case AutoExtendPattern.NoExtend or AutoExtendPattern.OnCompletion or AutoExtendPattern.FromCompletion:
                 {
-                    if (repeatingInterval.PreviousOccurrence != null)
-                        repeatingInterval.ReferenceDate = repeatingInterval.PreviousOccurrence.Value;
+                    repeatingInterval.DecrementOnce();
                     break;
                 }
             }
@@ -166,9 +185,9 @@ public partial class TwTask : HashableObject
 
         return OPattern switch
         {
-            OccurrencePattern.OccurOn => TwigTime.Today.CompareTo(Interval.NextOccurrence.Value) == 0,
+            OccurrencePattern.OccurOn => TwigTime.Today == Interval.NextOccurrence.Value,
             OccurrencePattern.DueBy => true,
-            OccurrencePattern.StartOn => TwigTime.Today.CompareTo(Interval.NextOccurrence.Value) >= 0,
+            OccurrencePattern.StartOn => TwigTime.Today >= Interval.NextOccurrence,
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -197,8 +216,8 @@ public partial class TwTask : HashableObject
         {
             repeatingInterval.RepeatTo = pattern switch
             {
-                OccurrencePattern.OccurOn or OccurrencePattern.DueBy => RepeatPattern.OnAfter,
-                OccurrencePattern.StartOn => RepeatPattern.OnBefore,
+                OccurrencePattern.OccurOn or OccurrencePattern.DueBy => RepeatPattern.EndsOnDay,
+                OccurrencePattern.StartOn => RepeatPattern.StartsOnDay,
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), pattern, null)
             };
         }

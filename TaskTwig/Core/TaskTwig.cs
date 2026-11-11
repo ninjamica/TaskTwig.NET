@@ -198,9 +198,9 @@ public partial class TaskTwig : ObservableObject
     {
         public bool AutoSync { get; init; }
         public bool ShowCommandBar { get; init; }
-        public TimeSpan DayStart { get; init; }
-        public TimeSpan NightStart { get; init; }
-        public TimeSpan FetchInterval { get; init; }
+        public TimeSpan? DayStart { get; init; }
+        public TimeSpan? NightStart { get; init; }
+        public TimeSpan? FetchInterval { get; init; }
     }
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -393,9 +393,15 @@ public partial class TaskTwig : ObservableObject
             await using var file = File.OpenRead(_settingsFile.LocalPath);
             var settings = await JsonSerializer.DeserializeAsync<UserSettings>(file, SerializerOptions);
 
-            TwigTime.DayStart = settings.DayStart;
-            TwigTime.NightStart = settings.NightStart;
-            HashableObject.FetchInterval = settings.FetchInterval;
+            if (settings.DayStart.HasValue)
+                TwigTime.DayStart = settings.DayStart.Value;
+            
+            if (settings.NightStart.HasValue)
+                TwigTime.NightStart = settings.NightStart.Value;
+            
+            if (settings.FetchInterval.HasValue)
+                HashableObject.FetchInterval = settings.FetchInterval.Value;
+            
             AutoSync = settings.AutoSync;
             ShowCommandBar = settings.ShowCommandBar;
         }

@@ -97,6 +97,11 @@ public static class TwigTime
         Today = EffectiveDate(DateTime.Now);
         SetRefreshTimer();
     }
+
+    public static void StopTodayTimer()
+    {
+        RefreshTimer.Stop();
+    }
     
     public static event EventHandler<TodayChangedEventArgs> OnTodayChanged
     {
@@ -115,7 +120,7 @@ public static class TwigTime
         SetRefreshTimer();
     }
     
-    private static readonly DispatcherTimer RefreshTimer = new(DispatcherPriority.Background, Dispatcher.UIThread);
+    private static readonly DispatcherTimer RefreshTimer = new(DispatcherPriority.Normal, Dispatcher.UIThread);
     private static readonly WeakEventSource<TodayChangedEventArgs> TodayChangedEventSource = new();
     
     private static void OnRefreshTimerTick(object? sender, EventArgs e)

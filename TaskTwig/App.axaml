@@ -15,6 +15,7 @@
         <semi:SemiTheme Locale="en-US" />
         <semi:UrsaSemiTheme Locale="en-US"/>
         <StyleInclude Source="/Controls/Styles/TodayTaskBlock.axaml"/>
+        <StyleInclude Source="/Controls/Styles/JournalCalendar.axaml"/>
     </Application.Styles>
              
      <Application.Resources>
@@ -23,6 +24,7 @@
              <ResourceDictionary.MergedDictionaries>
                  <ResourceInclude Source="/Controls/ControlThemes/TodayTaskCatBox.axaml"/>
                  <ResourceInclude Source="/Controls/ControlThemes/WeekDaySelect.axaml"/>
+                 <ResourceInclude Source="/Controls/ControlThemes/MarkdownTextBox.axaml"/>
              </ResourceDictionary.MergedDictionaries>
          </ResourceDictionary>
      </Application.Resources>

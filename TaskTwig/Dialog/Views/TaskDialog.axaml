@@ -7,7 +7,6 @@
              xmlns:vm="using:TaskTwig.Dialog.ViewModels"
              xmlns:core="clr-namespace:TaskTwig.Core"
              xmlns:twigInterval="clr-namespace:TaskTwig.Core.TwigInterval"
-             xmlns:views="clr-namespace:TaskTwig.Views"
              xmlns:dialogViews="clr-namespace:TaskTwig.Dialog.Views"
              xmlns:controls="clr-namespace:TaskTwig.Controls"
              x:Class="TaskTwig.Dialog.Views.TaskDialog"
@@ -18,7 +17,7 @@
             <vm:TaskDialogViewModel.Task>
                 <core:TwTask Name="PreviewTask"
                              Icon="👾"
-                             Description="___________________________________________________________________">
+                             Description="hi">
                     <core:TwTask.Interval>
                         <twigInterval:WeekInterval DayOfWeekMap="Sunday"/>
                     </core:TwTask.Interval>
@@ -58,9 +57,10 @@
                     </u:FormItem>
                     
                     <u:FormItem Label="Description">
-                        <TextBox Text="{Binding Task?.Description, Delay=500}" 
+                        <TextBox Text="{Binding Task?.Description, Delay=500}"
                                  Classes="TextArea"
                                  TextInputOptions.AutoCapitalization="True"/>
+                        <!-- <controls:MarkdownTextBox Markdown="{Binding Task?.Description}"/> -->
                     </u:FormItem>
                     
                     <u:FormItem Label="Points">
@@ -131,7 +131,7 @@
                             
                             <DataTemplate DataType="twigInterval:MonthInterval">
                                 <StackPanel Spacing="10">
-                                    <views:MonthDateSelect
+                                    <controls:MonthDateSelect
                                         DateMap="{Binding DaysOfMonthMap, FallbackValue=0}" />
                                     <u:NumericIntUpDown
                                         Value="{Binding MonthSpacing}"
@@ -189,16 +189,16 @@
         
         <DockPanel Grid.Row="2">
             
-            <Button Command="{Binding Delete}"
-                    Classes="Danger"
-                    Theme="{StaticResource SolidButton}"
-                    HorizontalAlignment="Left"
-                    DockPanel.Dock="Left">
-                <StackPanel Orientation="Horizontal" Spacing="6">
+            <u:IconButton Command="{Binding Delete}"
+                          Content="Delete"
+                          Classes="Danger"
+                          Theme="{StaticResource SolidIconButton}"
+                          HorizontalAlignment="Left"
+                          DockPanel.Dock="Left">
+                <u:IconButton.Icon>
                     <PathIcon Data="{StaticResource SemiIconDelete}"/>
-                    <TextBlock Text="Delete"/>
-                </StackPanel>
-            </Button>
+                </u:IconButton.Icon>
+            </u:IconButton>
             
             <Button Content="Okay"
                     Command="{Binding Close}"

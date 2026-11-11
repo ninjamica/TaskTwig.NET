@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
+             x:Class="TaskTwig.Controls.MonthDateSelect"
+             x:Name="DateControl">
+    
+    <UserControl.Styles>
+        <Style Selector="u|DatePickerCalendarDayButton:in-range">
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+    </UserControl.Styles>
+    
+    <Border Background="{DynamicResource SemiColorBackground3}" CornerRadius="3">
+        <UniformGrid x:Name="DateGrid" Columns="7">
+            <controls:MonthDateCell Date="1" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="2" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="3" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="4" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="5" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="6" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="7" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="8" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="9" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="10" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="11" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="12" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="13" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="14" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="15" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="16" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="17" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="18" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="19" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="20" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="21" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="22" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="23" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="24" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="25" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="26" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="27" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="28" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="29" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="30" DateMap="{Binding #DateControl.DateMap}"/>
+            <controls:MonthDateCell Date="31" DateMap="{Binding #DateControl.DateMap}"/>
+        </UniformGrid>
+    </Border>
+    
+</UserControl>

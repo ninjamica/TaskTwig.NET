@@ -1,0 +1,20 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:TaskTwig.Controls">
+    <Design.PreviewWith>
+        <controls:JournalCalendar/>
+    </Design.PreviewWith>
+
+    <Style Selector="controls|JournalCalendar">
+        
+        <Setter Property="Theme" Value="{StaticResource {x:Type Calendar}}"/>
+        <Setter Property="DisplayMode" Value="Month"/>
+        <Setter Property="SelectionMode" Value="SingleDate"/>
+        
+        <Style Selector="^ CalendarDayButton">
+            <Setter Property="Command" Value="{Binding $parent[controls:JournalCalendar].DayButtonPressedCommand}"/>
+            <Setter Property="CommandParameter" Value="{Binding $self}"/>
+        </Style>
+        
+    </Style>
+</Styles>

@@ -20,17 +20,25 @@ public enum DayOfWeekFlag
 
 public partial class WeekInterval : RepeatingInterval
 {
+    /// <summary>
+    /// The number of weeks between occurrences. For example, a value of 1 means the interval occurs every week,
+    /// a value of 2 means it occurs every other week, etc.
+    /// </summary>
     [WatchForHash]
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Range(1, int.MaxValue, ErrorMessage = "Must occur at least every 1 week.")]
     public partial int WeekSpacing { get; set; } = 1;
 
+    /// <summary>
+    /// Flag enum that represents which days of the week the interval occurs on.
+    /// </summary>
     [WatchForHash]
     [ObservableProperty]
     public partial DayOfWeekFlag DayOfWeekMap { get; set; } = DayOfWeekFlag.None;
 
-    protected override DateOnly? NextFromDate(DateOnly refDate)
+    /// <inheritdoc/>
+    protected override DateOnly? NextAfterDate(DateOnly refDate)
     {
         int refDay = (int) refDate.DayOfWeek;
         int nextDay = _getNextDayOfWeek(refDay);
@@ -45,7 +53,8 @@ public partial class WeekInterval : RepeatingInterval
         return nextDate;
     }
 
-    protected override DateOnly? PreviousFromDate(DateOnly refDate)
+    /// <inheritdoc/>
+    protected override DateOnly? PreviousBeforeDate(DateOnly refDate)
     {
         int refDay = (int) refDate.DayOfWeek;
         int prevDay = _getPrevDayOfWeek(refDay);
@@ -60,7 +69,8 @@ public partial class WeekInterval : RepeatingInterval
         return prevDate;
     }
 
-    protected override void _AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
+    /// <inheritdoc/>
+    protected override void AppendPartialHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append("WeekInterval"u8);
         hashAlgorithm.Append(BitConverter.GetBytes(WeekSpacing));
@@ -87,6 +97,6 @@ public partial class WeekInterval : RepeatingInterval
         return -1;
     }
 
-    partial void OnWeekSpacingChanged(int value) => UpdateOccurrences();
-    partial void OnDayOfWeekMapChanged(DayOfWeekFlag value) => UpdateOccurrences();
+    partial void OnWeekSpacingChanged(int value) => RecalcOccurrences();
+    partial void OnDayOfWeekMapChanged(DayOfWeekFlag value) => RecalcOccurrences();
 }
