@@ -1,8 +1,10 @@
 using System;
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Interactivity;
 
 namespace TaskTwig.Controls;
 
@@ -16,25 +18,55 @@ public partial class EmojiTextBox : TextBox
     [GeneratedRegex(EmojiPattern)]
     private static partial Regex EmojiRegex();
 
+    // public EmojiTextBox()
+    // {
+    //     PastingFromClipboard += PastingEventHandler;
+    // }
+
     protected override async void OnKeyDown(KeyEventArgs e)
     {
         if (PasteGesture?.Matches(e) == true)
         {
+            e.Handled = true;
+            
             var clipboard = TopLevel.GetTopLevel(visual: this)?.Clipboard;
             
             if (clipboard is null || await clipboard.TryGetTextAsync() is not { } text ||
                 !EmojiRegex().IsMatch(text))
             {
                 Console.WriteLine("EmojiTextBox Pasted, not valid emoji");
-                e.Handled = true;
                 return;
             }
-
-            Clear();
+    
+            Console.WriteLine($"Pasted: {text}");
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                Text = text;
+            });
         }
-
-        base.OnKeyDown(e);
+        else
+        {
+            base.OnKeyDown(e);
+        }
     }
+
+    // private async void PastingEventHandler(object sender, RoutedEventArgs args)
+    // {
+    //     args.Handled = true;
+    //     
+    //     var clipboard = TopLevel.GetTopLevel(visual: this)?.Clipboard;
+    //         
+    //     if (clipboard is null || await clipboard.TryGetTextAsync() is not { } text ||
+    //         !EmojiRegex().IsMatch(text))
+    //     {
+    //         Console.WriteLine("EmojiTextBox Pasted, not valid emoji");
+    //         args.Handled = true;
+    //         return;
+    //     }
+    //
+    //     Console.WriteLine($"Pasted: {text}");
+    //     Clear();
+    // }
 
     protected override void OnTextInput(TextInputEventArgs e)
     {
