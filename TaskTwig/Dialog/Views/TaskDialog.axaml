@@ -47,13 +47,7 @@
                     </u:FormItem>
                     
                     <u:FormItem Label="Icon">
-                        <vm:EmojiTextBox x:Name="IconBox" 
-                                 Text="{Binding Task?.Icon}"
-                                 FontFamily="{StaticResource NotoColorEmoji}"
-                                 MaxLines="1"
-                                 FontSize="24"
-                                 MaxWidth="56"
-                                 HorizontalAlignment="Left"/>
+                        <controls:EmojiTextBox Text="{Binding Task?.Icon}"/>
                     </u:FormItem>
                     
                     <u:FormItem Label="Description">

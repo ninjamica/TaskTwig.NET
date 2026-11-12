@@ -5,6 +5,7 @@
              xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="230"
              xmlns:vm="using:TaskTwig.Dialog.ViewModels"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
              x:Class="TaskTwig.Dialog.Views.TaskCategoryDialog"
              x:DataType="vm:TaskCategoryDialogViewModel">
     
@@ -18,14 +19,14 @@
         
         <u:Form Grid.Row="1" LabelPosition="Left" LabelWidth="*">
             <u:FormItem Label="Name">
-                <TextBox Text="{Binding Category.Name}"
+                <TextBox Text="{Binding Category?.Name}"
                          AcceptsReturn="False" AcceptsTab="False"
                          TextWrapping="Wrap"
                          TextInputOptions.AutoCapitalization="True"
                          u:FocusHelper.DialogFocusHint="True"/>
             </u:FormItem>
-            <u:FormItem Label="Color">
-                <!-- TODO: Implement when color support is updated in TaskCategory -->
+            <u:FormItem Label="Icon">
+                <controls:EmojiTextBox Text="{Binding Category?.Icon}"/>
             </u:FormItem>
         </u:Form>
         

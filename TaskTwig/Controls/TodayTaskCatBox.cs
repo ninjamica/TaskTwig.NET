@@ -17,6 +17,9 @@ public partial class TodayTaskCatBox : TemplatedControl
     public static readonly StyledProperty<string?> HeaderTextProperty = AvaloniaProperty.Register<TodayTaskCatBox, string?>(
         nameof(HeaderText));
 
+    public static readonly StyledProperty<string?> HeaderIconProperty = AvaloniaProperty.Register<TodayTaskCatBox, string?>(
+        nameof(HeaderIcon));
+
     public static readonly StyledProperty<bool> IsExpandedProperty = AvaloniaProperty.Register<TodayTaskCatBox, bool>(
         nameof(IsExpanded));
     
@@ -28,12 +31,6 @@ public partial class TodayTaskCatBox : TemplatedControl
 
     public static readonly StyledProperty<ICommand?> EditTaskCommandProperty = AvaloniaProperty.Register<TodayTaskCatBox, ICommand?>(
         nameof(EditTaskCommand));
-    
-    public ICommand? EditTaskCommand
-    {
-        get => GetValue(EditTaskCommandProperty);
-        set => SetValue(EditTaskCommandProperty, value);
-    }
 
     public IEnumerable<TwTask>? TasksSource
     {
@@ -46,6 +43,12 @@ public partial class TodayTaskCatBox : TemplatedControl
         get => GetValue(HeaderTextProperty);
         set => SetValue(HeaderTextProperty, value);
     }
+    
+    public string? HeaderIcon
+    {
+        get => GetValue(HeaderIconProperty);
+        set => SetValue(HeaderIconProperty, value);
+    }
 
     public bool IsExpanded
     {
@@ -57,6 +60,12 @@ public partial class TodayTaskCatBox : TemplatedControl
     {
         get => GetValue(HeaderContextMenuProperty);
         set => SetValue(HeaderContextMenuProperty, value);
+    }
+    
+    public ICommand? EditTaskCommand
+    {
+        get => GetValue(EditTaskCommandProperty);
+        set => SetValue(EditTaskCommandProperty, value);
     }
     
     

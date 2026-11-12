@@ -14,12 +14,13 @@
         <FluentTheme />
         <semi:SemiTheme Locale="en-US" />
         <semi:UrsaSemiTheme Locale="en-US"/>
+        <StyleInclude Source="/Controls/Styles/EmojiTextBox.axaml"/>
         <StyleInclude Source="/Controls/Styles/TodayTaskBlock.axaml"/>
         <StyleInclude Source="/Controls/Styles/JournalCalendar.axaml"/>
     </Application.Styles>
              
      <Application.Resources>
-         <ResourceDictionary >
+         <ResourceDictionary>
              <FontFamily x:Key="NotoColorEmoji">avares://TaskTwig/Assets/Fonts/NotoColorEmoji_WindowsCompatible.ttf#Noto Color Emoji</FontFamily>
              <ResourceDictionary.MergedDictionaries>
                  <ResourceInclude Source="/Controls/ControlThemes/TodayTaskCatBox.axaml"/>

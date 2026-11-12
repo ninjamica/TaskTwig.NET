@@ -144,6 +144,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     <DataTemplate DataType="core:TaskCategory">
                                         <controls:TodayTaskCatBox TasksSource="{Binding TodayTasks}" 
                                                                HeaderText="{Binding Name}"
+                                                               HeaderIcon="{Binding Icon}"
                                                                IsExpanded="{Binding Expanded}"
                                                                EditTaskCommand="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
                                                                Margin="10"
@@ -283,9 +284,9 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                     Classes="Tertiary"
                                                     Padding="12,4">
                                                 <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}">
-                                                    <!-- <Run Text="{Binding Icon}" -->
-                                                    <!--      FontFamily="{StaticResource NotoColorEmoji}" -->
-                                                    <!--      FontSize="24" /> -->
+                                                    <Run Text="{Binding Category.Icon}"
+                                                         FontFamily="{StaticResource NotoColorEmoji}"
+                                                         FontSize="24" />
                                                     <Run Text="{Binding Category.Name}"
                                                          BaselineAlignment="Center" />
                                                     <InlineUIContainer
@@ -735,6 +736,12 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                     <u:SettingsCard.RightContent>
                                         <u:ThemeToggleButton x:Name="ThemeButton" IsThreeState="True"/>
                                     </u:SettingsCard.RightContent>
+                                    <u:SettingsCard.NoteTemplate>
+                                        <DataTemplate DataType="ThemeVariant">
+                                            <TextBlock Text="{Binding}"
+                                                       VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </u:SettingsCard.NoteTemplate>
                                 </u:SettingsCard>
                             </u:SettingsCardGroup>
                         </StackPanel>

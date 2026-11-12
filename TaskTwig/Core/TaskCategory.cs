@@ -16,10 +16,11 @@ public partial class TaskCategory : HashableObject
     [WatchForHash]
     [ObservableProperty] 
     public partial string Name { get; set; } = "New Task Category";
-
+    
     [WatchForHash]
-    [ObservableProperty] 
-    public partial Color Color { get; set; } = Color.White;
+    [ObservableProperty]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public partial string? Icon { get; set; }
     
     [ObservableProperty]
     public partial bool Expanded { get; set; } = true;
@@ -139,7 +140,8 @@ public partial class TaskCategory : HashableObject
     protected override void AppendHash(NonCryptographicHashAlgorithm hashAlgorithm)
     {
         hashAlgorithm.Append(Encoding.UTF8.GetBytes(Name));
-        hashAlgorithm.Append(BitConverter.GetBytes(Color.ToArgb()));
+        if (!string.IsNullOrEmpty(Icon))
+            hashAlgorithm.Append(Encoding.UTF8.GetBytes(Icon));
         hashAlgorithm.Append(BitConverter.GetBytes(Expanded));
     }
 

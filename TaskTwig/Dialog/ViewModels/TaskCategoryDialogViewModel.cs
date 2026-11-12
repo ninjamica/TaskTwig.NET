@@ -10,7 +10,7 @@ namespace TaskTwig.Dialog.ViewModels;
 public partial class TaskCategoryDialogViewModel : ViewModelBase, IDialogContext
 {
     [ObservableProperty] 
-    public partial TaskCategory Category { get; set; }
+    public partial TaskCategory? Category { get; set; }
     
     [RelayCommand]
     public void Close()
