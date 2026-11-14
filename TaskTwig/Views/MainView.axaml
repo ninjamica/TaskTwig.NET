@@ -435,7 +435,13 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                                             </MenuItem.Icon>
                                                             <MenuItem.ItemTemplate>
                                                                 <DataTemplate DataType="core:TaskCategory">
-                                                                    <TextBlock Text="{Binding Name}"/>
+                                                                    <TextBlock>
+                                                                        <Run Text="{Binding Icon}"
+                                                                             FontFamily="{StaticResource NotoColorEmoji}"
+                                                                             FontSize="20" />
+                                                                        <Run Text="{Binding Name}"
+                                                                             BaselineAlignment="Center" />
+                                                                    </TextBlock>
                                                                 </DataTemplate>
                                                             </MenuItem.ItemTemplate>
                                                         </MenuItem>
