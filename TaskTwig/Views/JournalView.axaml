@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
+             xmlns:vm="clr-namespace:TaskTwig.ViewModels"
+             xmlns:views="clr-namespace:TaskTwig.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskTwig.Views.JournalView"
+             x:DataType="vm:MainViewModel">
+
+    <u:UrsaGroupBox x:Name="JournalGroupBox"
+                    Margin="30"
+                    Padding="4, 10, 4, 4"
+                    Background="{DynamicResource SemiColorBackground1}"
+                    BorderBrush="{DynamicResource SemiColorBorder}"
+                    BorderThickness="2"
+                    VerticalAlignment="Stretch">
+        <u:UrsaGroupBox.Transitions>
+            <Transitions>
+                <ThicknessTransition Property="Margin" Duration="0:0:0" />
+            </Transitions>
+        </u:UrsaGroupBox.Transitions>
+        <u:UrsaGroupBox.Header>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="Journal:"
+                           Classes="H4"
+                           Theme="{StaticResource TitleTextBlock}"
+                           VerticalAlignment="Center"/>
+                <Button>
+                    <TextBlock
+                        Text="{Binding SelectedJournal?.Date, Converter={x:Static views:JournalView.JournalDateConverter}}"
+                        Classes="H6 Secondary"
+                        Theme="{StaticResource TitleTextBlock}"
+                        VerticalAlignment="Center"/>
+                    <Button.Flyout>
+                        <Flyout>
+                            <controls:JournalCalendar 
+                                x:Name="JournalCalendar"
+                                DayCommand="{Binding JournalCalendarDayClickedCommand}"
+                                SelectedDate="{Binding JournalSelectedDate}"
+                                HorizontalAlignment="Center"/>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+        </u:UrsaGroupBox.Header>
+        <ScrollViewer>
+            <controls:MarkdownTextBox Markdown="{Binding SelectedJournal?.Text, Delay=500}"
+                                      PlaceholderText="Type journal here..."/>
+        </ScrollViewer>
+    </u:UrsaGroupBox>
+    
+</UserControl>

@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
@@ -79,4 +81,7 @@ public partial class EmojiTextBox : TextBox
             Console.WriteLine($"EmojiTextBox TextInput: {text}");
         }
     }
+
+    public static readonly FuncValueConverter<string?, string?> AppendEmojiSelectorConverter =
+        new(s => string.IsNullOrEmpty(s) || s.Last() == '\uFE0F' ? s : s + '\uFE0F');
 }

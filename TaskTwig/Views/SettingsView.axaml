@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:TaskTwig.ViewModels"
+             xmlns:views="clr-namespace:TaskTwig.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskTwig.Views.SettingsView"
+             x:DataType="vm:MainViewModel">
+    
+    <ScrollViewer Padding="20" VerticalContentAlignment="Center">
+        <StackPanel Spacing="20">
+            <u:SettingsCardGroup Header="Cloud Settings"
+                                 Description="Connect to Dropbox account to sync between devices.">
+                <u:SettingsCard Content="Account"
+                                Description="{Binding DbxAccountName, TargetNullValue=No Account Connected}"
+                                Icon="{StaticResource SemiIconUserCircle}">
+                    <u:SettingsCard.RightContent>
+                        <u:Avatar Source="{Binding DbxPhoto^, FallbackValue=Null}"
+                                  Content="DBX"
+                                  Command="{Binding DbxSignInOutCommand}"
+                                  ToolTip.Tip="{Binding IsDbxConnected, Converter={x:Static views:SettingsView.AccountButtonTextConverter}}">
+                            <u:Avatar.HoverMask>
+                                <Border Opacity="0.6">
+                                    <Panel>
+                                        <Border
+                                            Background="#16161A"
+                                            Width="{Binding $parent[u:Avatar].Width}"
+                                            Height="{Binding $parent[u:Avatar].Height}" />
+                                        <PathIcon
+                                            Theme="{StaticResource InnerPathIcon}"
+                                            Data="{StaticResource SemiIconUserAdd}"
+                                            Width="{Binding $parent[u:Avatar].FontSize}"
+                                            Height="{Binding $parent[u:Avatar].FontSize}"
+                                            IsVisible="{Binding !IsDbxConnected}" />
+                                        <PathIcon
+                                            Theme="{StaticResource InnerPathIcon}"
+                                            Data="{StaticResource SemiIconExit}"
+                                            Width="{Binding $parent[u:Avatar].FontSize}"
+                                            Height="{Binding $parent[u:Avatar].FontSize}"
+                                            IsVisible="{Binding IsDbxConnected}" />
+                                    </Panel>
+                                </Border>
+                            </u:Avatar.HoverMask>
+                        </u:Avatar>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+
+                <u:SettingsCard Content="Auto Sync"
+                                Description="Auto sync data to the cloud."
+                                Icon="{StaticResource SemiIconCloud}">
+                    <u:SettingsCard.RightContent>
+                        <ToggleSwitch IsChecked="{Binding AutoSync}"
+                                      Theme="{DynamicResource SimpleToggleSwitch}"/>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+
+                <u:SettingsCard Content="Auto Fetch Interval"
+                                Description="Interval at which to fetch or sync to the cloud, regardless of any local changes."
+                                Icon="{StaticResource SemiIconHistory}">
+                    <u:SettingsCard.RightContent>
+                        <u:NumericDoubleUpDown Value="{Binding FetchInterval}"
+                                               Minimum="0.5"
+                                               InnerRightContent="minutes" />
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
+
+            <u:SettingsCardGroup Header="Task Settings"
+                                 Description="Affect functionality of tasks and other features. Synced with account.">
+                <u:SettingsCard Content="Start of Day"
+                                Icon="{StaticResource SemiIconSun}">
+                    <u:SettingsCard.RightContent>
+                        <u:TimePicker SelectedTime="{Binding DayStart}"
+                                      DisplayFormat="h:mm tt" PanelFormat="hh mm tt" />
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+
+                <u:SettingsCard Content="Start of Night"
+                                Icon="{StaticResource SemiIconMoon}">
+                    <u:SettingsCard.RightContent>
+                        <u:TimePicker SelectedTime="{Binding NightStart}"
+                                      DisplayFormat="h:mm tt" PanelFormat="hh mm tt" />
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
+            
+            <u:SettingsCardGroup Header="App Settings"
+                                 Description="Local app settings, not synced with account.">
+                <u:SettingsCard Content="Show Command Bar"
+                                Icon="{StaticResource SemiIconMenu}">
+                    <u:SettingsCard.RightContent>
+                        <ToggleSwitch IsChecked="{Binding ShowCommandBar}"
+                                      Theme="{DynamicResource SimpleToggleSwitch}"/>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                
+                <!--TODO: Add Theme to settings, split shared and local settings-->
+                <u:SettingsCard Content="Theme"
+                                Note="{Binding #ThemeButton.SelectedTheme}"
+                                Icon="{StaticResource SemiIconEyedropper}">
+                    <u:SettingsCard.RightContent>
+                        <u:ThemeToggleButton x:Name="ThemeButton" IsThreeState="True"/>
+                    </u:SettingsCard.RightContent>
+                    <u:SettingsCard.NoteTemplate>
+                        <DataTemplate DataType="ThemeVariant">
+                            <TextBlock Text="{Binding}"
+                                       VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </u:SettingsCard.NoteTemplate>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
+        </StackPanel>
+    </ScrollViewer>
+    
+</UserControl>

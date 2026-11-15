@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:views="clr-namespace:TaskTwig.Views"
+             xmlns:core="clr-namespace:TaskTwig.Core"
+             xmlns:vm="clr-namespace:TaskTwig.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskTwig.Views.SleepView"
+             x:DataType="vm:MainViewModel">
+    
+    <ScrollViewer u:ScrollTo.Direction="Top">
+        <StackPanel>
+            <u:ButtonGroup>
+                <Button Content="{Binding IsSleeping, Converter={x:Static views:SleepView.SleepButtonTextConverter}}"
+                        Command="{Binding SleepButtonCommand}"/>
+                <Button Command="{Binding CancelSleepCommand}"
+                        IsVisible="{Binding IsSleeping}">
+                    <PathIcon Data="{StaticResource SemiIconDelete}"/>
+                </Button>
+                <Button Command="{Binding SleepAddButtonCommand}"
+                        IsVisible="{Binding !IsSleeping}">
+                    <PathIcon Data="{StaticResource SemiIconPlus}"
+                              Width="12" Height="12"/>
+                </Button>
+            </u:ButtonGroup>
+            <ListBox ItemsSource="{Binding SleepList}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="core:Sleep">
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0}: slept from {1:t} to {2:t} for {3:F1} hours">
+                                    <Binding Path="Date" />
+                                    <Binding Path="StartTime" />
+                                    <Binding Path="EndTime" />
+                                    <Binding Path="Length.TotalHours" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </ScrollViewer>
+    
+</UserControl>

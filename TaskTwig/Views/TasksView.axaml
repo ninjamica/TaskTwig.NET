@@ -1,0 +1,308 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:avalonia="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+             xmlns:vm="clr-namespace:TaskTwig.ViewModels"
+             xmlns:controls="clr-namespace:TaskTwig.Controls"
+             xmlns:core="clr-namespace:TaskTwig.Core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskTwig.Views.TasksView"
+             x:DataType="vm:MainViewModel"
+             Name="RootControl">
+    
+    <ScrollViewer x:Name="TaskScrollViewer"
+                  BringIntoViewOnFocusChange="False"
+                  u:ScrollTo.Direction="Top">
+        <Grid RowDefinitions="*,Auto,Auto" ColumnDefinitions="*,*,*"
+              RowSpacing="10" Margin="10"
+              VerticalAlignment="Top">
+                
+            <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                          ItemsSource="{Binding TasksFlatList}"
+                          IsVisible="{Binding !#RootControl.IsReorderCategories}"
+                          avalonia:Sortable.Sortable="True"
+                          avalonia:Sortable.AutoScroll="True"
+                          avalonia:Sortable.UpdateCommand="{Binding TaskListUpdateCommand}"
+                          avalonia:Sortable.ReleaseCommand="{Binding TaskListReleaseCommand}">
+                
+                <ItemsControl.DataTemplates>
+                    
+                    <DataTemplate DataType="vm:TaskCategoryListItem">
+                        <Grid RowDefinitions="*, Auto" RowSpacing="10"
+                              ColumnDefinitions="Auto, Auto, *" ColumnSpacing="5"
+                              Margin="10, 10, 5, 10">
+                            <PathIcon Grid.Row="0" Grid.Column="0"
+                                      Data="{StaticResource SemiIconHandle}"
+                                      IsVisible="{Binding #RootControl.IsReorderCategories}"
+                                      Cursor="Hand"
+                                      avalonia:Sortable.IsDragHandle="True"
+                                      PointerPressed="CategoryDragStarted" />
+                            <controls:ExpanderButton Grid.Row="0" Grid.Column="0"
+                                                  IsExpanded="{Binding Category.Expanded}"
+                                                  Padding="3,0,5,0" />
+                            <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
+                                    Command="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
+                                    CommandParameter="{Binding Category}"
+                                    Theme="{DynamicResource OutlineButton}"
+                                    Classes="Tertiary"
+                                    Padding="12,4">
+                                <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}">
+                                    <Run Text="{Binding Category.Icon}"
+                                         FontFamily="{StaticResource NotoColorEmoji}"
+                                         FontSize="24" />
+                                    <Run Text="{Binding Category.Name}"
+                                         BaselineAlignment="Center" />
+                                    <InlineUIContainer
+                                        BaselineAlignment="Center">
+                                        <PathIcon
+                                            Data="{StaticResource SemiIconMore}"
+                                            Width="16"
+                                            RenderTransform="rotate(90deg) translate(5px, 0px)" />
+                                    </InlineUIContainer>
+                                </TextBlock>
+                            </Button>
+                            <Button Grid.Row="0" Grid.Column="2"
+                                    Foreground="White"
+                                    Background="Transparent"
+                                    Margin="0"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding #RootControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
+                                    CommandParameter="{Binding Category}"
+                                    IsVisible="{Binding !#RootControl.IsReorderCategories}">
+                                <PathIcon Data="{StaticResource SemiIconPlus}"
+                                          Width="10" Height="10" />
+                            </Button>
+                            <u:Divider Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"/>
+                            <Grid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Edit"
+                                              Command="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
+                                              CommandParameter="{Binding Category}">
+                                        <MenuItem.Icon>
+                                            <PathIcon Data="{StaticResource SemiIconEdit}" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Add Task">
+                                        <MenuItem.Icon>
+                                            <PathIcon Data="{StaticResource SemiIconPlus}" />
+                                        </MenuItem.Icon>
+                                        
+                                        <MenuItem Header="Add to Top"
+                                                  Command="{Binding #RootControl.((vm:MainViewModel)DataContext).CreateTaskAtTopCommand}"
+                                                  CommandParameter="{Binding Category}">
+                                            <MenuItem.Icon>
+                                                <PathIcon Data="{StaticResource SemiIconAlignTop}"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Add to Bottom"
+                                                  Command="{Binding #RootControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
+                                                  CommandParameter="{Binding Category}">
+                                            <MenuItem.Icon>
+                                                <PathIcon Data="{StaticResource SemiIconAlignBottom}"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </MenuItem>
+                                    <MenuItem Header="Delete Finished Tasks"
+                                              Command="{Binding Category.RemovePermaDoneTasks}"
+                                              Foreground="{DynamicResource SemiColorWarning}">
+                                        <MenuItem.Icon>
+                                            <PathIcon Data="{StaticResource SemiIconTrueFalseStroked}" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Grid.ContextMenu>
+                        </Grid>
+                    </DataTemplate>
+                    
+                </ItemsControl.DataTemplates>
+                
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:TaskListItem">
+                        <Border Theme="{StaticResource CardBorder}"
+                                Classes="Hover"
+                                Margin="30,4,4,4"
+                                Padding="10,4, 3, 4"
+                                HorizontalAlignment="Left"
+                                IsVisible="{Binding Task.Category.Expanded}"
+                                avalonia:Sortable.IsSortable="True">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Panel Grid.Column="0"
+                                       Width="30"
+                                       PointerPressed="TaskDragStarted">
+                                    <PathIcon
+                                        Data="{StaticResource SemiIconHandle}"
+                                        Cursor="Hand"
+                                        HorizontalAlignment="Left" />
+                                </Panel>
+
+                                <Button Grid.Column="1"
+                                        Classes="Tertiary"
+                                        Theme="{DynamicResource BorderlessButton}"
+                                        Command="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
+                                        CommandParameter="{Binding Task}"
+                                        Padding="0,0,10,0">
+                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Task.Icon}"
+                                                   FontFamily="{StaticResource NotoColorEmoji}"
+                                                   FontSize="24"
+                                                   Margin="0,0,5,0"
+                                                   IsVisible="{Binding Task.Icon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Task.Name}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center"/>
+                                        <PathIcon Grid.Column="2"
+                                                  Data="{StaticResource SemiIconMore}"
+                                                  Width="16"
+                                                  RenderTransform="rotate(90deg) translate(5px, 0px)"
+                                                  VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Button>
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Edit"
+                                                Command="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCommand}"
+                                                CommandParameter="{Binding Task}">
+                                            <MenuItem.Icon>
+                                                <PathIcon Data="{StaticResource SemiIconEdit}"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Move To">
+                                            <MenuItem.Icon>
+                                                <PathIcon Data="{StaticResource SemiIconLineHeight}"/>
+                                            </MenuItem.Icon>
+                                            
+                                            <MenuItem Header="Top of Category"
+                                                      Command="{Binding #RootControl.((vm:MainViewModel)DataContext).MoveTaskToTopCommand}"
+                                                      CommandParameter="{Binding Task}">
+                                                <MenuItem.Icon>
+                                                    <PathIcon Data="{StaticResource SemiIconAlignTop}"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Bottom of Category"
+                                                      Command="{Binding #RootControl.((vm:MainViewModel)DataContext).MoveTaskToBottomCommand}"
+                                                      CommandParameter="{Binding Task}">
+                                                <MenuItem.Icon>
+                                                    <PathIcon Data="{StaticResource SemiIconAlignBottom}"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </MenuItem>
+                                        <MenuItem Header="Move To Category"
+                                                ItemsSource="{Binding #RootControl.((vm:MainViewModel)DataContext).TaskCategoriesView}"
+                                                Command="{Binding $self.((core:TaskCategory)SelectedItem)?.AddTask}"
+                                                CommandParameter="{Binding Task}">
+                                            <MenuItem.Icon>
+                                                <PathIcon Data="{StaticResource SemiIconAppCenter}"/>
+                                            </MenuItem.Icon>
+                                            <MenuItem.ItemTemplate>
+                                                <DataTemplate DataType="core:TaskCategory">
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Icon}"
+                                                             FontFamily="{StaticResource NotoColorEmoji}"
+                                                             FontSize="20" />
+                                                        <Run Text="{Binding Name}"
+                                                             BaselineAlignment="Center" />
+                                                    </TextBlock>
+                                                </DataTemplate>
+                                            </MenuItem.ItemTemplate>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            
+            <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                          ItemsSource="{Binding TaskCategoriesView}"
+                          IsVisible="{Binding #RootControl.IsReorderCategories}"
+                          avalonia:Sortable.Sortable="True"
+                          avalonia:Sortable.AutoScroll="True"
+                          avalonia:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}"
+                          avalonia:Sortable.ReleaseCommand="{Binding CategoryListReleaseCommand}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="5"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="core:TaskCategory">
+                        <Border Theme="{StaticResource CardBorder}"
+                                Classes="Hover"
+                                Padding="10,4, 3, 4"
+                                HorizontalAlignment="Left"
+                                avalonia:Sortable.IsSortable="True">
+                            <Grid ColumnSpacing="5"
+                                  ColumnDefinitions="Auto, *">
+                                <PathIcon Grid.Column="0"
+                                          Data="{StaticResource SemiIconHandle}"
+                                          Cursor="Hand"
+                                          PointerPressed="CategoryDragStarted" />
+                                <Button Grid.Column="1" HorizontalAlignment="Left"
+                                        Command="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
+                                        CommandParameter="{Binding}"
+                                        Theme="{DynamicResource OutlineButton}"
+                                        Classes="Tertiary"
+                                        Padding="12,4">
+                                    <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}">
+                                        <!-- <Run Text="{Binding Icon}" -->
+                                        <!--      FontFamily="{StaticResource NotoColorEmoji}" -->
+                                        <!--      FontSize="24" /> -->
+                                        <Run Text="{Binding Name}"
+                                             BaselineAlignment="Center" />
+                                        <InlineUIContainer
+                                            BaselineAlignment="Center">
+                                            <PathIcon
+                                                Data="{StaticResource SemiIconMore}"
+                                                Width="16"
+                                                RenderTransform="rotate(90deg) translate(5px, 0px)" />
+                                        </InlineUIContainer>
+                                    </TextBlock>
+                                </Button>
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Edit"
+                                                  Command="{Binding #RootControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
+                                                  CommandParameter="{Binding }">
+                                            <MenuItem.Icon>
+                                                <PathIcon Data="{StaticResource SemiIconEdit}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <u:IconButton Grid.Row="0" Grid.Column="0"
+                          Command="{Binding CreateTaskCategoryCommand}"
+                          Content="Category"
+                          Icon="{StaticResource SemiIconPlus}"
+                          IsVisible="{Binding !#RootControl.IsReorderCategories}" />
+            <u:IconButton Grid.Row="0" Grid.Column="1"
+                          Command="{Binding #RootControl.EnterCategoryReorderCommand}"
+                          Content="Reorder"
+                          Icon="{StaticResource SemiIconLineHeight}"
+                          IsVisible="{Binding !#RootControl.IsReorderCategories}" />
+            <u:IconButton Grid.Row="0" Grid.Column="1"
+                          Command="{Binding #RootControl.ExitCategoryReorderCommand}"
+                          Content="Finish"
+                          Classes="Success"
+                          Icon="{StaticResource SemiIconTick}"
+                          IsVisible="{Binding #RootControl.IsReorderCategories}" />
+            <u:IconButton Grid.Row="0" Grid.Column="2"
+                          Command="{Binding DeletePermaDoneTasksCommand}"
+                          Content="Finished"
+                          Classes="Danger"
+                          Icon="{StaticResource SemiIconDelete}"
+                          IsVisible="{Binding !#RootControl.IsReorderCategories}" />
+        </Grid>
+    </ScrollViewer>
+    
+</UserControl>
