@@ -13,7 +13,8 @@
              Name="RootControl">
     
     <ScrollViewer BringIntoViewOnFocusChange="False"
-                  u:ScrollTo.Direction="Top">
+                  u:ScrollTo.Direction="Top"
+                  VerticalScrollBarVisibility="Visible">
         <StackPanel>
             <u:UrsaGroupBox Margin="10" Padding="15, 5, 15, 5"
                             Background="{DynamicResource SemiColorBackground1}"

@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:TaskTwig.ViewModels"
              xmlns:u="https://irihi.tech/ursa"
-             xmlns:views="clr-namespace:TaskTwig.Views"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              x:Class="TaskTwig.Views.MainView"
              x:DataType="vm:MainViewModel"
@@ -15,14 +14,160 @@ to set the actual DataContext for runtime, set the DataContext property in code 
         <vm:MainViewModel />
     </Design.DataContext>
 
-    
+
     <Panel>
         <DockPanel>
-            <CommandBar DockPanel.Dock="{OnFormFactor Bottom, Mobile=Top}"
-                        IsVisible="{Binding ShowCommandBar}">
-                <CommandBar.Content>
-                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="10,0,0,0">
-                        <Panel>
+            <!-- <CommandBar DockPanel.Dock="Top" -->
+            <!--             IsVisible="{Binding ShowCommandBar}"> -->
+            <!--     <CommandBar.Content> -->
+            <!--         <StackPanel Orientation="Horizontal" Spacing="10" Margin="3,0,0,0"> -->
+            <!--             ~1~ <u:IconToggleButton IsChecked="{Binding #MainSplitView.IsPaneOpen}" @1@ -->
+            <!--             ~1~                     Foreground="{DynamicResource SemiColorText0}" @1@ -->
+            <!--             ~1~                     Background="Transparent" @1@ -->
+            <!--             ~1~                     Padding="0" @1@ -->
+            <!--             ~1~                     Width="30" @1@ -->
+            <!--             ~1~                     Icon="{StaticResource SemiIconMenu}"> @1@ -->
+            <!--             ~1~ </u:IconToggleButton> @1@ -->
+            <!--             ~1~ <Panel> @1@ -->
+            <!--             ~1~     <u:LoadingIcon x:Name="SyncLoadingIcon"> @1@ -->
+            <!--             ~1~         <u:LoadingIcon.IsVisible> @1@ -->
+            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.Or}"> @1@ -->
+            <!--             ~1~                 <Binding Path="SaveFilesCommand.IsRunning" /> @1@ -->
+            <!--             ~1~                 <Binding Path="DbxSyncCommand.IsRunning" /> @1@ -->
+            <!--             ~1~                 <Binding Path="PullDbxCommand.IsRunning" /> @1@ -->
+            <!--             ~1~                 <Binding Path="PushDbxCommand.IsRunning" /> @1@ -->
+            <!--             ~1~                 <Binding Path="FetchDbxCommand.IsRunning" /> @1@ -->
+            <!--             ~1~             </MultiBinding> @1@ -->
+            <!--             ~1~         </u:LoadingIcon.IsVisible> @1@ -->
+            <!--             ~1~     </u:LoadingIcon> @1@ -->
+            <!--             ~1~     <PathIcon Data="{StaticResource SemiIconCheckCircleStroked}" @1@ -->
+            <!--             ~1~               Foreground="{DynamicResource SemiColorSuccess}"> @1@ -->
+            <!--             ~1~         <PathIcon.IsVisible> @1@ -->
+            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
+            <!--             ~1~                 <Binding Path="InSync" /> @1@ -->
+            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
+            <!--             ~1~             </MultiBinding> @1@ -->
+            <!--             ~1~         </PathIcon.IsVisible> @1@ -->
+            <!--             ~1~     </PathIcon> @1@ -->
+            <!--             ~1~     <Panel> @1@ -->
+            <!--             ~1~         <Panel.IsVisible> @1@ -->
+            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
+            <!--             ~1~                 <Binding Path="!InSync" /> @1@ -->
+            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
+            <!--             ~1~             </MultiBinding> @1@ -->
+            <!--             ~1~         </Panel.IsVisible> @1@ -->
+            <!--             ~1~ @1@ -->
+            <!--             ~1~     </Panel> @1@ -->
+            <!--             ~1~     <PathIcon Data="{StaticResource SemiIconUnChainStroked}" @1@ -->
+            <!--             ~1~               Foreground="{DynamicResource SemiColorWarning}"> @1@ -->
+            <!--             ~1~         <PathIcon.IsVisible> @1@ -->
+            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
+            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
+            <!--             ~1~                 <Binding Path="!InSync" /> @1@ -->
+            <!--             ~1~                 <Binding Path="CacheValid" /> @1@ -->
+            <!--             ~1~             </MultiBinding> @1@ -->
+            <!--             ~1~         </PathIcon.IsVisible> @1@ -->
+            <!--             ~1~     </PathIcon> @1@ -->
+            <!--             ~1~     <PathIcon Data="{StaticResource SemiIconCrossCircleStroked}" @1@ -->
+            <!--             ~1~               Foreground="{DynamicResource SemiColorWarning}"> @1@ -->
+            <!--             ~1~         <PathIcon.IsVisible> @1@ -->
+            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
+            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
+            <!--             ~1~                 <Binding Path="!CacheValid" /> @1@ -->
+            <!--             ~1~             </MultiBinding> @1@ -->
+            <!--             ~1~         </PathIcon.IsVisible> @1@ -->
+            <!--             ~1~     </PathIcon> @1@ -->
+            <!--             ~1~ </Panel> @1@ -->
+            <!--             ~1~ <TextBlock Text="{Binding SyncStatusText}" @1@ -->
+            <!--             ~1~            FontSize="12" @1@ -->
+            <!--             ~1~            VerticalAlignment="Center" /> @1@ -->
+            <!--         </StackPanel> -->
+            <!--     </CommandBar.Content> -->
+            <!--     ~1~ <CommandBar.PrimaryCommands> @1@ -->
+            <!--     ~1~     <CommandBarButton Label="Sync" Icon="{StaticResource SemiIconSync}" @1@ -->
+            <!--     ~1~                       Command="{Binding DbxSyncCommand}" @1@ -->
+            <!--     ~1~                       HotKey="Ctrl+S" /> @1@ -->
+            <!--     ~1~ </CommandBar.PrimaryCommands> @1@ -->
+            <!--     <CommandBar.SecondaryCommands> -->
+            <!--         <CommandBarButton Label="Compare To Cloud" Icon="{StaticResource SemiIconCloud}" -->
+            <!--                           Command="{Binding FetchDbxCommand}" /> -->
+            <!--         <CommandBarButton Label="Upload All" Icon="{StaticResource SemiIconUpload}" -->
+            <!--                           Command="{Binding PushDbxCommand}" /> -->
+            <!--         <CommandBarButton Label="Download All" Icon="{StaticResource SemiIconDownload}" -->
+            <!--                           Command="{Binding PullDbxCommand}" /> -->
+            <!--         <CommandBarButton Label="Save Locally" Icon="{StaticResource SemiIconSave}" -->
+            <!--                           Command="{Binding SaveFilesCommand}" /> -->
+            <!--     </CommandBar.SecondaryCommands> -->
+            <!-- </CommandBar> -->
+            
+            <!-- Content="{Binding CurrentPage}" -->
+            <!-- Header="{Binding CurrentPage.Header}" -->
+            <!-- <DrawerPage Name="DrawerPage" -->
+            <!--             DrawerLayoutBehavior="CompactOverlay" -->
+            <!--             DrawerLength="100" -->
+            <!--             CompactDrawerLength="33"> -->
+            <SplitView Name="MainSplitView"
+                       DisplayMode="CompactOverlay"
+                       CompactPaneLength="45"
+                       OpenPaneLength="200"
+                       UseLightDismissOverlayMode="True"
+                       Content="{Binding CurrentPage}">
+                <SplitView.Pane>
+                    <Grid ColumnDefinitions="Auto, Auto" RowDefinitions="Auto, *, Auto, Auto"
+                          Background="{DynamicResource SemiColorBackground1}">
+                        
+                        <u:IconToggleButton Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2"
+                                            IsChecked="{Binding #MainSplitView.IsPaneOpen}"
+                                            Icon="{StaticResource SemiIconMenu}"
+                                            Foreground="{DynamicResource SemiColorText0}"
+                                            Background="Transparent"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="14, 14, 0, 14"
+                                            Margin="0,0,0,10">
+                        </u:IconToggleButton>
+                        
+                        <ListBox Name="DrawerListBox" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
+                                 ItemsSource="{Binding Pages}"
+                                 SelectedItem="{Binding CurrentPage}"
+                                 SelectionChanged="SelectedPageChanged">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="ContentPage">
+                                    <StackPanel Orientation="Horizontal" 
+                                                VerticalAlignment="Center"
+                                                Spacing="10"
+                                                Margin="2,5,0,5">
+                                        <u:TwoTonePathIcon Data="{Binding Icon}" Width="16"
+                                                           Foreground="{DynamicResource SemiColorText1}"
+                                                           ActiveForeground="{DynamicResource SemiColorPrimary}"
+                                                           IsActive="{Binding $parent[ListBoxItem].IsSelected}" />
+                                        <TextBlock Text="{Binding Header}"
+                                                   FontSize="14"
+                                                   IsVisible="{Binding #MainSplitView.IsPaneOpen}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        
+                        <u:IconButton Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" 
+                                      Theme="{StaticResource BorderlessIconButton}"
+                                      Icon="{StaticResource SemiIconSync}"
+                                      Foreground="{DynamicResource SemiColorText1}"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Left"
+                                      Padding="14, 10, 0, 10"
+                                      Command="{Binding DbxSyncCommand}"
+                                      HotKey="Ctrl+S">
+                            <TextBlock IsVisible="{Binding #MainSplitView.IsPaneOpen}">Sync</TextBlock>
+                        </u:IconButton>
+                        
+                        <!-- <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" -->
+                        <!--             HorizontalAlignment="Left" VerticalAlignment="Bottom" -->
+                        <!--             Spacing="10" -->
+                        <!--             Margin="12"> -->
+                        <Panel Grid.Column="0" Grid.Row="3" Margin="12"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Bottom">
                             <u:LoadingIcon x:Name="SyncLoadingIcon">
                                 <u:LoadingIcon.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.Or}">
@@ -38,7 +183,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                       Foreground="{DynamicResource SemiColorSuccess}">
                                 <PathIcon.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                        <Binding Path="InSync"/>
+                                        <Binding Path="InSync" />
                                         <Binding Path="!#SyncLoadingIcon.IsVisible" />
                                     </MultiBinding>
                                 </PathIcon.IsVisible>
@@ -46,19 +191,19 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             <Panel>
                                 <Panel.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                        <Binding Path="!InSync"/>
+                                        <Binding Path="!InSync" />
                                         <Binding Path="!#SyncLoadingIcon.IsVisible" />
                                     </MultiBinding>
                                 </Panel.IsVisible>
-                                
+
                             </Panel>
                             <PathIcon Data="{StaticResource SemiIconUnChainStroked}"
                                       Foreground="{DynamicResource SemiColorWarning}">
                                 <PathIcon.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                                         <Binding Path="!#SyncLoadingIcon.IsVisible" />
-                                        <Binding Path="!InSync"/>
-                                        <Binding Path="CacheValid"/>
+                                        <Binding Path="!InSync" />
+                                        <Binding Path="CacheValid" />
                                     </MultiBinding>
                                 </PathIcon.IsVisible>
                             </PathIcon>
@@ -67,60 +212,98 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                 <PathIcon.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                                         <Binding Path="!#SyncLoadingIcon.IsVisible" />
-                                        <Binding Path="!CacheValid"/>
+                                        <Binding Path="!CacheValid" />
                                     </MultiBinding>
                                 </PathIcon.IsVisible>
                             </PathIcon>
                         </Panel>
-                        <TextBlock Text="{Binding SyncStatusText}"
+                        <TextBlock Grid.Column="1" Grid.Row="3" 
+                                   Text="{Binding SyncStatusText}"
                                    FontSize="12"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </CommandBar.Content>
-                <CommandBar.PrimaryCommands>
-                    <CommandBarButton Label="Sync" Icon="{StaticResource SemiIconSync}"
-                                      Command="{Binding DbxSyncCommand}"
-                                      HotKey="Ctrl+S"/>
-                </CommandBar.PrimaryCommands>
-                <CommandBar.SecondaryCommands>
-                    <CommandBarButton Label="Compare To Cloud" Icon="{StaticResource SemiIconCloud}"
-                                      Command="{Binding FetchDbxCommand}"/>
-                    <CommandBarButton Label="Upload All" Icon="{StaticResource SemiIconUpload}"
-                                      Command="{Binding PushDbxCommand}"/>
-                    <CommandBarButton Label="Download All" Icon="{StaticResource SemiIconDownload}"
-                                      Command="{Binding PullDbxCommand}"/>
-                    <CommandBarButton Label="Save Locally" Icon="{StaticResource SemiIconSave}"
-                                      Command="{Binding SaveFilesCommand}"/>
-                </CommandBar.SecondaryCommands>
-            </CommandBar>
+                                   TextWrapping="Wrap"
+                                   MaxWidth="150"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding #MainSplitView.IsPaneOpen}"/>
+                        <!-- </StackPanel> -->
+                    </Grid>
+                </SplitView.Pane>
             
-            <TabbedPage x:Name="TabControl" IsKeyboardNavigationEnabled="True">
-                <ContentPage Header="Today" Icon="{StaticResource SemiIconCalendar}">
-                    <views:TodayView/>
-                </ContentPage>
-            
-                <ContentPage Header="Tasks" Icon="{StaticResource SemiIconCheckList}">
-                    <views:TasksView/>
-                </ContentPage>
-            
-                <ContentPage Header="Sleep" Icon="{StaticResource SemiIconAlarm}">
-                    <views:SleepView/>
-                </ContentPage>
-            
-                <ContentPage Header="Journal" Icon="{StaticResource SemiIconBook}">
-                    <views:JournalView/>
-                </ContentPage>
-            
-                <ContentPage Header="Notes" Icon="{StaticResource SemiIconEdit2}">
-                    <views:NotesView/>
-                </ContentPage>
-            
-                <ContentPage Header="Settings" Icon="{StaticResource SemiIconSetting}">
-                    <views:SettingsView/>
-                </ContentPage>
-            
-            </TabbedPage>
+                <!-- <NavigationPage Name="MainPage" IsBackButtonVisible="False"> -->
+                <!--     <NavigationPage.PageTransition> -->
+                <!--         <PageSlide Orientation="Vertical" Duration="0:0:0.1"/> -->
+                <!--     </NavigationPage.PageTransition> -->
+                <!-- </NavigationPage> -->
+                <!-- <Panel DataContext="{Binding #RootControl.DataContext}"> -->
+                <!--     <views:TodayView> -->
+                <!--         <views:TodayView.IsVisible> -->
+                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
+                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
+                <!--                         <Binding.ConverterParameter> -->
+                <!--                             <x:Int32>0</x:Int32> -->
+                <!--                         </Binding.ConverterParameter> -->
+                <!--                      </Binding> -->
+                <!--         </views:TodayView.IsVisible> -->
+                <!--     </views:TodayView> -->
+                <!--      -->
+                <!--     <views:TasksView> -->
+                <!--         <views:TasksView.IsVisible> -->
+                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
+                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
+                <!--                         <Binding.ConverterParameter> -->
+                <!--                             <x:Int32>1</x:Int32> -->
+                <!--                         </Binding.ConverterParameter> -->
+                <!--                      </Binding> -->
+                <!--         </views:TasksView.IsVisible> -->
+                <!--     </views:TasksView> -->
+                <!--      -->
+                <!--     <views:SleepView> -->
+                <!--         <views:SleepView.IsVisible> -->
+                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
+                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
+                <!--                         <Binding.ConverterParameter> -->
+                <!--                             <x:Int32>2</x:Int32> -->
+                <!--                         </Binding.ConverterParameter> -->
+                <!--                      </Binding> -->
+                <!--         </views:SleepView.IsVisible> -->
+                <!--     </views:SleepView> -->
+                <!--      -->
+                <!--     <views:JournalView> -->
+                <!--         <views:JournalView.IsVisible> -->
+                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
+                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
+                <!--                         <Binding.ConverterParameter> -->
+                <!--                             <x:Int32>3</x:Int32> -->
+                <!--                         </Binding.ConverterParameter> -->
+                <!--                      </Binding> -->
+                <!--         </views:JournalView.IsVisible> -->
+                <!--     </views:JournalView> -->
+                <!--      -->
+                <!--     <views:NotesView> -->
+                <!--         <views:NotesView.IsVisible> -->
+                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
+                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
+                <!--                         <Binding.ConverterParameter> -->
+                <!--                             <x:Int32>4</x:Int32> -->
+                <!--                         </Binding.ConverterParameter> -->
+                <!--                      </Binding> -->
+                <!--         </views:NotesView.IsVisible> -->
+                <!--     </views:NotesView> -->
+                <!--      -->
+                <!--     <views:SettingsView> -->
+                <!--         <views:SettingsView.IsVisible> -->
+                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
+                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
+                <!--                         <Binding.ConverterParameter> -->
+                <!--                             <x:Int32>5</x:Int32> -->
+                <!--                         </Binding.ConverterParameter> -->
+                <!--                      </Binding> -->
+                <!--         </views:SettingsView.IsVisible> -->
+                <!--     </views:SettingsView> -->
+                <!-- </Panel> -->
+            <!-- </DrawerPage> -->
+            </SplitView>
+
         </DockPanel>
-        <u:OverlayDialogHost x:Name="DialogHost"/>
+        <u:OverlayDialogHost x:Name="DialogHost" />
     </Panel>
 </UserControl>

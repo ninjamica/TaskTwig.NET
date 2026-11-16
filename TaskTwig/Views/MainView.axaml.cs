@@ -20,6 +20,7 @@ public partial class MainView : UserControl
         TopLevel.GetTopLevel(this)?.InputPane?.StateChanged += InputPaneStateChanged;
         
         DialogHost.Transitions ??= [new ThicknessTransition {Property = MarginProperty, Duration = TimeSpan.Zero}];
+        
     }
 
     private void InputPaneStateChanged(object? sender, InputPaneStateEventArgs e)
@@ -50,5 +51,12 @@ public partial class MainView : UserControl
             
             DialogHost.Margin = new Thickness(0);
         }
+    }
+
+    private void SelectedPageChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        // DrawerPage.IsOpen = false;
+        // await MainPage.ReplaceAsync((Page)DrawerListBox.SelectedItem);
+        MainSplitView.IsPaneOpen = false;
     }
 }
