@@ -5,6 +5,7 @@ using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Platform;
+using Avalonia.Input;
 
 namespace TaskTwig.Views;
 
@@ -58,5 +59,19 @@ public partial class MainView : UserControl
         // DrawerPage.IsOpen = false;
         // await MainPage.ReplaceAsync((Page)DrawerListBox.SelectedItem);
         MainSplitView.IsPaneOpen = false;
+    }
+
+    private void DrawerSwipeGesture(object? sender, SwipeGestureEventArgs e)
+    {
+        switch (e.SwipeDirection)
+        {
+            case SwipeDirection.Left:
+                MainSplitView.IsPaneOpen = false;
+                break;
+            
+            case SwipeDirection.Right:
+                MainSplitView.IsPaneOpen = true;
+                break;
+        }
     }
 }
