@@ -14,119 +14,65 @@ to set the actual DataContext for runtime, set the DataContext property in code 
         <vm:MainViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <Style Selector="u|IconToggleButton.DrawerToggleButton">
+            <Setter Property="Icon" Value="{StaticResource SemiIconMenu}" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="0" />
+            
+            <Style Selector="^:checked">
+                <Setter Property="BorderBrush" Value="{DynamicResource ButtonDefaultBorderBrush}" />
+                
+                <Style Selector="^:pointerover Border#PART_Background">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ButtonDefaultPointeroverBorderBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ButtonDefaultPointeroverBackground}" />
+                </Style>
+                    
+                <Style Selector="^:pressed Border#PART_Background">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ButtonDefaultPressedBorderBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ButtonDefaultPressedBackground}" />
+                </Style>
+            </Style>
+        </Style>
+        
+        <Style Selector="u|IconButton.DrawerButton">
+            <Setter Property="Theme" Value="{StaticResource BorderlessIconButton}" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText1}" />
+            <Setter Property="IconPlacement" Value="Top" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="2,12,2,12" />
+            
+            <Setter Property="ContentTemplate">
+                <DataTemplate DataType="x:String">
+                    <TextBlock Text="{Binding}"
+                               FontSize="10"
+                               IsVisible="{Binding #MainSplitView.IsPaneOpen}"/>
+                </DataTemplate>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
 
     <Panel>
         <DockPanel>
-            <!-- <CommandBar DockPanel.Dock="Top" -->
-            <!--             IsVisible="{Binding ShowCommandBar}"> -->
-            <!--     <CommandBar.Content> -->
-            <!--         <StackPanel Orientation="Horizontal" Spacing="10" Margin="3,0,0,0"> -->
-            <!--             ~1~ <u:IconToggleButton IsChecked="{Binding #MainSplitView.IsPaneOpen}" @1@ -->
-            <!--             ~1~                     Foreground="{DynamicResource SemiColorText0}" @1@ -->
-            <!--             ~1~                     Background="Transparent" @1@ -->
-            <!--             ~1~                     Padding="0" @1@ -->
-            <!--             ~1~                     Width="30" @1@ -->
-            <!--             ~1~                     Icon="{StaticResource SemiIconMenu}"> @1@ -->
-            <!--             ~1~ </u:IconToggleButton> @1@ -->
-            <!--             ~1~ <Panel> @1@ -->
-            <!--             ~1~     <u:LoadingIcon x:Name="SyncLoadingIcon"> @1@ -->
-            <!--             ~1~         <u:LoadingIcon.IsVisible> @1@ -->
-            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.Or}"> @1@ -->
-            <!--             ~1~                 <Binding Path="SaveFilesCommand.IsRunning" /> @1@ -->
-            <!--             ~1~                 <Binding Path="DbxSyncCommand.IsRunning" /> @1@ -->
-            <!--             ~1~                 <Binding Path="PullDbxCommand.IsRunning" /> @1@ -->
-            <!--             ~1~                 <Binding Path="PushDbxCommand.IsRunning" /> @1@ -->
-            <!--             ~1~                 <Binding Path="FetchDbxCommand.IsRunning" /> @1@ -->
-            <!--             ~1~             </MultiBinding> @1@ -->
-            <!--             ~1~         </u:LoadingIcon.IsVisible> @1@ -->
-            <!--             ~1~     </u:LoadingIcon> @1@ -->
-            <!--             ~1~     <PathIcon Data="{StaticResource SemiIconCheckCircleStroked}" @1@ -->
-            <!--             ~1~               Foreground="{DynamicResource SemiColorSuccess}"> @1@ -->
-            <!--             ~1~         <PathIcon.IsVisible> @1@ -->
-            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
-            <!--             ~1~                 <Binding Path="InSync" /> @1@ -->
-            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
-            <!--             ~1~             </MultiBinding> @1@ -->
-            <!--             ~1~         </PathIcon.IsVisible> @1@ -->
-            <!--             ~1~     </PathIcon> @1@ -->
-            <!--             ~1~     <Panel> @1@ -->
-            <!--             ~1~         <Panel.IsVisible> @1@ -->
-            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
-            <!--             ~1~                 <Binding Path="!InSync" /> @1@ -->
-            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
-            <!--             ~1~             </MultiBinding> @1@ -->
-            <!--             ~1~         </Panel.IsVisible> @1@ -->
-            <!--             ~1~ @1@ -->
-            <!--             ~1~     </Panel> @1@ -->
-            <!--             ~1~     <PathIcon Data="{StaticResource SemiIconUnChainStroked}" @1@ -->
-            <!--             ~1~               Foreground="{DynamicResource SemiColorWarning}"> @1@ -->
-            <!--             ~1~         <PathIcon.IsVisible> @1@ -->
-            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
-            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
-            <!--             ~1~                 <Binding Path="!InSync" /> @1@ -->
-            <!--             ~1~                 <Binding Path="CacheValid" /> @1@ -->
-            <!--             ~1~             </MultiBinding> @1@ -->
-            <!--             ~1~         </PathIcon.IsVisible> @1@ -->
-            <!--             ~1~     </PathIcon> @1@ -->
-            <!--             ~1~     <PathIcon Data="{StaticResource SemiIconCrossCircleStroked}" @1@ -->
-            <!--             ~1~               Foreground="{DynamicResource SemiColorWarning}"> @1@ -->
-            <!--             ~1~         <PathIcon.IsVisible> @1@ -->
-            <!--             ~1~             <MultiBinding Converter="{x:Static BoolConverters.And}"> @1@ -->
-            <!--             ~1~                 <Binding Path="!#SyncLoadingIcon.IsVisible" /> @1@ -->
-            <!--             ~1~                 <Binding Path="!CacheValid" /> @1@ -->
-            <!--             ~1~             </MultiBinding> @1@ -->
-            <!--             ~1~         </PathIcon.IsVisible> @1@ -->
-            <!--             ~1~     </PathIcon> @1@ -->
-            <!--             ~1~ </Panel> @1@ -->
-            <!--             ~1~ <TextBlock Text="{Binding SyncStatusText}" @1@ -->
-            <!--             ~1~            FontSize="12" @1@ -->
-            <!--             ~1~            VerticalAlignment="Center" /> @1@ -->
-            <!--         </StackPanel> -->
-            <!--     </CommandBar.Content> -->
-            <!--     ~1~ <CommandBar.PrimaryCommands> @1@ -->
-            <!--     ~1~     <CommandBarButton Label="Sync" Icon="{StaticResource SemiIconSync}" @1@ -->
-            <!--     ~1~                       Command="{Binding DbxSyncCommand}" @1@ -->
-            <!--     ~1~                       HotKey="Ctrl+S" /> @1@ -->
-            <!--     ~1~ </CommandBar.PrimaryCommands> @1@ -->
-            <!--     <CommandBar.SecondaryCommands> -->
-            <!--         <CommandBarButton Label="Compare To Cloud" Icon="{StaticResource SemiIconCloud}" -->
-            <!--                           Command="{Binding FetchDbxCommand}" /> -->
-            <!--         <CommandBarButton Label="Upload All" Icon="{StaticResource SemiIconUpload}" -->
-            <!--                           Command="{Binding PushDbxCommand}" /> -->
-            <!--         <CommandBarButton Label="Download All" Icon="{StaticResource SemiIconDownload}" -->
-            <!--                           Command="{Binding PullDbxCommand}" /> -->
-            <!--         <CommandBarButton Label="Save Locally" Icon="{StaticResource SemiIconSave}" -->
-            <!--                           Command="{Binding SaveFilesCommand}" /> -->
-            <!--     </CommandBar.SecondaryCommands> -->
-            <!-- </CommandBar> -->
-            
-            <!-- Content="{Binding CurrentPage}" -->
-            <!-- Header="{Binding CurrentPage.Header}" -->
-            <!-- <DrawerPage Name="DrawerPage" -->
-            <!--             DrawerLayoutBehavior="CompactOverlay" -->
-            <!--             DrawerLength="100" -->
-            <!--             CompactDrawerLength="33"> -->
             <SplitView Name="MainSplitView"
                        DisplayMode="CompactOverlay"
                        CompactPaneLength="45"
-                       OpenPaneLength="200"
+                       OpenPaneLength="250"
                        UseLightDismissOverlayMode="True"
                        Content="{Binding CurrentPage}">
                 <SplitView.Pane>
-                    <Grid ColumnDefinitions="Auto, Auto" RowDefinitions="Auto, *, Auto, Auto"
+                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, *, Auto, Auto"
                           Background="{DynamicResource SemiColorBackground1}">
                         
                         <u:IconToggleButton Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2"
+                                            Classes="DrawerToggleButton"
                                             IsChecked="{Binding #MainSplitView.IsPaneOpen}"
-                                            Icon="{StaticResource SemiIconMenu}"
-                                            Foreground="{DynamicResource SemiColorText0}"
-                                            Background="Transparent"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Left"
-                                            Padding="14, 14, 0, 14"
-                                            Margin="0,0,0,10">
-                        </u:IconToggleButton>
-                        
+                                            Padding="14, 14, 0, 24"/>
+
                         <ListBox Name="DrawerListBox" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
                                  ItemsSource="{Binding Pages}"
                                  SelectedItem="{Binding CurrentPage}"
@@ -149,23 +95,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                             </ListBox.ItemTemplate>
                         </ListBox>
                         
-                        <u:IconButton Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" 
-                                      Theme="{StaticResource BorderlessIconButton}"
-                                      Icon="{StaticResource SemiIconSync}"
-                                      Foreground="{DynamicResource SemiColorText1}"
-                                      HorizontalAlignment="Stretch"
-                                      HorizontalContentAlignment="Left"
-                                      Padding="14, 10, 0, 10"
-                                      Command="{Binding DbxSyncCommand}"
-                                      HotKey="Ctrl+S">
-                            <TextBlock IsVisible="{Binding #MainSplitView.IsPaneOpen}">Sync</TextBlock>
-                        </u:IconButton>
-                        
-                        <!-- <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" -->
-                        <!--             HorizontalAlignment="Left" VerticalAlignment="Bottom" -->
-                        <!--             Spacing="10" -->
-                        <!--             Margin="12"> -->
-                        <Panel Grid.Column="0" Grid.Row="3" Margin="12"
+                        <Panel Grid.Column="0" Grid.Row="2" Margin="12, 8, 5,8"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Bottom">
                             <u:LoadingIcon x:Name="SyncLoadingIcon">
@@ -217,90 +147,51 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                 </PathIcon.IsVisible>
                             </PathIcon>
                         </Panel>
-                        <TextBlock Grid.Column="1" Grid.Row="3" 
+                        <TextBlock Grid.Column="1" Grid.Row="2"
                                    Text="{Binding SyncStatusText}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
-                                   MaxWidth="150"
+                                   Padding="5"
+                                   Width="205"
                                    VerticalAlignment="Center"
+                                   HorizontalAlignment="Stretch"
+                                   TextAlignment="Left"
                                    IsVisible="{Binding #MainSplitView.IsPaneOpen}"/>
-                        <!-- </StackPanel> -->
+                        
+                        <UniformGrid Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
+                                     Rows="1">
+                            <u:IconButton Classes="DrawerButton"
+                                          Content="Sync"
+                                          Icon="{StaticResource SemiIconSync}"
+                                          Command="{Binding DbxSyncCommand}"
+                                          HotKey="Ctrl+S"/>
+                            
+                            <u:IconButton Classes="DrawerButton"
+                                          Content="Save"
+                                          Icon="{StaticResource SemiIconSave}"
+                                          IsVisible="{Binding #MainSplitView.IsPaneOpen}"
+                                          Command="{Binding SaveFilesCommand}" />
+                            
+                            <u:IconButton Classes="DrawerButton"
+                                          Content="Fetch"
+                                          Icon="{StaticResource SemiIconCloud}"
+                                          IsVisible="{Binding #MainSplitView.IsPaneOpen}"
+                                          Command="{Binding FetchDbxCommand}" />
+                            
+                            <u:IconButton Classes="DrawerButton"
+                                          Content="Push"
+                                          Icon="{StaticResource SemiIconUpload}"
+                                          IsVisible="{Binding #MainSplitView.IsPaneOpen}"
+                                          Command="{Binding PushDbxCommand}" />
+                            
+                            <u:IconButton Classes="DrawerButton"
+                                          Content="Pull"
+                                          Icon="{StaticResource SemiIconDownload}"
+                                          IsVisible="{Binding #MainSplitView.IsPaneOpen}"
+                                          Command="{Binding PullDbxCommand}" />
+                        </UniformGrid>
                     </Grid>
                 </SplitView.Pane>
-            
-                <!-- <NavigationPage Name="MainPage" IsBackButtonVisible="False"> -->
-                <!--     <NavigationPage.PageTransition> -->
-                <!--         <PageSlide Orientation="Vertical" Duration="0:0:0.1"/> -->
-                <!--     </NavigationPage.PageTransition> -->
-                <!-- </NavigationPage> -->
-                <!-- <Panel DataContext="{Binding #RootControl.DataContext}"> -->
-                <!--     <views:TodayView> -->
-                <!--         <views:TodayView.IsVisible> -->
-                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
-                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
-                <!--                         <Binding.ConverterParameter> -->
-                <!--                             <x:Int32>0</x:Int32> -->
-                <!--                         </Binding.ConverterParameter> -->
-                <!--                      </Binding> -->
-                <!--         </views:TodayView.IsVisible> -->
-                <!--     </views:TodayView> -->
-                <!--      -->
-                <!--     <views:TasksView> -->
-                <!--         <views:TasksView.IsVisible> -->
-                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
-                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
-                <!--                         <Binding.ConverterParameter> -->
-                <!--                             <x:Int32>1</x:Int32> -->
-                <!--                         </Binding.ConverterParameter> -->
-                <!--                      </Binding> -->
-                <!--         </views:TasksView.IsVisible> -->
-                <!--     </views:TasksView> -->
-                <!--      -->
-                <!--     <views:SleepView> -->
-                <!--         <views:SleepView.IsVisible> -->
-                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
-                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
-                <!--                         <Binding.ConverterParameter> -->
-                <!--                             <x:Int32>2</x:Int32> -->
-                <!--                         </Binding.ConverterParameter> -->
-                <!--                      </Binding> -->
-                <!--         </views:SleepView.IsVisible> -->
-                <!--     </views:SleepView> -->
-                <!--      -->
-                <!--     <views:JournalView> -->
-                <!--         <views:JournalView.IsVisible> -->
-                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
-                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
-                <!--                         <Binding.ConverterParameter> -->
-                <!--                             <x:Int32>3</x:Int32> -->
-                <!--                         </Binding.ConverterParameter> -->
-                <!--                      </Binding> -->
-                <!--         </views:JournalView.IsVisible> -->
-                <!--     </views:JournalView> -->
-                <!--      -->
-                <!--     <views:NotesView> -->
-                <!--         <views:NotesView.IsVisible> -->
-                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
-                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
-                <!--                         <Binding.ConverterParameter> -->
-                <!--                             <x:Int32>4</x:Int32> -->
-                <!--                         </Binding.ConverterParameter> -->
-                <!--                      </Binding> -->
-                <!--         </views:NotesView.IsVisible> -->
-                <!--     </views:NotesView> -->
-                <!--      -->
-                <!--     <views:SettingsView> -->
-                <!--         <views:SettingsView.IsVisible> -->
-                <!--             <Binding Path="#DrawerListBox.SelectedIndex" -->
-                <!--                      Converter="{x:Static ObjectConverters.Equal}"> -->
-                <!--                         <Binding.ConverterParameter> -->
-                <!--                             <x:Int32>5</x:Int32> -->
-                <!--                         </Binding.ConverterParameter> -->
-                <!--                      </Binding> -->
-                <!--         </views:SettingsView.IsVisible> -->
-                <!--     </views:SettingsView> -->
-                <!-- </Panel> -->
-            <!-- </DrawerPage> -->
             </SplitView>
 
         </DockPanel>
