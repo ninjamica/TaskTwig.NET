@@ -6,9 +6,13 @@
              xmlns:controls="clr-namespace:TaskTwig.Controls"
              xmlns:vm="clr-namespace:TaskTwig.ViewModels"
              xmlns:views="clr-namespace:TaskTwig.Views"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="555" d:DesignHeight="700"
              x:Class="TaskTwig.Views.JournalView"
              x:DataType="vm:MainViewModel">
+    
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
 
     <u:UrsaGroupBox x:Name="JournalGroupBox"
                     Margin="30"

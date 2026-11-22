@@ -123,6 +123,19 @@ public partial class MainViewModel : ViewModelBase
         category.Expanded = true;
         EditTask(task);
     }
+
+    [RelayCommand]
+    private void CreateTaskAtBottom(TaskCategory category)
+    {
+        var task = new TwTask()
+        {
+            Name = "New Task",
+            Interval = new NoInterval()
+        };
+        category.AddTask(task, category.Count);
+        category.Expanded = true;
+        EditTask(task);
+    }
     
     [RelayCommand]
     private void EditTask(TwTask task)

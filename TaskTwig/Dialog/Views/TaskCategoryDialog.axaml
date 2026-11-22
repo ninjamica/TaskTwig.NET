@@ -1,13 +1,19 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="230"
              xmlns:vm="using:TaskTwig.Dialog.ViewModels"
              xmlns:controls="clr-namespace:TaskTwig.Controls"
+             xmlns:core="clr-namespace:TaskTwig.Core"
              x:Class="TaskTwig.Dialog.Views.TaskCategoryDialog"
              x:DataType="vm:TaskCategoryDialogViewModel">
+    
+    <Design.DataContext>
+        <vm:TaskCategoryDialogViewModel>
+            <vm:TaskCategoryDialogViewModel.Category>
+                <core:TaskCategory AddToTop="False"/>
+            </vm:TaskCategoryDialogViewModel.Category>
+        </vm:TaskCategoryDialogViewModel>
+    </Design.DataContext>
     
     <Grid RowDefinitions="Auto, *, Auto" Margin="25,18,25,25" RowSpacing="10">
         
@@ -27,6 +33,15 @@
             </u:FormItem>
             <u:FormItem Label="Icon">
                 <controls:EmojiTextBox Text="{Binding Category?.Icon}"/>
+            </u:FormItem>
+            <u:FormItem Label="Add New Tasks at">
+                <ComboBox>
+                    <ComboBoxItem Name="TopComboBoxItem" 
+                                  Content="top"
+                                  IsSelected="{Binding Category?.AddToTop, Mode=TwoWay}" />
+                    <ComboBoxItem Content="bottom"
+                                  IsSelected="{Binding !#TopComboBoxItem.IsSelected} "/>
+                </ComboBox>
             </u:FormItem>
         </u:Form>
         

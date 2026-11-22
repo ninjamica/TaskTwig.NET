@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO.Hashing;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -26,6 +25,11 @@ public partial class TaskCategory : HashableObject
     [ObservableProperty]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public partial string? Icon { get; set; }
+
+    [WatchForHash]
+    [ObservableProperty]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public partial bool AddToTop { get; set; } = false;
     
     [ObservableProperty]
     public partial bool Expanded { get; set; } = true;
@@ -86,7 +90,7 @@ public partial class TaskCategory : HashableObject
 
     public void AddTask(TwTask task)
     {
-        AddTask(task, Tasks.Count);
+        AddTask(task, AddToTop ? 0 : Tasks.Count);
     }
 
     public void AddTask(TwTask task, int index)
