@@ -7,6 +7,11 @@ namespace TaskTwig.Core;
 
 public class Sleep : HashableObject, IComparable<Sleep>
 {
+    /// <summary>
+    /// Represents the json scheme version for sleep records
+    /// </summary>
+    public const int JsonVersion = 1;
+    
     public required DateTime StartTime { get; init; }
     public required DateTime EndTime { get; init; }
     

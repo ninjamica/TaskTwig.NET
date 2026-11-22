@@ -7,6 +7,11 @@ namespace TaskTwig.Core;
 
 public partial class Journal : HashableObject
 {
+    /// <summary>
+    /// Represents the json scheme version for journals
+    /// </summary>
+    public const int JsonVersion = 1;
+    
     [WatchForHash]
     [ObservableProperty]
     public required partial DateOnly Date { get; set; }

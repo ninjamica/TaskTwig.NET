@@ -8,6 +8,11 @@ namespace TaskTwig.Core;
 
 public class Workout : HashableObject
 {
+    /// <summary>
+    /// Represents the json scheme version for workouts and exercises
+    /// </summary>
+    public const int JsonVersion = 1;
+    
     public required DateTime StartTime { get; init; }
     public required DateTime EndTime { get; init; }
 
@@ -35,13 +40,4 @@ public class Workout : HashableObject
             hashAlgorithm.Append(BitConverter.GetBytes(exercisePair.Value));
         }
     }
-
-    // protected override void AppendHashableChildren(NonCryptographicHashAlgorithm mainHasher, NonCryptographicHashAlgorithm childHasher)
-    // {
-    //     foreach (var exercisePair in Exercises.OrderBy(pair => pair.Key))
-    //     {
-    //         exercisePair.Key.AppendHashAndChildren(mainHasher, childHasher);
-    //         mainHasher.Append(BitConverter.GetBytes(exercisePair.Value));
-    //     }
-    // }
 }

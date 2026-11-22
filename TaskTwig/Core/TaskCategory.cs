@@ -13,6 +13,11 @@ namespace TaskTwig.Core;
 
 public partial class TaskCategory : HashableObject
 {
+    /// <summary>
+    /// Represents the json scheme version for task categories, tasks, and intervals
+    /// </summary>
+    public const int JsonVersion = 1;
+    
     [WatchForHash]
     [ObservableProperty] 
     public partial string Name { get; set; } = "New Task Category";

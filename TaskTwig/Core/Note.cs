@@ -6,6 +6,11 @@ namespace TaskTwig.Core;
 
 public partial class Note : HashableObject
 {
+    /// <summary>
+    /// Represents the json scheme version for notes
+    /// </summary>
+    public const int JsonVersion = 1;
+    
     [WatchForHash]
     [ObservableProperty] 
     public required partial string Title { get; set; }
