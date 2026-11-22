@@ -5,7 +5,7 @@ using DynamicData;
 
 namespace TaskTwig.Core.Util;
 
-public class GroupHeaderFlattener<TGroup, TItem, TDestination>
+public class GroupHeaderFlattener<TGroup, TItem, TDestination> : IDisposable
     where TGroup : notnull
     where TItem : notnull
     where TDestination : notnull
@@ -17,6 +17,8 @@ public class GroupHeaderFlattener<TGroup, TItem, TDestination>
     
     private readonly SourceList<TDestination> _flatList = new();
     private readonly SourceList<GroupContainer> _groupList = new();
+    
+    private IDisposable? _sourceSubscription;
     
     public GroupHeaderFlattener(IObservable<IChangeSet<TGroup>> source, Func<TGroup, IObservableList<TItem>> itemsSelector, Func<TGroup, TDestination> headerConverter, Func<TItem, TDestination> itemConverter)
     {
@@ -33,7 +35,7 @@ public class GroupHeaderFlattener<TGroup, TItem, TDestination>
 
     public IObservable<IChangeSet<TDestination>> Run()
     {
-        _source.ForEachChange(OnGroupChange).Subscribe();
+        _sourceSubscription = _source.ForEachChange(OnGroupChange).Subscribe();
         return _flatList.Connect();
     }
 
@@ -87,7 +89,7 @@ public class GroupHeaderFlattener<TGroup, TItem, TDestination>
     private void AddGroup(int groupIndex, TGroup group)
     {
         var items = _itemsSelector(group);
-        var groupContainer = new GroupContainer(group, items);
+        var groupContainer = new GroupContainer(items);
         _groupList.Insert(groupIndex, groupContainer);
         
         var startIndex = GetGroupFlatIndex(groupIndex);
@@ -190,12 +192,21 @@ public class GroupHeaderFlattener<TGroup, TItem, TDestination>
         }));
     }
 
-    public class GroupContainer(TGroup group, IObservableList<TItem> items)
+    private class GroupContainer(IObservableList<TItem> items)
     {
-        public readonly TGroup Group = group;
-        public readonly IObservableList<TItem> Items = items;
         public IDisposable? Disposable;
+        public int Count => items.Count;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        foreach (var groupContainer in _groupList.Items) 
+            groupContainer.Disposable?.Dispose();
         
-        public int Count => Items.Count;
+        _flatList.Dispose();
+        _groupList.Dispose();
+        _sourceSubscription?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
