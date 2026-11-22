@@ -6,10 +6,8 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -24,7 +22,6 @@ using TaskTwig.Core.TwigInterval;
 using TaskTwig.Core.Util;
 using TaskTwig.Dialog.ViewModels;
 using TaskTwig.Dialog.Views;
-using TaskTwig.Views;
 using Ursa.Common;
 using Ursa.Controls;
 using Ursa.Controls.Options;
@@ -65,11 +62,7 @@ public partial class MainViewModel : ViewModelBase
     
     private readonly ReadOnlyObservableCollection<Note> _notes;
     public ReadOnlyObservableCollection<Note> Notes => _notes;
-
-    public List<ContentPage> Pages { get; } = [];
     
-    [ObservableProperty]
-    public partial ContentPage CurrentPage { get; set; }
 
     [RelayCommand]
     private void CreateTaskCategory()
@@ -815,19 +808,6 @@ public partial class MainViewModel : ViewModelBase
             .ToObservableOptional(TwigTime.Today.AddDays(-1))
             .Subscribe(sleep => HasSleepRecordLastNight = sleep.HasValue);
         _twig.Notes.Connect().Bind(out _notes).Subscribe();
-
-        Pages.Add(new ContentPage { Header = "Today", Icon = Application.Current?.FindResource("SemiIconCalendar"), Content = new TodayView { DataContext = this } });
-        Pages.Add(new ContentPage { Header = "Tasks", Icon = Application.Current?.FindResource("SemiIconCheckList"), Content = new TasksView { DataContext = this } });
-        Pages.Add(new ContentPage { Header = "Sleep", Icon = Application.Current?.FindResource("SemiIconAlarm"), Content = new SleepView { DataContext = this } });
-        Pages.Add(new ContentPage { Header = "Journal", Icon = Application.Current?.FindResource("SemiIconBook"), Content = new JournalView { DataContext = this } });
-        Pages.Add(new ContentPage { Header = "Notes", Icon = Application.Current?.FindResource("SemiIconEdit2"), Content = new NotesView { DataContext = this } });
-        Pages.Add(new ContentPage { Header = "Settings", Icon = Application.Current?.FindResource("SemiIconSetting"), Content = new SettingsView { DataContext = this } });
-        
-        foreach (var page in Pages)
-        {
-            NavigationPage.SetHasNavigationBar(page, false);
-        }
-        CurrentPage = Pages.First();
 
         Task.Run(async () => await _twig.DbxHandler.AuthFromStoredKeys());
     }

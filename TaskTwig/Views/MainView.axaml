@@ -48,7 +48,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                 <DataTemplate DataType="x:String">
                     <TextBlock Text="{Binding}"
                                FontSize="10"
-                               IsVisible="{Binding #MainSplitView.IsPaneOpen}"/>
+                               IsVisible="{Binding #MainSplitView.IsPaneOpen}" />
                 </DataTemplate>
             </Setter>
         </Style>
@@ -60,7 +60,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                    CompactPaneLength="45"
                    OpenPaneLength="250"
                    UseLightDismissOverlayMode="True"
-                   Content="{Binding CurrentPage}"
+                   Content="{Binding #DrawerListBox.SelectedItem}"
                    SwipeGesture="DrawerSwipeGesture">
             <SplitView.GestureRecognizers>
                 <SwipeGestureRecognizer CanHorizontallySwipe="True" Threshold="50" />
@@ -74,11 +74,10 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                         IsChecked="{Binding #MainSplitView.IsPaneOpen}"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Left"
-                                        Padding="14, 14, 0, 24"/>
+                                        Padding="14, 14, 0, 24" />
 
                     <ListBox Name="DrawerListBox" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
-                             ItemsSource="{Binding Pages}"
-                             SelectedItem="{Binding CurrentPage}"
+                             ItemsSource="{Binding #RootControl.Pages}"
                              SelectionChanged="SelectedPageChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="ContentPage">
@@ -159,7 +158,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                VerticalAlignment="Center"
                                HorizontalAlignment="Stretch"
                                TextAlignment="Left"
-                               IsVisible="{Binding #MainSplitView.IsPaneOpen}"/>
+                               IsVisible="{Binding #MainSplitView.IsPaneOpen}" />
                     
                     <UniformGrid Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
                                  Rows="1">
@@ -167,7 +166,7 @@ to set the actual DataContext for runtime, set the DataContext property in code 
                                       Content="Sync"
                                       Icon="{StaticResource SemiIconSync}"
                                       Command="{Binding DbxSyncCommand}"
-                                      HotKey="Ctrl+S"/>
+                                      HotKey="Ctrl+S" />
                         
                         <u:IconButton Classes="DrawerButton"
                                       Content="Save"
