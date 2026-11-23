@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             xmlns:avalonia="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
+             xmlns:sortable="clr-namespace:Sortable.Avalonia;assembly=Sortable.Avalonia"
              xmlns:vm="clr-namespace:TaskTwig.ViewModels"
              xmlns:controls="clr-namespace:TaskTwig.Controls"
              xmlns:core="clr-namespace:TaskTwig.Core"
@@ -26,10 +26,10 @@
             <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                           ItemsSource="{Binding TasksFlatList}"
                           IsVisible="{Binding !#TasksRootControl.IsReorderCategories}"
-                          avalonia:Sortable.Sortable="True"
-                          avalonia:Sortable.AutoScroll="True"
-                          avalonia:Sortable.UpdateCommand="{Binding TaskListUpdateCommand}"
-                          avalonia:Sortable.ReleaseCommand="{Binding TaskListReleaseCommand}">
+                          sortable:Sortable.Sortable="True"
+                          sortable:Sortable.AutoScroll="True"
+                          sortable:Sortable.UpdateCommand="{Binding TaskListUpdateCommand}"
+                          sortable:Sortable.ReleaseCommand="{Binding TaskListReleaseCommand}">
                 
                 <ItemsControl.DataTemplates>
                     
@@ -37,12 +37,6 @@
                         <Grid RowDefinitions="*, Auto" RowSpacing="10"
                               ColumnDefinitions="Auto, Auto, *" ColumnSpacing="5"
                               Margin="10, 10, 5, 10">
-                            <PathIcon Grid.Row="0" Grid.Column="0"
-                                      Data="{StaticResource SemiIconHandle}"
-                                      IsVisible="{Binding #TasksRootControl.IsReorderCategories}"
-                                      Cursor="Hand"
-                                      avalonia:Sortable.IsDragHandle="True"
-                                      PointerPressed="CategoryDragStarted" />
                             <controls:ExpanderButton Grid.Row="0" Grid.Column="0"
                                                   IsExpanded="{Binding Category.Expanded}"
                                                   Padding="3,0,5,0" />
@@ -73,8 +67,7 @@
                                     Margin="0"
                                     HorizontalAlignment="Left"
                                     Command="{Binding #TasksRootControl.((vm:MainViewModel)DataContext).CreateTaskCommand}"
-                                    CommandParameter="{Binding Category}"
-                                    IsVisible="{Binding !#TasksRootControl.IsReorderCategories}">
+                                    CommandParameter="{Binding Category}">
                                 <PathIcon Data="{StaticResource SemiIconPlus}"
                                           Width="10" Height="10" />
                             </Button>
@@ -127,16 +120,17 @@
                                 Padding="10,4, 3, 4"
                                 HorizontalAlignment="Left"
                                 IsVisible="{Binding Task.Category.Expanded}"
-                                avalonia:Sortable.IsSortable="True">
+                                sortable:Sortable.IsSortable="True">
                             <Grid ColumnDefinitions="Auto,*">
-                                <Panel Grid.Column="0"
+                                <Border Grid.Column="0"
                                        Width="30"
+                                       Cursor="Hand"
+                                       sortable:Sortable.IsDragHandle="True"
                                        PointerPressed="TaskDragStarted">
                                     <PathIcon
                                         Data="{StaticResource SemiIconHandle}"
-                                        Cursor="Hand"
                                         HorizontalAlignment="Left" />
-                                </Panel>
+                                </Border>
 
                                 <Button Grid.Column="1"
                                         Classes="Tertiary"
@@ -222,10 +216,10 @@
             <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                           ItemsSource="{Binding TaskCategoriesView}"
                           IsVisible="{Binding #TasksRootControl.IsReorderCategories}"
-                          avalonia:Sortable.Sortable="True"
-                          avalonia:Sortable.AutoScroll="True"
-                          avalonia:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}"
-                          avalonia:Sortable.ReleaseCommand="{Binding CategoryListReleaseCommand}">
+                          sortable:Sortable.Sortable="True"
+                          sortable:Sortable.AutoScroll="True"
+                          sortable:Sortable.UpdateCommand="{Binding CategoryListUpdateCommand}"
+                          sortable:Sortable.ReleaseCommand="{Binding CategoryListReleaseCommand}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Spacing="5"/>
@@ -237,7 +231,7 @@
                                 Classes="Hover"
                                 Padding="10,4, 3, 4"
                                 HorizontalAlignment="Left"
-                                avalonia:Sortable.IsSortable="True">
+                                sortable:Sortable.IsSortable="True">
                             <Grid ColumnSpacing="5"
                                   ColumnDefinitions="Auto, *">
                                 <PathIcon Grid.Column="0"
@@ -251,9 +245,9 @@
                                         Classes="Tertiary"
                                         Padding="12,4">
                                     <TextBlock FontSize="{StaticResource SemiFontSizeHeader5}">
-                                        <!-- <Run Text="{Binding Icon}" -->
-                                        <!--      FontFamily="{StaticResource NotoColorEmoji}" -->
-                                        <!--      FontSize="24" /> -->
+                                        <Run Text="{Binding Icon}"
+                                             FontFamily="{StaticResource NotoColorEmoji}"
+                                             FontSize="24" />
                                         <Run Text="{Binding Name}"
                                              BaselineAlignment="Center" />
                                         <InlineUIContainer
