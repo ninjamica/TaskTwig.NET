@@ -1,7 +1,5 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using CommunityToolkit.Mvvm.Input;
 
 namespace TaskTwig.Views;
@@ -32,23 +30,5 @@ public partial class TasksView : UserControl
     private void ExitCategoryReorder()
     {
         IsReorderCategories = false;
-    }
-    
-    private void CategoryDragStarted(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.Pointer.Type != PointerType.Mouse)
-        {
-            Console.WriteLine("Starting TaskCategory drag");
-            e.PreventGestureRecognition();
-        }
-    }
-
-    private void TaskDragStarted(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.Pointer.Type != PointerType.Mouse)
-        {
-            Console.WriteLine("Starting Task drag");
-            e.PreventGestureRecognition();
-        }
     }
 }

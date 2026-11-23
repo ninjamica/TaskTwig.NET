@@ -125,8 +125,7 @@
                                 <Border Grid.Column="0"
                                        Width="30"
                                        Cursor="Hand"
-                                       sortable:Sortable.IsDragHandle="True"
-                                       PointerPressed="TaskDragStarted">
+                                       sortable:Sortable.IsDragHandle="True">
                                     <PathIcon
                                         Data="{StaticResource SemiIconHandle}"
                                         HorizontalAlignment="Left" />
@@ -236,8 +235,7 @@
                                   ColumnDefinitions="Auto, *">
                                 <PathIcon Grid.Column="0"
                                           Data="{StaticResource SemiIconHandle}"
-                                          Cursor="Hand"
-                                          PointerPressed="CategoryDragStarted" />
+                                          Cursor="Hand" />
                                 <Button Grid.Column="1" HorizontalAlignment="Left"
                                         Command="{Binding #TasksRootControl.((vm:MainViewModel)DataContext).EditTaskCategoryCommand}"
                                         CommandParameter="{Binding}"
